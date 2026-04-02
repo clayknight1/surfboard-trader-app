@@ -72,3 +72,21 @@ export type FilterState = {
 
 // UI types
 export type TabRoute = 'browse' | 'sell' | 'messages' | 'profile';
+
+export type ListingCardData = {
+  id: string;
+  title: string;
+  price: number;
+  volume: number;
+  length_inches: number;
+  board_type: BoardType;
+  fin_system: FinSystem;
+  fin_setup: FinSetup;
+  primary_photo: string | null;
+  condition: BoardCondition;
+  location_label: string;
+  is_sponsored: boolean;
+  listing_type: ListingType;
+  user_id: string;
+  distance_miles: number;
+};
