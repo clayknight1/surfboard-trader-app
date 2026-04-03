@@ -90,3 +90,7 @@ export type ListingCardData = {
   user_id: string;
   distance_miles: number;
 };
+
+export type ListingWithPhotos = Listing & {
+  listing_photos: ListingPhoto[];
+};

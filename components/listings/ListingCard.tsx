@@ -25,7 +25,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const router = useRouter();
 
   function onSelect(): void {
-    router.push(`/listing/${listing.id}`);
+    router.push(`/listings/${listing.id}`);
   }
 
   function formatPrice(cents: number): string {
