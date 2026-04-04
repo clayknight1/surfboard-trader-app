@@ -25,6 +25,7 @@ export type Database = {
           is_sponsored: boolean
           location: unknown
           location_label: string | null
+          logo_url: string | null
           price_range_high: number | null
           price_range_low: number | null
           service_radius_miles: number | null
@@ -43,6 +44,7 @@ export type Database = {
           is_sponsored?: boolean
           location?: unknown
           location_label?: string | null
+          logo_url?: string | null
           price_range_high?: number | null
           price_range_low?: number | null
           service_radius_miles?: number | null
@@ -61,6 +63,7 @@ export type Database = {
           is_sponsored?: boolean
           location?: unknown
           location_label?: string | null
+          logo_url?: string | null
           price_range_high?: number | null
           price_range_low?: number | null
           service_radius_miles?: number | null
@@ -121,6 +124,7 @@ export type Database = {
           bump_count: number
           condition: Database["public"]["Enums"]["board_condition"] | null
           created_at: string
+          currency: string
           description: string | null
           era: Database["public"]["Enums"]["board_era"] | null
           fin_setup: Database["public"]["Enums"]["fin_setup"] | null
@@ -160,6 +164,7 @@ export type Database = {
           bump_count?: number
           condition?: Database["public"]["Enums"]["board_condition"] | null
           created_at?: string
+          currency?: string
           description?: string | null
           era?: Database["public"]["Enums"]["board_era"] | null
           fin_setup?: Database["public"]["Enums"]["fin_setup"] | null
@@ -199,6 +204,7 @@ export type Database = {
           bump_count?: number
           condition?: Database["public"]["Enums"]["board_condition"] | null
           created_at?: string
+          currency?: string
           description?: string | null
           era?: Database["public"]["Enums"]["board_era"] | null
           fin_setup?: Database["public"]["Enums"]["fin_setup"] | null
@@ -721,6 +727,39 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_listings_nearby: {
+        Args: {
+          p_board_type?: Database["public"]["Enums"]["board_type"]
+          p_fin_system?: Database["public"]["Enums"]["fin_system"]
+          p_lat: number
+          p_length_max?: number
+          p_length_min?: number
+          p_listing_type?: Database["public"]["Enums"]["listing_type"]
+          p_lng: number
+          p_price_max?: number
+          p_radius_miles?: number
+          p_search_term?: string
+          p_volume_max?: number
+          p_volume_min?: number
+        }
+        Returns: {
+          board_type: Database["public"]["Enums"]["board_type"]
+          condition: Database["public"]["Enums"]["board_condition"]
+          distance_miles: number
+          fin_setup: Database["public"]["Enums"]["fin_setup"]
+          fin_system: Database["public"]["Enums"]["fin_system"]
+          id: string
+          is_sponsored: boolean
+          length_inches: number
+          listing_type: Database["public"]["Enums"]["listing_type"]
+          location_label: string
+          price: number
+          primary_photo: string
+          title: string
+          user_id: string
+          volume: number
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
@@ -1357,7 +1396,7 @@ export type Database = {
       }
     }
     Enums: {
-      board_condition: "excellent" | "good" | "fair" | "poor"
+      board_condition: "new" | "excellent" | "good" | "fair" | "poor"
       board_era: "1950s" | "1960s" | "1970s" | "1980s" | "1990s" | "early_2000s"
       board_type:
         | "shortboard"
@@ -1378,7 +1417,7 @@ export type Database = {
         | "other"
       fin_system: "fcs2" | "futures" | "fcs1" | "single" | "other" | "unknown"
       listing_status: "active" | "sold" | "hidden" | "pending_review"
-      listing_type: "used" | "vintage" | "new" | "custom_order"
+      listing_type: "for_sale" | "in_stock" | "vintage" | "custom_order"
       message_status: "sent" | "delivered" | "read"
       sponsored_tier: "basic" | "featured" | "premium"
       user_role: "buyer_seller" | "shop" | "shaper" | "admin"
@@ -1518,7 +1557,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      board_condition: ["excellent", "good", "fair", "poor"],
+      board_condition: ["new", "excellent", "good", "fair", "poor"],
       board_era: ["1950s", "1960s", "1970s", "1980s", "1990s", "early_2000s"],
       board_type: [
         "shortboard",
@@ -1541,7 +1580,7 @@ export const Constants = {
       ],
       fin_system: ["fcs2", "futures", "fcs1", "single", "other", "unknown"],
       listing_status: ["active", "sold", "hidden", "pending_review"],
-      listing_type: ["used", "vintage", "new", "custom_order"],
+      listing_type: ["for_sale", "in_stock", "vintage", "custom_order"],
       message_status: ["sent", "delivered", "read"],
       sponsored_tier: ["basic", "featured", "premium"],
       user_role: ["buyer_seller", "shop", "shaper", "admin"],

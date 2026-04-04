@@ -52,9 +52,15 @@ export type ListingWithPrimaryPhoto = Listing & {
 };
 
 // Form types
-export type ListingFormData = Omit<ListingInsert, 'length_inches'> & {
+export type ListingFormData = Omit<
+  ListingInsert,
+  'length_inches' | 'price' | 'location'
+> & {
   length_feet: number | null;
   length_inches_remainder: number | null;
+  price: number | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 export type FilterState = {
