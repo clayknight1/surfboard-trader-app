@@ -7,7 +7,7 @@ export default function CreateListing() {
   const userId = session?.user?.id;
   const [step, setStep] = useState();
   const [formData, setFormData] = useState<ListingFormData>({
-    listing_type: 'used',
+    listing_type: 'for_sale',
     title: '',
     description: null,
     price: null,

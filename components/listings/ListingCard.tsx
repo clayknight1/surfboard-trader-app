@@ -94,7 +94,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
         )}
 
         {/* Listing type badge for non-used */}
-        {listing.listing_type !== 'used' && (
+        {listing.listing_type !== 'for_sale' && (
           <View style={styles.typeBadge}>
             <Text style={styles.typeText}>
               {listing.listing_type === 'vintage' ? 'Vintage' : 'New'}
