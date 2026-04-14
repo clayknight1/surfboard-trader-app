@@ -17,7 +17,6 @@ export type Database = {
       business_profiles: {
         Row: {
           bio: string | null
-          board_styles: Database["public"]["Enums"]["board_type"][] | null
           business_name: string
           created_at: string
           id: string
@@ -36,7 +35,6 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
-          board_styles?: Database["public"]["Enums"]["board_type"][] | null
           business_name: string
           created_at?: string
           id?: string
@@ -55,7 +53,6 @@ export type Database = {
         }
         Update: {
           bio?: string | null
-          board_styles?: Database["public"]["Enums"]["board_type"][] | null
           business_name?: string
           created_at?: string
           id?: string
@@ -258,6 +255,7 @@ export type Database = {
           recipient_id: string
           sender_id: string
           status: Database["public"]["Enums"]["message_status"]
+          thread_id: string
         }
         Insert: {
           body: string
@@ -268,6 +266,7 @@ export type Database = {
           recipient_id: string
           sender_id: string
           status?: Database["public"]["Enums"]["message_status"]
+          thread_id: string
         }
         Update: {
           body?: string
@@ -278,6 +277,7 @@ export type Database = {
           recipient_id?: string
           sender_id?: string
           status?: Database["public"]["Enums"]["message_status"]
+          thread_id?: string
         }
         Relationships: [
           {
@@ -299,6 +299,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
             referencedColumns: ["id"]
           },
         ]
@@ -360,6 +367,58 @@ export type Database = {
         }
         Relationships: []
       }
+      threads: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          listing_id: string
+          seller_id: string | null
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          listing_id: string
+          seller_id?: string | null
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          listing_id?: string
+          seller_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "threads_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "threads_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -371,6 +430,8 @@ export type Database = {
           is_active: boolean
           is_verified: boolean
           last_seen_at: string | null
+          lat: number | null
+          lng: number | null
           location: unknown
           location_label: string | null
           phone: string | null
@@ -391,6 +452,8 @@ export type Database = {
           is_active?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
+          lat?: number | null
+          lng?: number | null
           location?: unknown
           location_label?: string | null
           phone?: string | null
@@ -411,6 +474,8 @@ export type Database = {
           is_active?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
+          lat?: number | null
+          lng?: number | null
           location?: unknown
           location_label?: string | null
           phone?: string | null
@@ -596,6 +661,33 @@ export type Database = {
             }
             Returns: string
           }
+      create_listing: {
+        Args: {
+          p_board_type: Database["public"]["Enums"]["board_type"]
+          p_condition: Database["public"]["Enums"]["board_condition"]
+          p_currency?: string
+          p_description: string
+          p_era?: Database["public"]["Enums"]["board_era"]
+          p_fin_setup: Database["public"]["Enums"]["fin_setup"]
+          p_fin_system: Database["public"]["Enums"]["fin_system"]
+          p_is_rideable?: boolean
+          p_lat: number
+          p_lead_time_weeks?: number
+          p_length_inches: number
+          p_listing_type: Database["public"]["Enums"]["listing_type"]
+          p_lng: number
+          p_location_label: string
+          p_price: number
+          p_provenance?: string
+          p_shaper_brand: string
+          p_thickness_inches: number
+          p_title: string
+          p_user_id: string
+          p_volume: number
+          p_width_inches: number
+        }
+        Returns: string
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -802,6 +894,10 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      send_message: {
+        Args: { p_body: string; p_listing_id: string; p_sender_id: string }
+        Returns: string
+      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -1384,6 +1480,15 @@ export type Database = {
         Returns: unknown
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_user_location: {
+        Args: {
+          p_label: string
+          p_lat: number
+          p_lng: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -1397,14 +1502,18 @@ export type Database = {
     }
     Enums: {
       board_condition: "new" | "excellent" | "good" | "fair" | "poor"
-      board_era: "1950s" | "1960s" | "1970s" | "1980s" | "1990s" | "early_2000s"
+      board_era: "1950s" | "1960s" | "1970s" | "1980s" | "1990s"
       board_type:
         | "shortboard"
         | "longboard"
-        | "fish"
-        | "funboard"
-        | "gun"
         | "midlength"
+        | "fish"
+        | "hybrid"
+        | "groveler"
+        | "step_up"
+        | "gun"
+        | "soft_top"
+        | "sup"
         | "foilboard"
         | "other"
       fin_setup:
@@ -1558,14 +1667,18 @@ export const Constants = {
   public: {
     Enums: {
       board_condition: ["new", "excellent", "good", "fair", "poor"],
-      board_era: ["1950s", "1960s", "1970s", "1980s", "1990s", "early_2000s"],
+      board_era: ["1950s", "1960s", "1970s", "1980s", "1990s"],
       board_type: [
         "shortboard",
         "longboard",
-        "fish",
-        "funboard",
-        "gun",
         "midlength",
+        "fish",
+        "hybrid",
+        "groveler",
+        "step_up",
+        "gun",
+        "soft_top",
+        "sup",
         "foilboard",
         "other",
       ],

@@ -1,15 +1,27 @@
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
+import { Colors, Spacing, Typography } from '../../constants';
+import AuthInput from '../../components/ui/AuthInput';
 
 export default function SignUp() {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { session } = useAuth();
 
@@ -19,8 +31,9 @@ export default function SignUp() {
     }
   }, [session]);
 
-  async function handleSignUp(): Promise<void> {
+  async function handleSignUp() {
     setLoading(true);
+    setError('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -32,11 +45,12 @@ export default function SignUp() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { full_name: fullName },
+        },
       });
-      if (error) {
-        setError(error.message);
-      }
-    } catch (err) {
+      if (error) setError(error.message);
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -44,62 +58,147 @@ export default function SignUp() {
   }
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <TextInput
-        placeholder='email'
-        textContentType='emailAddress'
-        value={email}
-        onChangeText={setEmail}
-        style={{
-          width: '80%',
-          height: 44,
-          borderWidth: 0.5,
-          borderColor: '#ccc',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          marginBottom: 12,
-        }}
-      />
-      <TextInput
-        placeholder='password'
-        textContentType='password'
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={{
-          width: '80%',
-          height: 44,
-          borderWidth: 0.5,
-          borderColor: '#ccc',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          marginBottom: 12,
-        }}
-      />
-      <TextInput
-        placeholder='confirm password'
-        textContentType='password'
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        style={{
-          width: '80%',
-          height: 44,
-          borderWidth: 0.5,
-          borderColor: '#ccc',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          marginBottom: 12,
-        }}
-      />
-      <TouchableOpacity onPress={handleSignUp}>
-        <Text>Sign Up Button</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/auth/login')}>
-        <Text>Already have an account? Sign in</Text>
-      </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps='handled'
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Wordmark */}
+        <View style={styles.wordmark}>
+          <Text style={styles.wordmarkTitle}>Surfboard</Text>
+          <Text style={styles.wordmarkSubtitle}>Trader</Text>
+        </View>
 
-      {error ? <Text>{error}</Text> : null}
-    </View>
+        {/* Form */}
+        <View style={styles.form}>
+          <AuthInput
+            label='Full Name'
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder='John Doe'
+            textContentType='name'
+            autoComplete='name'
+            autoCapitalize='words'
+          />
+          <AuthInput
+            label='Email'
+            value={email}
+            onChangeText={setEmail}
+            placeholder='you@example.com'
+            keyboardType='email-address'
+            textContentType='emailAddress'
+            autoComplete='email'
+          />
+          <AuthInput
+            label='Password'
+            value={password}
+            onChangeText={setPassword}
+            placeholder='••••••••'
+            secureTextEntry
+            textContentType='newPassword'
+            autoComplete='password-new'
+          />
+          <AuthInput
+            label='Confirm Password'
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder='••••••••'
+            secureTextEntry
+            textContentType='newPassword'
+            autoComplete='password-new'
+          />
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleSignUp}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={Colors.backgroundCard} />
+            ) : (
+              <Text style={styles.buttonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/auth/login')}>
+            <Text style={styles.footerLink}>Sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: 80,
+    paddingBottom: Spacing.xxxl,
+    gap: Spacing.xxxl,
+  },
+  wordmark: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  wordmarkTitle: {
+    ...Typography.displayLarge,
+    color: Colors.textPrimary,
+    letterSpacing: -1,
+  },
+  wordmarkSubtitle: {
+    ...Typography.displayLarge,
+    color: Colors.accent,
+    letterSpacing: -1,
+  },
+  form: {
+    gap: Spacing.lg,
+  },
+  error: {
+    ...Typography.caption,
+    color: Colors.error,
+  },
+  button: {
+    backgroundColor: Colors.accent,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    ...Typography.subheading,
+    fontFamily: Typography.fontBold,
+    color: Colors.backgroundCard,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+  },
+  footerText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+  },
+  footerLink: {
+    ...Typography.body,
+    color: Colors.accent,
+    fontFamily: Typography.fontMedium,
+  },
+});

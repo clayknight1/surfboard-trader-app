@@ -30,6 +30,7 @@ export const Colors = {
   backgroundCard: palette.white,
   backgroundSubtle: palette.neutral800,
   backgroundInput: palette.neutral800,
+  backgroundSheet: palette.neutral900,
 
   // Text
   textPrimary: palette.neutral50,

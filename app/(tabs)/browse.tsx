@@ -1,19 +1,36 @@
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { Text, FlatList, ActivityIndicator, View } from 'react-native';
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ListingCardData } from '../../lib/types';
-import { supabase } from '../../lib/supabase';
+import { useEffect, useRef, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { FilterState } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
 import { Spacing } from '../../constants';
 import Screen from '../../components/ui/Screen';
+import { getListings } from '../../lib/services/listingService';
+import FilterBar, { FilterKey } from '../../components/listings/FilterBar';
+import FilterPanel from '../../components/listings/FilterPanel';
 
 export default function BrowseScreen() {
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
-  const [error, setError] = useState<string | null>(null);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [radius, setRadius] = useState<number>(25);
-
+  const [filterBarHeight, setFilterBarHeight] = useState(0);
+  const [filters, setFilters] = useState<FilterState>({
+    volumeMin: null,
+    volumeMax: null,
+    lengthMin: null,
+    lengthMax: null,
+    boardType: null,
+    finSystem: null,
+    finSetup: null,
+    condition: null,
+    priceMax: null,
+    radiusMiles: 25,
+    listingType: 'for_sale',
+    shipsOnly: false,
+  });
+  const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     async function getCurrentLocation() {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,34 +50,18 @@ export default function BrowseScreen() {
     getCurrentLocation();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
   const { isPending, isError, data } = useQuery({
-    queryKey: ['listings', location, radius],
-    queryFn: () => getListings(),
-    initialData: [],
+    queryKey: ['listings', location, filters],
+    queryFn: () => getListings(location.lat, location.lng, filters),
+    placeholderData: keepPreviousData,
+    enabled: !!location,
   });
-
-  async function getListings(): Promise<ListingCardData[]> {
-    try {
-      setError(null);
-      const { data, error } = await supabase.rpc('get_listings_nearby', {
-        p_lat: location.lat,
-        p_lng: location.lng,
-        p_radius_miles: radius,
-      });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        setError(error.message);
-        return [];
-      }
-
-      return data ?? [];
-    } catch (err) {
-      console.error('Error fetching listings:', err);
-      setError('Something went wrong fetching listings');
-      return [];
-    }
-  }
 
   if (isPending) {
     return <ActivityIndicator />;
@@ -70,23 +71,68 @@ export default function BrowseScreen() {
     return <Text>Something went wrong</Text>;
   }
 
+  function handleFilterPress(key: FilterKey) {
+    setOpenFilter((prev) => (prev === key ? null : key));
+  }
+
+  function handleReset(key: FilterKey) {
+    const resets: Partial<FilterState> = {
+      volume: { volumeMin: null, volumeMax: null },
+      length: { lengthMin: null, lengthMax: null },
+      boardType: { boardType: null },
+      finSystem: { finSystem: null },
+      radius: { radiusMiles: 25 },
+    }[key];
+    setFilters((prev) => ({ ...prev, ...resets }));
+  }
+
+  function handleFilterChange(updates: Partial<FilterState>) {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, ...updates }));
+    }, 500);
+  }
+
   return (
     <Screen>
-      <FlatList
-        numColumns={2}
-        columnWrapperStyle={{
-          gap: Spacing.cardGap,
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: Spacing.screenPadding,
-          paddingTop: Spacing.screenPadding,
-          paddingBottom: Spacing.xxl,
-          rowGap: Spacing.cardGap,
-        }}
-        data={data}
-        renderItem={({ item }) => <ListingCard listing={item}></ListingCard>}
-        keyExtractor={(item) => item.id}
-      />
+      <View style={{ flex: 1, position: 'relative' }}>
+        <View onLayout={(e) => setFilterBarHeight(e.nativeEvent.layout.height)}>
+          <FilterBar
+            filters={filters}
+            openFilter={openFilter}
+            onFilterPress={handleFilterPress}
+          />
+        </View>
+        <FlatList
+          numColumns={2}
+          columnWrapperStyle={{
+            gap: Spacing.cardGap,
+          }}
+          contentContainerStyle={{
+            paddingHorizontal: Spacing.screenPadding,
+            paddingTop: Spacing.screenPadding,
+            paddingBottom: Spacing.xxl,
+            rowGap: Spacing.cardGap,
+          }}
+          data={data ?? []}
+          renderItem={({ item }) => <ListingCard listing={item}></ListingCard>}
+          keyExtractor={(item) => item.id}
+        />
+        <FilterPanel
+          openFilter={openFilter}
+          filters={filters}
+          onClose={() => setOpenFilter(null)}
+          onReset={handleReset}
+          onFilterChange={handleFilterChange}
+          style={{
+            position: 'absolute',
+            top: filterBarHeight,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+          }}
+        />
+      </View>
     </Screen>
   );
 }

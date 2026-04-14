@@ -16,6 +16,9 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getListing } from '../../lib/services/listingService';
 import { Colors, Spacing, Typography } from '../../constants';
+import { useAuth } from '../../lib/auth';
+import Avatar from '../../components/ui/Avatar';
+import SignInModal from '../../components/ui/SignInModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -25,6 +28,9 @@ export default function ListingDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const { session } = useAuth();
+  const userId = session?.user?.id;
 
   const { isPending, isError, data } = useQuery({
     queryKey: ['listing', id],
@@ -73,6 +79,17 @@ export default function ListingDetail() {
     return condition.charAt(0).toUpperCase() + condition.slice(1);
   }
 
+  function handleMessageSeller(): void {
+    if (!userId) {
+      setSignInModalOpen(true);
+      return;
+    }
+    router.push({
+      pathname: '/messages/new',
+      params: { listingId: id, sellerId: data?.user_id },
+    });
+  }
+
   if (isPending) {
     return (
       <View style={styles.centered}>
@@ -88,7 +105,6 @@ export default function ListingDetail() {
       </View>
     );
   }
-
   const photos = data.listing_photos ?? [];
   const hasPhotos = photos.length > 0;
 
@@ -303,13 +319,15 @@ export default function ListingDetail() {
           {/* Seller */}
           <Text style={styles.sectionTitle}>Seller</Text>
           <TouchableOpacity style={styles.sellerRow}>
-            <View style={styles.sellerAvatar}>
-              <Text style={styles.sellerAvatarText}>
-                {data.user_id.slice(0, 2).toUpperCase()}
-              </Text>
-            </View>
+            <Avatar
+              avatarUrl={data.users?.avatar_url ?? null}
+              fullName={data.users?.full_name ?? null}
+              size={40}
+            />
             <View style={styles.sellerInfo}>
-              <Text style={styles.sellerName}>View seller profile</Text>
+              <Text style={styles.sellerName}>
+                {data.users?.full_name ?? 'Unknown'}
+              </Text>
               <Text style={styles.sellerMeta}>Tap to see all listings</Text>
             </View>
             <Ionicons
@@ -320,18 +338,29 @@ export default function ListingDetail() {
           </TouchableOpacity>
 
           {/* Bottom padding for sticky button */}
-          <View style={{ height: 100 }} />
+          {data.user_id !== userId && <View style={{ height: 100 }} />}
         </View>
       </ScrollView>
 
       {/* Sticky message button */}
-      <View
-        style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
-      >
-        <TouchableOpacity style={styles.messageButton} onPress={() => {}}>
-          <Text style={styles.messageButtonText}>Message Seller</Text>
-        </TouchableOpacity>
-      </View>
+      {data.user_id !== userId && (
+        <View
+          style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
+        >
+          <TouchableOpacity
+            style={styles.messageButton}
+            onPress={handleMessageSeller}
+          >
+            <Text style={styles.messageButtonText}>Message Seller</Text>
+          </TouchableOpacity>
+          <SignInModal
+            isOpen={signInModalOpen}
+            onClose={() => setSignInModalOpen(false)}
+            title='Sign in to message sellers'
+            subtitle='Create a free account to contact sellers and buy boards'
+          />
+        </View>
+      )}
     </View>
   );
 }

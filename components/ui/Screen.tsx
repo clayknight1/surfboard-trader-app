@@ -8,7 +8,7 @@ type ScreenProps = {
 export default function Screen({ children }: ScreenProps) {
   return (
     <SafeAreaView
-      edges={['top']}
+      edges={['top', 'bottom']}
       style={{ flex: 1, backgroundColor: Colors.background }}
     >
       {children}

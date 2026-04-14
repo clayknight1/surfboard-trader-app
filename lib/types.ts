@@ -66,6 +66,8 @@ export type ListingFormData = Omit<
 export type FilterState = {
   volumeMin: number | null;
   volumeMax: number | null;
+  lengthMin: number | null;
+  lengthMax: number | null;
   boardType: BoardType | null;
   finSystem: FinSystem | null;
   finSetup: FinSetup | null;
@@ -99,4 +101,50 @@ export type ListingCardData = {
 
 export type ListingWithPhotos = Listing & {
   listing_photos: ListingPhoto[];
+  users: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
+
+export type StepProps = {
+  formData: ListingFormData;
+  updateField: <K extends keyof ListingFormData>(
+    key: K,
+    value: ListingFormData[K],
+  ) => void;
+  onNext?: () => void;
+  onBack?: () => void;
+  isEditing: boolean;
+};
+
+export type ThreadPreview = {
+  id: string;
+  last_message: string | null;
+  last_message_at: string | null;
+  listing: {
+    id: string;
+    title: string;
+    listing_photos: { storage_path: string; is_primary: boolean }[];
+  };
+  buyer: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  seller: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+};
+
+export type ThreadMessage = {
+  id: string;
+  body: string;
+  sender_id: string;
+  recipient_id: string;
+  created_at: string;
+  read_at: string | null;
 };

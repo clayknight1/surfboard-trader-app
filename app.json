@@ -14,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.anonymous.surfboard-trader"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +23,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,10 +38,25 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow Surfboard Trader to use your location to find boards near you."
+          "locationWhenInUsePermission": "Allow Surfboard Trader to use your location to find boards near you.",
+          "isIosBackgroundLocationEnabled": false,
+          "NSLocationWhenInUseUsageDescription": "Allow Surfboard Trader to use your location to find boards near you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos for listing surfboards for sale",
+          "cameraPermission": "Allow Surfboard Trader to access your camera"
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c81388ab-7cf1-47a7-a49f-8a0c9f0299f1"
+      }
+    }
   }
 }

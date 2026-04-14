@@ -10,20 +10,16 @@ import {
 import { useAuth } from '../../lib/auth';
 import { getListingsByUser } from '../../lib/services/listingService';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import Screen from '../../components/ui/Screen';
 import SellerListingCard from '../../components/listings/SellerListingCard';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import SignInPrompt from '../../components/ui/SignInPrompt';
 
 export default function SellScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
-
-  useEffect(() => {
-    if (!session) router.replace('/auth/login');
-  }, [session]);
 
   const { isPending, isError, data } = useQuery({
     queryKey: ['userListings', userId],
@@ -31,7 +27,17 @@ export default function SellScreen() {
     enabled: !!userId,
   });
 
-  if (!session) return null;
+  if (!userId) {
+    return (
+      <Screen>
+        <SignInPrompt
+          icon='chatbubble-outline'
+          title='Sign in to sell your board'
+          subtitle='List your board and connect with buyers near you'
+        />
+      </Screen>
+    );
+  }
 
   if (isPending) {
     return (
