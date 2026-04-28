@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   ScrollView,
@@ -12,13 +13,20 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getListing } from '../../lib/services/listingService';
-import { Colors, Spacing, Typography } from '../../constants';
-import { useAuth } from '../../lib/auth';
-import Avatar from '../../components/ui/Avatar';
-import SignInModal from '../../components/ui/SignInModal';
+import {
+  getListing,
+  markListingAsSold,
+} from '../../../lib/services/listingService';
+import { Colors, Spacing, Typography } from '../../../constants';
+import { useAuth } from '../../../lib/auth';
+import Avatar from '../../../components/ui/Avatar';
+import SignInModal from '../../../components/ui/SignInModal';
+import ListingDetailSkeleton from '../../../components/listings/ListingDetailSkeleton';
+import { Animated } from 'react-native';
+import { getExistingThread } from '../../../lib/services/messageService';
+import { submitReport } from '../../../lib/services/blockService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -31,10 +39,21 @@ export default function ListingDetail() {
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const { session } = useAuth();
   const userId = session?.user?.id;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const queryClient = useQueryClient();
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, PHOTO_HEIGHT * 0.6],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   const { isPending, isError, data } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => getListing(id),
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 1000 * 60 * 5,
   });
 
   function formatPrice(cents: number): string {
@@ -79,23 +98,77 @@ export default function ListingDetail() {
     return condition.charAt(0).toUpperCase() + condition.slice(1);
   }
 
-  function handleMessageSeller(): void {
+  async function handleMessageSeller(): Promise<void> {
     if (!userId) {
       setSignInModalOpen(true);
       return;
     }
-    router.push({
-      pathname: '/messages/new',
-      params: { listingId: id, sellerId: data?.user_id },
-    });
+    const existingThreadId = await getExistingThread(id, userId);
+    if (existingThreadId) {
+      router.push(`/messages/${existingThreadId}?listingId=${id}`);
+    } else {
+      router.push({
+        pathname: '/messages/new',
+        params: { listingId: id, sellerId: data?.user_id },
+      });
+    }
+  }
+
+  function handleMarkAsSold() {
+    Alert.alert(
+      'Mark as Sold?',
+      'This will remove your listing from search results.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark as Sold',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await markListingAsSold(id);
+              queryClient.invalidateQueries({ queryKey: ['listing', id] });
+              queryClient.invalidateQueries({ queryKey: ['userListings'] });
+              queryClient.invalidateQueries({ queryKey: ['listings'] });
+            } catch {
+              Alert.alert(
+                'Something went wrong',
+                'Could not mark listing as sold.',
+              );
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  function handleReportListing() {
+    Alert.alert('Report Listing', 'Why are you reporting this listing?', [
+      {
+        text: 'Spam',
+        onPress: () => submitReport(userId!, 'spam', undefined, id),
+      },
+      {
+        text: 'Misleading',
+        onPress: () => submitReport(userId!, 'misleading', undefined, id),
+      },
+      {
+        text: 'Inappropriate',
+        onPress: () => submitReport(userId!, 'inappropriate', undefined, id),
+      },
+      {
+        text: 'Scam',
+        onPress: () => submitReport(userId!, 'scam', undefined, id),
+      },
+      {
+        text: 'Other',
+        onPress: () => submitReport(userId!, 'other', undefined, id),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   }
 
   if (isPending) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={Colors.accent} />
-      </View>
-    );
+    return <ListingDetailSkeleton insets={insets} />;
   }
 
   if (isError || !data) {
@@ -107,13 +180,23 @@ export default function ListingDetail() {
   }
   const photos = data.listing_photos ?? [];
   const hasPhotos = photos.length > 0;
+  const isBusinessAccount =
+    data.users?.role === 'shop' || data.users?.role === 'shaper';
+  const displayName = isBusinessAccount
+    ? (data.users?.business_profiles?.business_name ?? data.users?.full_name)
+    : data.users?.full_name;
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces={true}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
       >
         {/* Photo carousel */}
         <View
@@ -141,6 +224,7 @@ export default function ListingDetail() {
                     source={{ uri: item.storage_path }}
                     style={styles.photo}
                     contentFit='contain'
+                    transition={200}
                   />
                 )}
               />
@@ -317,33 +401,99 @@ export default function ListingDetail() {
           )}
 
           {/* Seller */}
-          <Text style={styles.sectionTitle}>Seller</Text>
-          <TouchableOpacity style={styles.sellerRow}>
-            <Avatar
-              avatarUrl={data.users?.avatar_url ?? null}
-              fullName={data.users?.full_name ?? null}
-              size={40}
-            />
-            <View style={styles.sellerInfo}>
-              <Text style={styles.sellerName}>
-                {data.users?.full_name ?? 'Unknown'}
-              </Text>
-              <Text style={styles.sellerMeta}>Tap to see all listings</Text>
-            </View>
-            <Ionicons
-              name='chevron-forward'
-              size={16}
-              color={Colors.textSecondary}
-            />
-          </TouchableOpacity>
+          {data.user_id !== userId && (
+            <>
+              <Text style={styles.sectionTitle}>Seller</Text>
+              <TouchableOpacity
+                style={styles.sellerRow}
+                onPress={() => router.push(`/users/${data.user_id}`)}
+              >
+                <Avatar
+                  avatarUrl={
+                    isBusinessAccount
+                      ? (data.users?.business_profiles?.logo_url ??
+                        data.users?.avatar_url ??
+                        null)
+                      : (data.users?.avatar_url ?? null)
+                  }
+                  fullName={data.users?.full_name ?? null}
+                  size={40}
+                  shape={isBusinessAccount ? 'rounded' : 'circle'}
+                />
+                <View style={styles.sellerInfo}>
+                  <Text style={styles.sellerName}>
+                    {displayName ?? 'Unknown'}
+                  </Text>
+                  <Text style={styles.sellerMeta}>Tap to see all listings</Text>
+                </View>
+                <Ionicons
+                  name='chevron-forward'
+                  size={16}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Bottom padding for sticky button */}
-          {data.user_id !== userId && <View style={{ height: 100 }} />}
+          <View style={{ height: 100 }} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
-      {/* Sticky message button */}
-      {data.user_id !== userId && (
+      {/* Sticky header */}
+      <Animated.View
+        style={[
+          styles.stickyHeader,
+          {
+            opacity: headerOpacity,
+            paddingTop: insets.top,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.stickyTitle} numberOfLines={1}>
+          {data?.title ?? ''}
+        </Text>
+        <View style={{ width: 24 }} />
+      </Animated.View>
+
+      {/* Sticky footer */}
+      {data.user_id === userId ? (
+        <View
+          style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
+        >
+          {data.status === 'sold' ? (
+            <View style={styles.footerButtons}>
+              <TouchableOpacity
+                style={[styles.messageButton, styles.secondaryButton]}
+                onPress={() => router.push(`/listings/${id}/edit`)}
+              >
+                <Text style={styles.secondaryButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <View style={styles.soldBanner}>
+                <Text style={styles.soldBannerText}>Sold</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.footerButtons}>
+              <TouchableOpacity
+                style={[styles.messageButton, styles.secondaryButton]}
+                onPress={() => router.push(`/listings/${id}/edit`)}
+              >
+                <Text style={styles.secondaryButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.messageButton}
+                onPress={handleMarkAsSold}
+              >
+                <Text style={styles.messageButtonText}>Mark as Sold</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ) : (
         <View
           style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
         >
@@ -353,14 +503,23 @@ export default function ListingDetail() {
           >
             <Text style={styles.messageButtonText}>Message Seller</Text>
           </TouchableOpacity>
-          <SignInModal
-            isOpen={signInModalOpen}
-            onClose={() => setSignInModalOpen(false)}
-            title='Sign in to message sellers'
-            subtitle='Create a free account to contact sellers and buy boards'
-          />
         </View>
       )}
+      {data.user_id !== userId && (
+        <TouchableOpacity
+          style={styles.reportLink}
+          onPress={handleReportListing}
+        >
+          <Text style={styles.reportLinkText}>Report listing</Text>
+        </TouchableOpacity>
+      )}
+
+      <SignInModal
+        isOpen={signInModalOpen}
+        onClose={() => setSignInModalOpen(false)}
+        title='Sign in to message sellers'
+        subtitle='Create a free account to contact sellers and buy boards'
+      />
     </View>
   );
 }
@@ -585,10 +744,75 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+    flex: 1,
   },
   messageButtonText: {
     ...Typography.subheading,
     fontFamily: Typography.fontBold,
     color: Colors.backgroundCard,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.screenPadding,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.background,
+    zIndex: 10,
+  },
+  stickyTitle: {
+    ...Typography.subheading,
+    color: Colors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
+  },
+
+  footerButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  secondaryButton: {
+    backgroundColor: Colors.backgroundSubtle,
+  },
+  secondaryButtonText: {
+    ...Typography.subheading,
+    fontFamily: Typography.fontBold,
+    color: Colors.textPrimary,
+  },
+  soldBanner: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.backgroundSubtle,
+    borderRadius: 12,
+  },
+  soldBannerText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+  },
+  soldBadge: {
+    alignSelf: 'center',
+    backgroundColor: Colors.backgroundSubtle,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: Spacing.sm,
+  },
+  soldBadgeText: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+  },
+  reportLink: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  reportLinkText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
   },
 });

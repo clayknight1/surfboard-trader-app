@@ -14,6 +14,7 @@ export async function getListings(
   lat: number,
   lng: number,
   filters: FilterState,
+  userId?: string,
 ): Promise<ListingCardData[]> {
   try {
     const { data, error } = await supabase.rpc('get_listings_nearby', {
@@ -28,6 +29,7 @@ export async function getListings(
       p_listing_type: filters.listingType ?? undefined,
       p_length_min: filters.lengthMin ?? undefined,
       p_length_max: filters.lengthMax ?? undefined,
+      p_user_id: userId ?? null,
     });
 
     if (error) {
@@ -54,7 +56,7 @@ export async function getListing(
   const { data, error } = await supabase
     .from('listings')
     .select(
-      '*, listing_photos(*), users!listings_user_id_fkey(id, full_name, avatar_url)',
+      '*, listing_photos(*), users!listings_user_id_fkey(id, full_name, avatar_url, role, business_profiles(business_name, logo_url))',
     )
     .eq('id', listingId)
     .single();
@@ -155,11 +157,6 @@ export async function uploadListingPhotos(
   const uploadPromises = photos.map(async (photo, index) => {
     const filename = `${index}.jpg`;
     const path = `${userId}/${listingId}/${filename}`;
-
-    // const base64 = await readAsStringAsync(photo, {
-    //   encoding: 'base64',
-    // });
-    // const arrayBuffer = decode(base64);
     const response = await fetch(photo);
     const arrayBuffer = await response.arrayBuffer();
     const isPrimary = index === 0;
@@ -191,7 +188,25 @@ export async function uploadListingPhotos(
   await Promise.all(uploadPromises);
 }
 
-export async function deleteListing(listingId: string): Promise<void> {
+export async function deleteListing(
+  listingId: string,
+  userId: string,
+): Promise<void> {
+  const folderPath = `${userId}/${listingId}`;
+  console.log('listing path:', folderPath);
+  // Delete photos from storage first
+  const { data: files, error: listError } = await supabase.storage
+    .from('listings')
+    .list(`${userId}/${listingId}`);
+
+  console.log('files to delete:', files, 'list error:', listError);
+
+  if (files && files.length > 0) {
+    const paths = files.map((f) => `${userId}/${listingId}/${f.name}`);
+    await supabase.storage.from('listings').remove(paths);
+  }
+
+  // Then delete the listing
   const { error } = await supabase
     .from('listings')
     .delete()
@@ -201,4 +216,86 @@ export async function deleteListing(listingId: string): Promise<void> {
     console.error('Error deleting listing:', error);
     throw new Error(error.message);
   }
+}
+
+export async function updateListing(
+  listingId: string,
+  formData: ListingFormData,
+): Promise<void> {
+  const length_inches =
+    formData.length_feet !== null && formData.length_inches_remainder !== null
+      ? formData.length_feet * 12 + formData.length_inches_remainder
+      : null;
+
+  const { error } = await supabase
+    .from('listings')
+    .update({
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      board_type: formData.board_type,
+      volume: formData.volume,
+      length_inches,
+      width_inches: formData.width_inches,
+      thickness_inches: formData.thickness_inches,
+      fin_system: formData.fin_system,
+      fin_setup: formData.fin_setup,
+      shaper_brand: formData.shaper_brand,
+      condition: formData.condition,
+      era: formData.era,
+      listing_type: formData.listing_type,
+    })
+    .eq('id', listingId)
+    .eq('user_id', formData.user_id);
+
+  if (error) {
+    console.error('Error updating listing:', error);
+    throw new Error(error.message);
+  }
+}
+
+export async function updateListingLocation(
+  listingId: string,
+  lat: number,
+  lng: number,
+  label: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('update_listing_location', {
+    p_listing_id: listingId,
+    p_lat: lat,
+    p_lng: lng,
+    p_label: label,
+  });
+
+  if (error) {
+    console.error('Error updating listing location:', error);
+    throw new Error(error.message);
+  }
+}
+
+export async function markListingAsSold(listingId: string): Promise<void> {
+  const { error } = await supabase
+    .from('listings')
+    .update({ status: 'sold' })
+    .eq('id', listingId);
+
+  if (error) {
+    console.error('Error marking listing as sold:', error);
+    throw new Error(error.message);
+  }
+}
+
+export async function getUserListingCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('listings')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'active');
+
+  if (error) {
+    console.error('Error fetching listing count:', error);
+    return 0;
+  }
+
+  return count ?? 0;
 }

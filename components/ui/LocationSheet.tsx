@@ -17,9 +17,14 @@ import { useAuth } from '../../lib/auth';
 type LocationSheetProps = {
   isOpen: boolean;
   onClose: () => void;
+  onLocationUpdated?: (lat: number, lng: number, label: string) => void;
 };
 
-export default function LocationSheet({ isOpen, onClose }: LocationSheetProps) {
+export default function LocationSheet({
+  isOpen,
+  onClose,
+  onLocationUpdated,
+}: LocationSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +65,9 @@ export default function LocationSheet({ isOpen, onClose }: LocationSheetProps) {
         longitude,
       });
       const label = `${result.city}, ${result.region}`;
-      if (userId) {
+      if (onLocationUpdated) {
+        onLocationUpdated(latitude, longitude, label);
+      } else if (userId) {
         await updateUserLocation(userId, latitude, longitude, label);
         await refreshSession();
       }
@@ -90,7 +97,9 @@ export default function LocationSheet({ isOpen, onClose }: LocationSheetProps) {
         longitude,
       });
       const label = `${result.city}, ${result.region}`;
-      if (userId) {
+      if (onLocationUpdated) {
+        onLocationUpdated(latitude, longitude, label);
+      } else if (userId) {
         await updateUserLocation(userId, latitude, longitude, label);
         await refreshSession();
       }

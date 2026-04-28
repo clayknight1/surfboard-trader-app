@@ -13,11 +13,16 @@ import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import ThreadRow from '../../components/listings/ThreadRow';
 import SignInPrompt from '../../components/ui/SignInPrompt';
+import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
+import { ThreadPreview } from '../../lib/types';
 
 export default function MessagesScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
+  const skeletonData = Array.from({ length: 6 }, (_, i) => ({
+    id: `skeleton-${i}`,
+  }));
 
   const { data, isPending, isError } = useQuery({
     queryKey: ['inbox', userId],
@@ -38,14 +43,6 @@ export default function MessagesScreen() {
     );
   }
 
-  if (isPending) {
-    return (
-      <Screen>
-        <ActivityIndicator style={{ flex: 1 }} />
-      </Screen>
-    );
-  }
-
   if (isError) {
     return (
       <Screen>
@@ -62,24 +59,32 @@ export default function MessagesScreen() {
         <Text style={styles.title}>Messages</Text>
       </View>
       <FlatList
-        data={data}
+        data={isPending ? skeletonData : data}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ThreadRow
-            thread={item}
-            currentUserId={userId!}
-            onPress={() => {
-              router.push(`/messages/${item.id}?listingId=${item.listing.id}`);
-            }}
-          />
-        )}
+        renderItem={({ item }) =>
+          isPending ? (
+            <ThreadRowSkeleton />
+          ) : (
+            <ThreadRow
+              thread={item as ThreadPreview}
+              currentUserId={userId!}
+              onPress={() => {
+                router.push(
+                  `/messages/${item.id}?listingId=${(item as ThreadPreview).listing?.id}`,
+                );
+              }}
+            />
+          )
+        }
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>No messages yet.</Text>
-            <Text style={styles.emptySubtext}>
-              Find a board you like and message the seller.
-            </Text>
-          </View>
+          !isPending ? (
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>No messages yet.</Text>
+              <Text style={styles.emptySubtext}>
+                Find a board you like and message the seller.
+              </Text>
+            </View>
+          ) : null
         }
       />
     </Screen>

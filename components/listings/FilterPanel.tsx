@@ -48,6 +48,15 @@ export default function FilterPanel({
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const [contentHeight, setContentHeight] = useState(0);
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
+  const [volumeRange, setVolumeRange] = useState<[number, number]>([
+    filters.volumeMin ?? 0,
+    filters.volumeMax ?? 80,
+  ]);
+  const [lengthRange, setLengthRange] = useState<[number, number]>([
+    filters.lengthMin ?? 48,
+    filters.lengthMax ?? 120,
+  ]);
+  const [radiusValue, setRadiusValue] = useState<number>(filters.radiusMiles);
 
   useEffect(() => {
     if (openFilter !== null) {
@@ -119,11 +128,12 @@ export default function FilterPanel({
               max={80}
               step={0.5}
               unit='L'
-              low={filters.volumeMin ?? 0}
-              high={filters.volumeMax ?? 80}
-              onChange={(low, high) =>
-                onFilterChange({ volumeMin: low, volumeMax: high })
-              }
+              low={volumeRange[0]}
+              high={volumeRange[1]}
+              onChange={(low, high) => {
+                setVolumeRange([low, high]);
+                onFilterChange({ volumeMin: low, volumeMax: high });
+              }}
             />
           )}
           {activeFilter === 'length' && (
@@ -131,30 +141,28 @@ export default function FilterPanel({
               min={48}
               max={120}
               step={1}
-              low={filters.lengthMin ?? 48}
-              high={filters.lengthMax ?? 120}
-              onChange={(low, high) =>
-                onFilterChange({ lengthMin: low, lengthMax: high })
-              }
+              low={lengthRange[0]}
+              high={lengthRange[1]}
+              onChange={(low, high) => {
+                setLengthRange([low, high]);
+                onFilterChange({ lengthMin: low, lengthMax: high });
+              }}
               formatLabel={formatLength}
             />
           )}
           {activeFilter === 'radius' && (
             <View style={styles.sliderContainer}>
               <View style={styles.sliderLabels}>
-                <Text style={styles.sliderValue}>
-                  {filters.radiusMiles === null
-                    ? 'Anywhere'
-                    : `${filters.radiusMiles} mi`}
-                </Text>
+                <Text style={styles.sliderValue}>{radiusValue} mi</Text>
               </View>
               <Slider
-                value={filters.radiusMiles ?? 25}
+                value={radiusValue}
                 minimumValue={10}
                 maximumValue={200}
                 step={5}
                 onValueChange={(value) => {
                   const miles = Array.isArray(value) ? value[0] : value;
+                  setRadiusValue(miles);
                   onFilterChange({ radiusMiles: miles });
                 }}
                 minimumTrackTintColor={Colors.accent}

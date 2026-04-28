@@ -4,6 +4,8 @@ import { User } from './types';
 import { supabase } from './supabase';
 import { getUserProfile } from './services/userService';
 import { fetchUnreadCount } from './services/messageService';
+import { Alert } from 'react-native';
+import { SplashScreen } from 'expo-router';
 
 type AuthContextType = {
   session: Session | null;
@@ -30,25 +32,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     (async () => {
       try {
-        await refreshSession();
-      } catch {
-        if (alive) setSession(null);
+        await Promise.race([
+          refreshSession(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Auth timeout')), 10000),
+          ),
+        ]);
+      } catch (err) {
+        if (alive) {
+          setSession(null);
+          if (err instanceof Error && err.message === 'Auth timeout') {
+            Alert.alert(
+              'Connection issue',
+              'Could not connect to the server. Please check your connection and restart the app.',
+            );
+          }
+        }
       } finally {
-        if (alive) setLoading(false);
+        if (alive) {
+          setLoading(false);
+          await SplashScreen.hideAsync();
+        }
       }
     })();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user?.id) {
-        const profile = await getUserProfile(session.user.id!);
-        setProfile(profile);
-        const count = await fetchUnreadCount(session.user.id);
-        setUnreadCount(count);
-      } else {
+      if (!session) {
         setProfile(null);
         setUnreadCount(0);
       }
@@ -86,7 +99,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    getUserProfile(session.user.id).then(setProfile);
+    fetchUnreadCount(session.user.id).then(setUnreadCount);
+  }, [session?.user?.id]);
+
   async function refreshSession() {
+    console.log('refreshSession start');
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
@@ -96,6 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setProfile(null);
     }
+    console.log('refreshSession complete');
   }
 
   const signOut = async () => {

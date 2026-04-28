@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_applications: {
+        Row: {
+          business_name: string
+          business_type: string
+          created_at: string
+          description: string | null
+          id: string
+          instagram_handle: string | null
+          location_label: string | null
+          reviewed_at: string | null
+          status: string
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          business_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          instagram_handle?: string | null
+          location_label?: string | null
+          reviewed_at?: string | null
+          status?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          business_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          instagram_handle?: string | null
+          location_label?: string | null
+          reviewed_at?: string | null
+          status?: string
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_profiles: {
         Row: {
           bio: string | null
@@ -28,6 +114,7 @@ export type Database = {
           price_range_high: number | null
           price_range_low: number | null
           service_radius_miles: number | null
+          slug: string | null
           sponsored_until: string | null
           updated_at: string
           user_id: string
@@ -46,6 +133,7 @@ export type Database = {
           price_range_high?: number | null
           price_range_low?: number | null
           service_radius_miles?: number | null
+          slug?: string | null
           sponsored_until?: string | null
           updated_at?: string
           user_id: string
@@ -64,6 +152,7 @@ export type Database = {
           price_range_high?: number | null
           price_range_low?: number | null
           service_radius_miles?: number | null
+          slug?: string | null
           sponsored_until?: string | null
           updated_at?: string
           user_id?: string
@@ -119,6 +208,7 @@ export type Database = {
           accepts_offers: boolean
           board_type: Database["public"]["Enums"]["board_type"] | null
           bump_count: number
+          business_id: string | null
           condition: Database["public"]["Enums"]["board_condition"] | null
           created_at: string
           currency: string
@@ -159,6 +249,7 @@ export type Database = {
           accepts_offers?: boolean
           board_type?: Database["public"]["Enums"]["board_type"] | null
           bump_count?: number
+          business_id?: string | null
           condition?: Database["public"]["Enums"]["board_condition"] | null
           created_at?: string
           currency?: string
@@ -199,6 +290,7 @@ export type Database = {
           accepts_offers?: boolean
           board_type?: Database["public"]["Enums"]["board_type"] | null
           bump_count?: number
+          business_id?: string | null
           condition?: Database["public"]["Enums"]["board_condition"] | null
           created_at?: string
           currency?: string
@@ -237,6 +329,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "listings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "listings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -248,6 +347,7 @@ export type Database = {
       messages: {
         Row: {
           body: string
+          business_id: string | null
           created_at: string
           id: string
           listing_id: string
@@ -259,6 +359,7 @@ export type Database = {
         }
         Insert: {
           body: string
+          business_id?: string | null
           created_at?: string
           id?: string
           listing_id: string
@@ -270,6 +371,7 @@ export type Database = {
         }
         Update: {
           body?: string
+          business_id?: string | null
           created_at?: string
           id?: string
           listing_id?: string
@@ -280,6 +382,13 @@ export type Database = {
           thread_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_listing_id_fkey"
             columns: ["listing_id"]
@@ -306,6 +415,55 @@ export type Database = {
             columns: ["thread_id"]
             isOneToOne: false
             referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          reason: string
+          reported_listing_id: string | null
+          reported_user_id: string | null
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reason: string
+          reported_listing_id?: string | null
+          reported_user_id?: string | null
+          reporter_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reason?: string
+          reported_listing_id?: string | null
+          reported_user_id?: string | null
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_listing_id_fkey"
+            columns: ["reported_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -895,7 +1053,12 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       send_message: {
-        Args: { p_body: string; p_listing_id: string; p_sender_id: string }
+        Args: {
+          p_body: string
+          p_listing_id: string
+          p_sender_id: string
+          p_thread_id?: string
+        }
         Returns: string
       }
       st_3dclosestpoint: {
@@ -1480,6 +1643,24 @@ export type Database = {
         Returns: unknown
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_business_location: {
+        Args: {
+          p_label: string
+          p_lat: number
+          p_lng: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      update_listing_location: {
+        Args: {
+          p_label: string
+          p_lat: number
+          p_listing_id: string
+          p_lng: number
+        }
+        Returns: undefined
+      }
       update_user_location: {
         Args: {
           p_label: string

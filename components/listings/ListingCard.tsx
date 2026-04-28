@@ -12,6 +12,7 @@ import { Colors, Typography, Spacing } from '../../constants';
 
 type ListingCardProps = {
   listing: ListingCardData;
+  hideDistance?: boolean;
 };
 
 const CARD_WIDTH =
@@ -21,7 +22,10 @@ const CARD_WIDTH =
   2;
 const PHOTO_HEIGHT = CARD_WIDTH * 1.3;
 
-export default function ListingCard({ listing }: ListingCardProps) {
+export default function ListingCard({
+  listing,
+  hideDistance = false,
+}: ListingCardProps) {
   const router = useRouter();
 
   function onSelect(): void {
@@ -79,6 +83,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
             source={{ uri: listing.primary_photo }}
             style={styles.photo}
             contentFit='cover'
+            transition={400}
           />
         ) : (
           <View style={styles.photoPlaceholder}>
@@ -144,9 +149,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
               ]}
             />
           )}
-          <Text style={styles.distance}>
-            {listing.distance_miles.toFixed(1)}mi
-          </Text>
+          {!hideDistance && (
+            <Text style={styles.distance}>
+              {listing.distance_miles.toFixed(1)}mi
+            </Text>
+          )}
         </View>
       </View>
     </TouchableOpacity>

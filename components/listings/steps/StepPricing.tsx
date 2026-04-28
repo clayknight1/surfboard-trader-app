@@ -20,6 +20,7 @@ export default function StepPricing({
   updateField,
   handleSubmit,
   isSubmitting,
+  isEditing,
 }: StepPricingProps) {
   const canContinue = formData.price !== null && formData.price > 0;
 
@@ -70,21 +71,22 @@ export default function StepPricing({
           />
         </View>
       </ScrollView>
-
-      <TouchableOpacity
-        style={[
-          styles.nextButton,
-          (isSubmitting || !canContinue) && styles.nextButtonDisabled,
-        ]}
-        onPress={handleSubmit}
-        disabled={isSubmitting || !canContinue}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color={Colors.backgroundCard} />
-        ) : (
-          <Text style={styles.nextButtonText}>Post listing</Text>
-        )}
-      </TouchableOpacity>
+      {!isEditing && (
+        <TouchableOpacity
+          style={[
+            styles.nextButton,
+            (isSubmitting || !canContinue) && styles.nextButtonDisabled,
+          ]}
+          onPress={handleSubmit}
+          disabled={isSubmitting || !canContinue}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color={Colors.backgroundCard} />
+          ) : (
+            <Text style={styles.nextButtonText}>Post listing</Text>
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

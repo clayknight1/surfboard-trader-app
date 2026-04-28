@@ -6,26 +6,52 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../lib/auth';
-import { getListingsByUser } from '../../lib/services/listingService';
+import {
+  getListingsByUser,
+  getUserListingCount,
+} from '../../lib/services/listingService';
 import { useRouter } from 'expo-router';
 import Screen from '../../components/ui/Screen';
 import SellerListingCard from '../../components/listings/SellerListingCard';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import SignInPrompt from '../../components/ui/SignInPrompt';
+import { ListingWithPhotos } from '../../lib/types';
+import SellerListingCardSkeleton from '../../components/listings/SellerListingCardSkeleton';
 
 export default function SellScreen() {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
+  const skeletonData = Array.from({ length: 4 }, (_, i) => ({
+    id: `skeleton-${i}`,
+  }));
 
   const { isPending, isError, data } = useQuery({
     queryKey: ['userListings', userId],
     queryFn: () => getListingsByUser(userId!),
     enabled: !!userId,
   });
+
+  const { data: listingCount } = useQuery({
+    queryKey: ['userListingCount', userId],
+    queryFn: () => getUserListingCount(userId!),
+    enabled: !!userId,
+  });
+
+  const tierLimit =
+    profile?.tier === 'starter'
+      ? 25
+      : profile?.tier === 'pro'
+        ? Infinity
+        : profile?.tier === 'business'
+          ? Infinity
+          : 5; // free
+
+  const atLimit = (listingCount ?? 0) >= tierLimit;
 
   if (!userId) {
     return (
@@ -35,16 +61,6 @@ export default function SellScreen() {
           title='Sign in to sell your board'
           subtitle='List your board and connect with buyers near you'
         />
-      </Screen>
-    );
-  }
-
-  if (isPending) {
-    return (
-      <Screen>
-        <View style={styles.centered}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
       </Screen>
     );
   }
@@ -59,7 +75,7 @@ export default function SellScreen() {
     );
   }
 
-  const isEmpty = !data || data.length === 0;
+  const isEmpty = !isPending && (!data || data.length === 0);
 
   return (
     <Screen>
@@ -67,8 +83,15 @@ export default function SellScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Listings</Text>
         <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push('/listings/create')}
+          style={[styles.addButton, atLimit && styles.addButtonDisabled]}
+          onPress={() =>
+            atLimit
+              ? Alert.alert(
+                  'Listing limit reached',
+                  'Upgrade your plan to list more boards.',
+                )
+              : router.push('/listings/create')
+          }
         >
           <Ionicons name='add' size={22} color={Colors.backgroundCard} />
         </TouchableOpacity>
@@ -94,15 +117,19 @@ export default function SellScreen() {
         </View>
       ) : (
         <FlatList
-          data={data}
+          data={isPending ? skeletonData : data}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <SellerListingCard
-              item={item}
-              onPress={() => router.push(`/listings/${item.id}`)}
-            />
-          )}
+          renderItem={({ item }) =>
+            isPending ? (
+              <SellerListingCardSkeleton />
+            ) : (
+              <SellerListingCard
+                item={item as ListingWithPhotos}
+                onPress={() => router.push(`/listings/${item.id}`)}
+              />
+            )
+          }
         />
       )}
     </Screen>
@@ -171,5 +198,11 @@ const styles = StyleSheet.create({
   list: {
     padding: Spacing.screenPadding,
     gap: Spacing.sm,
+  },
+  addButtonDisabled: {
+    backgroundColor: Colors.backgroundSubtle,
+  },
+  createButtonDisabled: {
+    backgroundColor: Colors.backgroundSubtle,
   },
 });

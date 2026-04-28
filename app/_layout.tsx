@@ -31,12 +31,6 @@ export default function RootLayout() {
     SpaceMono_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) return null;
 
   return (

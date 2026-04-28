@@ -2,18 +2,21 @@ import { Text, FlatList, ActivityIndicator, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FilterState } from '../../lib/types';
+import { FilterState, ListingCardData } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
-import { Spacing } from '../../constants';
+import { Colors, Spacing } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { getListings } from '../../lib/services/listingService';
 import FilterBar, { FilterKey } from '../../components/listings/FilterBar';
 import FilterPanel from '../../components/listings/FilterPanel';
+import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
+import { useAuth } from '../../lib/auth';
 
 export default function BrowseScreen() {
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
-  const [radius, setRadius] = useState<number>(25);
+  const { session } = useAuth();
+  const userId = session?.user?.id;
   const [filterBarHeight, setFilterBarHeight] = useState(0);
   const [filters, setFilters] = useState<FilterState>({
     volumeMin: null,
@@ -31,6 +34,10 @@ export default function BrowseScreen() {
   });
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skeletonData = Array.from({ length: 6 }, (_, i) => ({
+    id: `skeleton-${i}`,
+  }));
+
   useEffect(() => {
     async function getCurrentLocation() {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -58,14 +65,10 @@ export default function BrowseScreen() {
 
   const { isPending, isError, data } = useQuery({
     queryKey: ['listings', location, filters],
-    queryFn: () => getListings(location.lat, location.lng, filters),
+    queryFn: () => getListings(location.lat, location.lng, filters, userId),
     placeholderData: keepPreviousData,
     enabled: !!location,
   });
-
-  if (isPending) {
-    return <ActivityIndicator />;
-  }
 
   if (isError) {
     return <Text>Something went wrong</Text>;
@@ -105,17 +108,21 @@ export default function BrowseScreen() {
         </View>
         <FlatList
           numColumns={2}
-          columnWrapperStyle={{
-            gap: Spacing.cardGap,
-          }}
+          columnWrapperStyle={{ gap: Spacing.cardGap }}
           contentContainerStyle={{
             paddingHorizontal: Spacing.screenPadding,
             paddingTop: Spacing.screenPadding,
             paddingBottom: Spacing.xxl,
             rowGap: Spacing.cardGap,
           }}
-          data={data ?? []}
-          renderItem={({ item }) => <ListingCard listing={item}></ListingCard>}
+          data={isPending ? skeletonData : (data ?? [])}
+          renderItem={({ item }) =>
+            isPending ? (
+              <ListingCardSkeleton />
+            ) : (
+              <ListingCard listing={item as ListingCardData} />
+            )
+          }
           keyExtractor={(item) => item.id}
         />
         <FilterPanel

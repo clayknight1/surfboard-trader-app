@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../lib/auth';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,8 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import LocationSheet from '../../components/ui/LocationSheet';
+import { supabase } from '../../lib/supabase';
+import { submitDeletionRequest } from '../../lib/services/userService';
 
 type SettingsRowProps = {
   label: string;
@@ -50,6 +53,33 @@ export default function ProfileScreen() {
   const router = useRouter();
   const userId = session?.user?.id;
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This cannot be undone. We will process your request within 24 hours.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Request Deletion',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await submitDeletionRequest(userId!);
+              await supabase.auth.signOut();
+              router.replace('/auth/login');
+            } catch {
+              Alert.alert(
+                'Something went wrong',
+                'Could not submit your request. Please try again.',
+              );
+            }
+          },
+        },
+      ],
+    );
+  }
 
   if (loading) {
     return (
@@ -109,7 +139,10 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Account</Text>
           <View style={styles.sectionContent}>
-            <SettingsRow label='Edit Profile' onPress={() => {}} />
+            <SettingsRow
+              label='Edit Profile'
+              onPress={() => router.push('/profile/edit')}
+            />
             <SettingsRow
               label='Location'
               value={profile?.location_label ?? 'Not set'}
@@ -117,6 +150,30 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {isShopOrShaper && !profile?.business_profiles && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Business</Text>
+            <View style={styles.sectionContent}>
+              <SettingsRow
+                label='Set up your business profile'
+                onPress={() => router.push('/profile/business')}
+              />
+            </View>
+          </View>
+        )}
+
+        {isShopOrShaper && profile?.business_profiles && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Business</Text>
+            <View style={styles.sectionContent}>
+              <SettingsRow
+                label='Edit business profile'
+                onPress={() => router.push('/profile/business')}
+              />
+            </View>
+          </View>
+        )}
 
         {/* Plan section */}
         <View style={styles.section}>
@@ -138,6 +195,11 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={styles.sectionContent}>
             <SettingsRow label='Sign Out' onPress={signOut} destructive />
+            <SettingsRow
+              label='Delete Account'
+              onPress={handleDeleteAccount}
+              destructive
+            />
           </View>
         </View>
       </ScrollView>

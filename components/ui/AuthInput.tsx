@@ -11,12 +11,12 @@ type AuthInputProps = TextInputProps & {
   label: string;
 };
 
-export default function AuthInput({ label, ...props }: AuthInputProps) {
+export default function AuthInput({ label, style, ...props }: AuthInputProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, style]}
         placeholderTextColor={Colors.textSecondary}
         autoCapitalize='none'
         {...props}

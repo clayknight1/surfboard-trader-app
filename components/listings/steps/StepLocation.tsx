@@ -12,6 +12,7 @@ import { StepProps, User } from '../../../lib/types';
 import { Colors, Spacing, Typography } from '../../../constants';
 import { updateUserLocation } from '../../../lib/services/userService';
 import { useAuth } from '../../../lib/auth';
+import { updateBusinessLocation } from '../../../lib/services/businessService';
 
 type StepLocationProps = StepProps & {
   profile: User | null;
@@ -22,23 +23,34 @@ export default function StepLocation({
   formData,
   updateField,
   onNext,
+  isEditing,
 }: StepLocationProps) {
+  const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
+  const hasLocation = isShopOrShaper
+    ? !!profile?.business_profiles?.location_label
+    : !!profile?.location_label;
+
   const [locationLabel, setLocationLabel] = useState<string | null>(
-    profile?.location_label ?? null,
+    isShopOrShaper
+      ? (profile?.business_profiles?.location_label ?? null)
+      : (profile?.location_label ?? null),
   );
-  const [isChanging, setIsChanging] = useState(!profile?.location_label);
+  const [isChanging, setIsChanging] = useState(!hasLocation);
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { refreshSession } = useAuth();
 
   useEffect(() => {
-    if (profile?.location_label) {
-      setLocationLabel(profile.location_label);
-      updateField('location_label', profile.location_label);
+    const savedLabel = isShopOrShaper
+      ? profile?.business_profiles?.location_label
+      : profile?.location_label;
+
+    if (savedLabel) {
+      setLocationLabel(savedLabel);
+      updateField('location_label', savedLabel);
+      setIsChanging(false);
     }
-    if (profile?.lat) updateField('lat', profile.lat);
-    if (profile?.lng) updateField('lng', profile.lng);
   }, [profile]);
 
   async function useCurrentLocation(): Promise<void> {
@@ -63,8 +75,12 @@ export default function StepLocation({
       updateField('lng', longitude);
       updateField('location_label', label);
 
-      if (!profile?.location_label && profile?.id) {
-        await updateUserLocation(profile.id, latitude, longitude, label);
+      if (profile?.id) {
+        if (isShopOrShaper && !profile.business_profiles?.location_label) {
+          await updateBusinessLocation(profile.id, latitude, longitude, label);
+        } else if (!isShopOrShaper && !profile?.location_label) {
+          await updateUserLocation(profile.id, latitude, longitude, label);
+        }
         await refreshSession();
       }
     } catch {
@@ -96,8 +112,12 @@ export default function StepLocation({
       updateField('lng', longitude);
       updateField('location_label', label);
 
-      if (!profile?.location_label && profile?.id) {
-        await updateUserLocation(profile.id, latitude, longitude, label);
+      if (profile?.id) {
+        if (isShopOrShaper && !profile.business_profiles?.location_label) {
+          await updateBusinessLocation(profile.id, latitude, longitude, label);
+        } else if (!isShopOrShaper && !profile?.location_label) {
+          await updateUserLocation(profile.id, latitude, longitude, label);
+        }
         await refreshSession();
       }
     } catch {
@@ -188,7 +208,7 @@ export default function StepLocation({
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         {/* First listing hint */}
-        {!profile?.location_label && (
+        {!hasLocation && (
           <Text style={styles.saveHint}>
             This will be saved to your profile for future listings.
           </Text>
@@ -196,13 +216,18 @@ export default function StepLocation({
       </View>
 
       {/* Continue */}
-      <TouchableOpacity
-        style={[styles.nextButton, !locationLabel && styles.nextButtonDisabled]}
-        onPress={onNext}
-        disabled={!locationLabel}
-      >
-        <Text style={styles.nextButtonText}>Continue</Text>
-      </TouchableOpacity>
+      {!isEditing && (
+        <TouchableOpacity
+          style={[
+            styles.nextButton,
+            !locationLabel && styles.nextButtonDisabled,
+          ]}
+          onPress={onNext}
+          disabled={!locationLabel}
+        >
+          <Text style={styles.nextButtonText}>Continue</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

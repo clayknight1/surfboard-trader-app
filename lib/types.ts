@@ -1,7 +1,9 @@
 import { Database } from './database.types';
 
 // Base table types
-export type User = Database['public']['Tables']['users']['Row'];
+export type User = Database['public']['Tables']['users']['Row'] & {
+  business_profiles: BusinessProfile | null;
+};
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
@@ -105,6 +107,11 @@ export type ListingWithPhotos = Listing & {
     id: string;
     full_name: string | null;
     avatar_url: string | null;
+    role: string | null;
+    business_profiles: {
+      business_name: string;
+      logo_url: string | null;
+    } | null;
   } | null;
 };
 
@@ -147,4 +154,12 @@ export type ThreadMessage = {
   recipient_id: string;
   created_at: string;
   read_at: string | null;
+};
+
+export type PublicProfile = User & {
+  business_profiles: BusinessProfile | null;
+};
+
+export type PublicListing = Listing & {
+  listing_photos: ListingPhoto[];
 };

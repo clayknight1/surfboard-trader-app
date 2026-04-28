@@ -80,7 +80,7 @@ export default function CreateListing() {
       console.error('Error creating listing:', err);
       if (listingId) {
         try {
-          await deleteListing(listingId);
+          await deleteListing(listingId, userId!);
         } catch (deleteErr) {
           console.error(
             'Failed to clean up listing after photo error:',
@@ -88,10 +88,17 @@ export default function CreateListing() {
           );
         }
       }
-      Alert.alert(
-        'Something went wrong',
-        'Could not create your listing. Please try again.',
-      );
+      const message =
+        err instanceof Error && err.message.includes('Listing limit reached')
+          ? 'You have reached your listing limit. Upgrade your plan to list more boards.'
+          : 'Could not create your listing. Please try again.';
+
+      const title =
+        err instanceof Error && err.message.includes('Listing limit reached')
+          ? 'Listing limit reached'
+          : 'Something went wrong';
+
+      Alert.alert(title, message);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +123,7 @@ export default function CreateListing() {
         <Text style={styles.stepLabel}>
           Step {step} of {TOTAL_STEPS}
         </Text>
-        <TouchableOpacity onPress={() => handleAbandon}>
+        <TouchableOpacity onPress={handleAbandon}>
           <Ionicons name='close' size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>

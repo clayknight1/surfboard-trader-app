@@ -6,12 +6,14 @@ type AvatarProps = {
   avatarUrl: string | null;
   fullName: string | null;
   size?: number;
+  shape?: 'circle' | 'rounded';
 };
 
 export default function Avatar({
   avatarUrl,
   fullName,
   size = 40,
+  shape = 'circle',
 }: AvatarProps) {
   const initials = fullName
     ? fullName
@@ -21,16 +23,14 @@ export default function Avatar({
         .join('')
         .toUpperCase()
     : '?';
+  const borderRadius = shape === 'rounded' ? size * 0.15 : size / 2;
 
   if (avatarUrl) {
     return (
       <Image
         source={{ uri: avatarUrl }}
-        style={[
-          styles.avatar,
-          { width: size, height: size, borderRadius: size / 2 },
-        ]}
-        contentFit='cover'
+        style={[styles.avatar, { width: size, height: size, borderRadius }]}
+        contentFit={shape === 'rounded' ? 'contain' : 'cover'}
       />
     );
   }

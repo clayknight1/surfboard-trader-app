@@ -8,6 +8,7 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
+import { blockUser, submitReport } from '../../lib/services/blockService';
 
 export default function ThreadScreen() {
   const { threadId, listingId } = useLocalSearchParams<{
@@ -30,6 +32,7 @@ export default function ThreadScreen() {
   const router = useRouter();
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const queryClient = useQueryClient();
   const resolvedThreadId = Array.isArray(threadId) ? threadId[0] : threadId;
   const flatListRef = useRef<FlatList>(null);
@@ -40,6 +43,12 @@ export default function ThreadScreen() {
     enabled: !!resolvedThreadId,
     refetchOnWindowFocus: true,
   });
+
+  const otherUserId = messages?.[0]
+    ? messages[0].sender_id === userId
+      ? messages[0].recipient_id
+      : messages[0].sender_id
+    : null;
 
   useEffect(() => {
     if (resolvedThreadId && userId) {
@@ -98,6 +107,69 @@ export default function ThreadScreen() {
       setIsSending(false);
     }
   }
+  async function handleBlock() {
+    Alert.alert(
+      'Block User?',
+      "They will no longer be able to message you and you won't see their listings.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(userId, otherUserId!);
+              queryClient.invalidateQueries({ queryKey: ['inbox'] });
+              queryClient.invalidateQueries({ queryKey: ['listings'] });
+              router.back();
+            } catch {
+              Alert.alert('Something went wrong', 'Could not block user.');
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleReport() {
+    Alert.alert('Report User', 'Why are you reporting this user?', [
+      {
+        text: 'Spam',
+        onPress: () => submitReport(userId, 'spam', otherUserId!),
+      },
+      {
+        text: 'Inappropriate behavior',
+        onPress: () => submitReport(userId, 'inappropriate', otherUserId!),
+      },
+      {
+        text: 'Scam',
+        onPress: () => submitReport(userId, 'scam', otherUserId!),
+      },
+      {
+        text: 'Other',
+        onPress: () => submitReport(userId, 'other', otherUserId!),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
+
+  function handleMenu() {
+    Alert.alert('Options', undefined, [
+      {
+        text: 'Report User',
+        onPress: handleReport,
+      },
+      {
+        text: 'Block User',
+        style: 'destructive',
+        onPress: handleBlock,
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  }
 
   return (
     <Screen>
@@ -115,7 +187,13 @@ export default function ThreadScreen() {
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Conversation</Text>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity onPress={handleMenu}>
+            <Ionicons
+              name='ellipsis-horizontal'
+              size={24}
+              color={Colors.textPrimary}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Messages */}

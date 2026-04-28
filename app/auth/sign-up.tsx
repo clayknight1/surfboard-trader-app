@@ -22,6 +22,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [birthYear, setBirthYear] = useState('');
   const router = useRouter();
   const { session } = useAuth();
 
@@ -37,6 +38,19 @@ export default function SignUp() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (!birthYear) {
+      setError('Please enter your birth year.');
+      setLoading(false);
+      return;
+    }
+
+    const age = new Date().getFullYear() - parseInt(birthYear);
+    if (age < 13) {
+      setError('You must be at least 13 years old to create an account.');
       setLoading(false);
       return;
     }
@@ -111,6 +125,14 @@ export default function SignUp() {
             textContentType='newPassword'
             autoComplete='password-new'
           />
+          <AuthInput
+            label='Birth Year'
+            value={birthYear}
+            onChangeText={setBirthYear}
+            placeholder='1990'
+            keyboardType='numeric'
+            maxLength={4}
+          />
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -134,6 +156,11 @@ export default function SignUp() {
             <Text style={styles.footerLink}>Sign in</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity onPress={() => router.push('/auth/apply')}>
+          <Text style={styles.applyLink}>
+            Are you a shop or shaper? Apply here →
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -200,5 +227,10 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.accent,
     fontFamily: Typography.fontMedium,
+  },
+  applyLink: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

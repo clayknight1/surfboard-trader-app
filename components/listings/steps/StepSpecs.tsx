@@ -88,9 +88,11 @@ export default function StepSpecs({
       </ScrollView>
 
       {/* Continue button */}
-      <TouchableOpacity style={[styles.nextButton]} onPress={onNext}>
-        <Text style={styles.nextButtonText}>Continue</Text>
-      </TouchableOpacity>
+      {!isEditing && (
+        <TouchableOpacity style={[styles.nextButton]} onPress={onNext}>
+          <Text style={styles.nextButtonText}>Continue</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

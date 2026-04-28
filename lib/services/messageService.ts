@@ -27,21 +27,9 @@ export async function sendMessage(
 
 export async function getInbox(userId: string): Promise<ThreadPreview[]> {
   try {
-    const { data, error } = await supabase
-      .from('threads')
-      .select(
-        `
-    id,
-    last_message,
-    last_message_at,
-    listing:listings(id, title, listing_photos(storage_path, is_primary)),
-    buyer:users!buyer_id(id, full_name, avatar_url),
-    seller:users!seller_id(id, full_name, avatar_url)
-  `,
-      )
-      .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-      .order('last_message_at', { ascending: false });
-
+    const { data, error } = await supabase.rpc('get_inbox', {
+      p_user_id: userId,
+    });
     if (error) {
       console.error('Error retrieving threads:', error);
       throw new Error(error.message);
@@ -51,15 +39,14 @@ export async function getInbox(userId: string): Promise<ThreadPreview[]> {
       ...thread,
       listing: {
         ...thread.listing,
-        listing_photos: thread.listing.listing_photos.map((photo: any) => ({
-          ...photo,
-          storage_path: supabase.storage
-            .from('listings')
-            .getPublicUrl(photo.storage_path).data.publicUrl,
-        })),
+        listing_photos:
+          thread.listing.listing_photos?.map((photo: any) => ({
+            ...photo,
+            storage_path: supabase.storage
+              .from('listings')
+              .getPublicUrl(photo.storage_path).data.publicUrl,
+          })) ?? [],
       },
-      buyer: thread.buyer,
-      seller: thread.seller,
     })) as ThreadPreview[];
   } catch (err) {
     console.error('Error retrieving message:', err);
@@ -126,4 +113,23 @@ export async function fetchUnreadCount(userId: string): Promise<number> {
     console.error('Error retrieving message count:', err);
     throw err;
   }
+}
+
+export async function getExistingThread(
+  listingId: string,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('threads')
+    .select('id')
+    .eq('listing_id', listingId)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching existing thread:', error);
+    return null;
+  }
+
+  return data?.id ?? null;
 }
