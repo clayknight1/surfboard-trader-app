@@ -4,8 +4,9 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  RefreshControl,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { getInbox } from '../../lib/services/messageService';
@@ -15,11 +16,14 @@ import ThreadRow from '../../components/listings/ThreadRow';
 import SignInPrompt from '../../components/ui/SignInPrompt';
 import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
 import { ThreadPreview } from '../../lib/types';
+import { useState } from 'react';
 
 export default function MessagesScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
   const skeletonData = Array.from({ length: 6 }, (_, i) => ({
     id: `skeleton-${i}`,
   }));
@@ -30,6 +34,12 @@ export default function MessagesScreen() {
     enabled: !!userId,
     refetchOnWindowFocus: true,
   });
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['inbox'] });
+    setIsRefreshing(false);
+  }
 
   if (!userId) {
     return (
@@ -85,6 +95,13 @@ export default function MessagesScreen() {
               </Text>
             </View>
           ) : null
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.accent}
+          />
         }
       />
     </Screen>

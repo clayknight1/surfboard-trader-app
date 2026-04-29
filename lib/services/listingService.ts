@@ -193,13 +193,10 @@ export async function deleteListing(
   userId: string,
 ): Promise<void> {
   const folderPath = `${userId}/${listingId}`;
-  console.log('listing path:', folderPath);
   // Delete photos from storage first
   const { data: files, error: listError } = await supabase.storage
     .from('listings')
     .list(`${userId}/${listingId}`);
-
-  console.log('files to delete:', files, 'list error:', listError);
 
   if (files && files.length > 0) {
     const paths = files.map((f) => `${userId}/${listingId}/${f.name}`);

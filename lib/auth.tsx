@@ -106,7 +106,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.id]);
 
   async function refreshSession() {
-    console.log('refreshSession start');
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
@@ -116,7 +115,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setProfile(null);
     }
-    console.log('refreshSession complete');
   }
 
   const signOut = async () => {

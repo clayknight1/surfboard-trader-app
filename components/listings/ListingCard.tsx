@@ -9,10 +9,20 @@ import {
 import { Image } from 'expo-image';
 import { ListingCardData } from '../../lib/types';
 import { Colors, Typography, Spacing } from '../../constants';
+import { useEffect, useState } from 'react';
+import {
+  isListingSaved,
+  saveListing,
+  unsaveListing,
+} from '../../lib/services/savedService';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../lib/auth';
+import { useQueryClient } from '@tanstack/react-query';
 
 type ListingCardProps = {
   listing: ListingCardData;
   hideDistance?: boolean;
+  userId?: string;
 };
 
 const CARD_WIDTH =
@@ -25,8 +35,17 @@ const PHOTO_HEIGHT = CARD_WIDTH * 1.3;
 export default function ListingCard({
   listing,
   hideDistance = false,
+  userId,
 }: ListingCardProps) {
   const router = useRouter();
+  const [isSaved, setIsSaved] = useState(false);
+  const showHeart = !!userId && listing.user_id !== userId;
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!userId || listing.user_id === userId) return;
+    isListingSaved(userId, listing.id).then(setIsSaved);
+  }, [userId, listing.id]);
 
   function onSelect(): void {
     router.push(`/listings/${listing.id}`);
@@ -70,6 +89,23 @@ export default function ListingCard({
     }
   }
 
+  async function handleToggleSave(e: any) {
+    e.stopPropagation();
+    if (!userId) return;
+    const newState = !isSaved;
+    setIsSaved(newState);
+    try {
+      if (newState) {
+        await saveListing(userId, listing.id);
+      } else {
+        await unsaveListing(userId, listing.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['savedListings'] });
+    } catch {
+      setIsSaved(!newState);
+    }
+  }
+
   return (
     <TouchableOpacity
       style={styles.container}
@@ -105,6 +141,19 @@ export default function ListingCard({
               {listing.listing_type === 'vintage' ? 'Vintage' : 'New'}
             </Text>
           </View>
+        )}
+        {/* Heart button */}
+        {showHeart && (
+          <TouchableOpacity
+            style={styles.heartButton}
+            onPress={handleToggleSave}
+          >
+            <Ionicons
+              name={isSaved ? 'heart' : 'heart-outline'}
+              size={14}
+              color={isSaved ? Colors.accent : Colors.backgroundCard}
+            />
+          </TouchableOpacity>
         )}
       </View>
 
@@ -262,5 +311,16 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textOnCardMuted,
     marginLeft: 'auto',
+  },
+  heartButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

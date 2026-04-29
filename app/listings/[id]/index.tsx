@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getListing,
@@ -27,6 +27,11 @@ import ListingDetailSkeleton from '../../../components/listings/ListingDetailSke
 import { Animated } from 'react-native';
 import { getExistingThread } from '../../../lib/services/messageService';
 import { submitReport } from '../../../lib/services/blockService';
+import {
+  isListingSaved,
+  saveListing,
+  unsaveListing,
+} from '../../../lib/services/savedService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -37,6 +42,7 @@ export default function ListingDetail() {
   const insets = useSafeAreaInsets();
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -55,6 +61,16 @@ export default function ListingDetail() {
     retryDelay: 1000,
     staleTime: 1000 * 60 * 5,
   });
+
+  const { data: savedStatus } = useQuery({
+    queryKey: ['isSaved', id, userId],
+    queryFn: () => isListingSaved(userId!, id),
+    enabled: !!userId,
+  });
+
+  useEffect(() => {
+    if (savedStatus !== undefined) setIsSaved(savedStatus);
+  }, [savedStatus]);
 
   function formatPrice(cents: number): string {
     return `$${(cents / 100).toLocaleString()}`;
@@ -167,6 +183,27 @@ export default function ListingDetail() {
     ]);
   }
 
+  async function handleToggleSave() {
+    if (!userId) {
+      setSignInModalOpen(true);
+      return;
+    }
+
+    const newSavedState = !isSaved;
+    setIsSaved(newSavedState);
+    try {
+      if (newSavedState) {
+        await saveListing(userId, id);
+      } else {
+        await unsaveListing(userId, id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['savedListings'] });
+    } catch {
+      console.error('Error toggling save');
+      setIsSaved(!newSavedState);
+    }
+  }
+
   if (isPending) {
     return <ListingDetailSkeleton insets={insets} />;
   }
@@ -269,12 +306,12 @@ export default function ListingDetail() {
           {/* Floating save button */}
           <TouchableOpacity
             style={[styles.saveButton, { top: 12 }]}
-            onPress={() => {}}
+            onPress={handleToggleSave}
           >
             <Ionicons
-              name='heart-outline'
+              name={isSaved ? 'heart' : 'heart-outline'}
               size={22}
-              color={Colors.backgroundCard}
+              color={isSaved ? Colors.accent : Colors.backgroundCard}
             />
           </TouchableOpacity>
         </View>

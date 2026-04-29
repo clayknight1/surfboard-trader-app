@@ -207,7 +207,11 @@ export default function UserProfileScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <ListingCard listing={item as ListingCardData} hideDistance />
+          <ListingCard
+            listing={item as ListingCardData}
+            hideDistance
+            userId={userId}
+          />
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>

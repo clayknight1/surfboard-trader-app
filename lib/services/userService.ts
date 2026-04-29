@@ -2,7 +2,6 @@ import { supabase } from '../supabase';
 import { ListingCardData, PublicListing, PublicProfile, User } from '../types';
 
 export async function getUserProfile(userId: string): Promise<User | null> {
-  console.log('getUserProfile start', userId);
   const { data, error } = await supabase
     .from('users')
     .select('*, business_profiles(*)')
@@ -13,7 +12,6 @@ export async function getUserProfile(userId: string): Promise<User | null> {
     console.error('Error fetching user profile:', error);
     return null;
   }
-  console.log('getUserProfile done', data);
   return data;
 }
 
@@ -63,7 +61,6 @@ export async function uploadAvatar(
   const response = await fetch(uri);
   const arrayBuffer = await response.arrayBuffer();
   const path = `${userId}/avatar.jpg`;
-  console.log('uploading avatar for userId:', userId, 'path:', path);
   const { error } = await supabase.storage
     .from('avatars')
     .upload(path, arrayBuffer, {

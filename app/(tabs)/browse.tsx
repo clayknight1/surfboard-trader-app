@@ -1,7 +1,11 @@
-import { Text, FlatList, ActivityIndicator, View } from 'react-native';
+import { Text, FlatList, View, RefreshControl } from 'react-native';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { FilterState, ListingCardData } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
 import { Colors, Spacing } from '../../constants';
@@ -15,6 +19,7 @@ import { useAuth } from '../../lib/auth';
 export default function BrowseScreen() {
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const [filterBarHeight, setFilterBarHeight] = useState(0);
@@ -37,6 +42,7 @@ export default function BrowseScreen() {
   const skeletonData = Array.from({ length: 6 }, (_, i) => ({
     id: `skeleton-${i}`,
   }));
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     async function getCurrentLocation() {
@@ -96,6 +102,12 @@ export default function BrowseScreen() {
     }, 500);
   }
 
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['listings'] });
+    setIsRefreshing(false);
+  }
+
   return (
     <Screen>
       <View style={{ flex: 1, position: 'relative' }}>
@@ -120,10 +132,17 @@ export default function BrowseScreen() {
             isPending ? (
               <ListingCardSkeleton />
             ) : (
-              <ListingCard listing={item as ListingCardData} />
+              <ListingCard listing={item as ListingCardData} userId={userId} />
             )
           }
           keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.accent}
+            />
+          }
         />
         <FilterPanel
           openFilter={openFilter}

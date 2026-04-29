@@ -207,6 +207,21 @@ export default function ProfileScreen() {
         isOpen={locationSheetOpen}
         onClose={() => setLocationSheetOpen(false)}
       />
+
+      {/* Legal */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Legal</Text>
+        <View style={styles.sectionContent}>
+          <SettingsRow
+            label='Privacy Policy'
+            onPress={() => router.push('/legal/privacy-policy')}
+          />
+          <SettingsRow
+            label='Terms of Service'
+            onPress={() => router.push('/legal/terms')}
+          />
+        </View>
+      </View>
     </Screen>
   );
 }

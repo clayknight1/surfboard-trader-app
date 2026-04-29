@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../lib/auth';
 import {
@@ -21,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SignInPrompt from '../../components/ui/SignInPrompt';
 import { ListingWithPhotos } from '../../lib/types';
 import SellerListingCardSkeleton from '../../components/listings/SellerListingCardSkeleton';
+import { useState } from 'react';
 
 export default function SellScreen() {
   const { session, profile } = useAuth();
@@ -35,12 +37,20 @@ export default function SellScreen() {
     queryFn: () => getListingsByUser(userId!),
     enabled: !!userId,
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: listingCount } = useQuery({
     queryKey: ['userListingCount', userId],
     queryFn: () => getUserListingCount(userId!),
     enabled: !!userId,
   });
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['userListings'] });
+    setIsRefreshing(false);
+  }
 
   const tierLimit =
     profile?.tier === 'starter'
@@ -129,6 +139,13 @@ export default function SellScreen() {
                 onPress={() => router.push(`/listings/${item.id}`)}
               />
             )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.accent}
+            />
           }
         />
       )}

@@ -161,6 +161,19 @@ export default function SignUp() {
             Are you a shop or shaper? Apply here →
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.legalRow}>
+          <Text style={styles.legalText}>By signing up you agree to our </Text>
+          <TouchableOpacity onPress={() => router.push('/legal/terms')}>
+            <Text style={styles.legalLink}>Terms</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalText}> and </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/legal/privacy-policy')}
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -232,5 +245,19 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
     textAlign: 'center',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legalText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  legalLink: {
+    ...Typography.caption,
+    color: Colors.accent,
   },
 });
