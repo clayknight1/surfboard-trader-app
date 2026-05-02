@@ -95,7 +95,7 @@ export default function EditListingScreen() {
     try {
       await updateListing(id, formData);
 
-      const locationChanged = formData.location_label !== data?.location_label;
+      const locationChanged = formData.lat !== null && formData.lng !== null;
 
       if (
         locationChanged &&

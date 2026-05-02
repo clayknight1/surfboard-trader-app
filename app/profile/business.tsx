@@ -112,7 +112,6 @@ export default function BusinessProfileScreen() {
         bio: bio.trim() || null,
         website: website.trim() || null,
         instagram_handle: instagram.trim() || null,
-        location_label: locationLabel || null,
         logo_url: logoUrl,
         price_range_low: priceRangeLow ? parseInt(priceRangeLow) : null,
         price_range_high: priceRangeHigh ? parseInt(priceRangeHigh) : null,

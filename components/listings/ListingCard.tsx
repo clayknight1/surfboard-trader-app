@@ -10,19 +10,16 @@ import { Image } from 'expo-image';
 import { ListingCardData } from '../../lib/types';
 import { Colors, Typography, Spacing } from '../../constants';
 import { useEffect, useState } from 'react';
-import {
-  isListingSaved,
-  saveListing,
-  unsaveListing,
-} from '../../lib/services/savedService';
+import { saveListing, unsaveListing } from '../../lib/services/savedService';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../lib/auth';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 
 type ListingCardProps = {
   listing: ListingCardData;
   hideDistance?: boolean;
   userId?: string;
+  savedIds?: string[];
 };
 
 const CARD_WIDTH =
@@ -36,6 +33,7 @@ export default function ListingCard({
   listing,
   hideDistance = false,
   userId,
+  savedIds,
 }: ListingCardProps) {
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
@@ -43,9 +41,8 @@ export default function ListingCard({
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!userId || listing.user_id === userId) return;
-    isListingSaved(userId, listing.id).then(setIsSaved);
-  }, [userId, listing.id]);
+    setIsSaved(savedIds?.includes(listing.id) ?? false);
+  }, [savedIds, listing.id]);
 
   function onSelect(): void {
     router.push(`/listings/${listing.id}`);
@@ -89,17 +86,21 @@ export default function ListingCard({
     }
   }
 
-  async function handleToggleSave(e: any) {
-    e.stopPropagation();
-    if (!userId) return;
+  async function handleToggleSave(event: any) {
+    event.stopPropagation();
+    if (!userId) {
+      return;
+    }
     const newState = !isSaved;
     setIsSaved(newState);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       if (newState) {
         await saveListing(userId, listing.id);
       } else {
         await unsaveListing(userId, listing.id);
       }
+      queryClient.invalidateQueries({ queryKey: ['savedIds'] });
       queryClient.invalidateQueries({ queryKey: ['savedListings'] });
     } catch {
       setIsSaved(!newState);

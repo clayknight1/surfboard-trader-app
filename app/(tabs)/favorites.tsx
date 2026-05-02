@@ -1,5 +1,5 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { getSavedListings } from '../../lib/services/savedService';
@@ -10,11 +10,14 @@ import SignInPrompt from '../../components/ui/SignInPrompt';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { ListingCardData } from '../../lib/types';
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 
 export default function FavoritesScreen() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const queryClient = useQueryClient();
   const skeletonData = Array.from({ length: 4 }, (_, i) => ({
     id: `skeleton-${i}`,
   }));
@@ -23,7 +26,11 @@ export default function FavoritesScreen() {
     queryKey: ['savedListings', userId],
     queryFn: () => getSavedListings(userId!),
     enabled: !!userId,
+    staleTime: 1000 * 30,
   });
+  if (loading) {
+    return null;
+  }
 
   if (!userId) {
     return (
@@ -35,6 +42,12 @@ export default function FavoritesScreen() {
         />
       </Screen>
     );
+  }
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['inbox'] });
+    setIsRefreshing(false);
   }
 
   const isEmpty = !isPending && (!data || data.length === 0);
@@ -71,6 +84,13 @@ export default function FavoritesScreen() {
               <ListingCard listing={item as ListingCardData} hideDistance />
             )
           }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.accent}
+            />
+          }
         />
       )}
     </Screen>
@@ -83,6 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
+    height: 56,
   },
   title: {
     ...Typography.heading,

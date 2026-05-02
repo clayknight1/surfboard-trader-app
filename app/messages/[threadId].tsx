@@ -21,6 +21,7 @@ import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { blockUser, submitReport } from '../../lib/services/blockService';
+import * as Haptics from 'expo-haptics';
 
 export default function ThreadScreen() {
   const { threadId, listingId } = useLocalSearchParams<{
@@ -92,6 +93,7 @@ export default function ThreadScreen() {
   async function handleSend() {
     if (!messageText.trim() || isSending) return;
     setIsSending(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await sendMessage(
         userId,
@@ -205,6 +207,7 @@ export default function ThreadScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.messageList}
             ref={flatListRef}
+            keyboardDismissMode='on-drag'
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
             }

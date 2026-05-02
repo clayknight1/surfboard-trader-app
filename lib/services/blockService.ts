@@ -77,3 +77,19 @@ export async function submitReport(
     throw new Error(error.message);
   }
 }
+
+export async function getBlockedUsersWithProfiles(userId: string) {
+  const { data, error } = await supabase
+    .from('blocked_users')
+    .select(
+      'blocked_id, users!blocked_users_blocked_id_fkey(id, full_name, avatar_url)',
+    )
+    .eq('blocker_id', userId);
+
+  if (error) {
+    console.error('Error fetching blocked users:', error);
+    return [];
+  }
+
+  return data.map((row: any) => row.users);
+}

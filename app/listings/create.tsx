@@ -18,6 +18,7 @@ import {
   uploadListingPhotos,
 } from '../../lib/services/listingService';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 
 const TOTAL_STEPS = 6;
 
@@ -75,6 +76,7 @@ export default function CreateListing() {
       await uploadListingPhotos(listingId, userId!, photos);
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace(`/listings/${listingId}`);
     } catch (err) {
       console.error('Error creating listing:', err);

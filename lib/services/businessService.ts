@@ -26,7 +26,6 @@ export async function upsertBusinessProfile(
     bio: string | null;
     website: string | null;
     instagram_handle: string | null;
-    location_label: string | null;
     logo_url: string | null;
     price_range_low: number | null;
     price_range_high: number | null;

@@ -25,7 +25,7 @@ import SellerListingCardSkeleton from '../../components/listings/SellerListingCa
 import { useState } from 'react';
 
 export default function SellScreen() {
-  const { session, profile } = useAuth();
+  const { session, profile, loading } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
   const skeletonData = Array.from({ length: 4 }, (_, i) => ({
@@ -36,6 +36,7 @@ export default function SellScreen() {
     queryKey: ['userListings', userId],
     queryFn: () => getListingsByUser(userId!),
     enabled: !!userId,
+    staleTime: 1000 * 30,
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
@@ -44,6 +45,7 @@ export default function SellScreen() {
     queryKey: ['userListingCount', userId],
     queryFn: () => getUserListingCount(userId!),
     enabled: !!userId,
+    staleTime: 1000 * 30,
   });
 
   async function handleRefresh() {
@@ -62,6 +64,10 @@ export default function SellScreen() {
           : 5; // free
 
   const atLimit = (listingCount ?? 0) >= tierLimit;
+
+  if (loading) {
+    return null;
+  }
 
   if (!userId) {
     return (
@@ -165,12 +171,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPadding,
     paddingVertical: Spacing.md,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
+    height: 56,
   },
   headerTitle: {
     ...Typography.heading,
@@ -183,6 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
   },
   emptyState: {
     flex: 1,

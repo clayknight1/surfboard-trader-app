@@ -79,12 +79,15 @@ export default function StepSpecs({
         />
 
         {/* Condition */}
-        <PillSelector
-          label='Condition'
-          options={CONDITION_OPTIONS}
-          value={formData.condition ?? null}
-          onSelect={(value) => updateField('condition', value)}
-        />
+        {formData.listing_type !== 'in_stock' &&
+          formData.listing_type !== 'custom_order' && (
+            <PillSelector
+              label='Condition'
+              options={CONDITION_OPTIONS}
+              value={formData.condition ?? null}
+              onSelect={(value) => updateField('condition', value)}
+            />
+          )}
       </ScrollView>
 
       {/* Continue button */}

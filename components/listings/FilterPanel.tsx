@@ -77,6 +77,24 @@ export default function FilterPanel({
     }
   }, [openFilter, contentHeight]);
 
+  useEffect(() => {
+    if (filters.volumeMin === null && filters.volumeMax === null) {
+      setVolumeRange([0, 80]);
+    }
+  }, [filters.volumeMin, filters.volumeMax]);
+
+  useEffect(() => {
+    if (filters.lengthMin === null && filters.lengthMax === null) {
+      setLengthRange([48, 120]);
+    }
+  }, [filters.lengthMin, filters.lengthMax]);
+
+  useEffect(() => {
+    if (filters.radiusMiles === 25) {
+      setRadiusValue(25);
+    }
+  }, [filters.radiusMiles]);
+
   function formatLength(inches: number): string {
     const feet = Math.floor(inches / 12);
     const remainder = Math.round(inches % 12);

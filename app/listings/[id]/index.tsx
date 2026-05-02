@@ -5,6 +5,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -32,6 +33,7 @@ import {
   saveListing,
   unsaveListing,
 } from '../../../lib/services/savedService';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -141,6 +143,7 @@ export default function ListingDetail() {
           style: 'destructive',
           onPress: async () => {
             try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
               await markListingAsSold(id);
               queryClient.invalidateQueries({ queryKey: ['listing', id] });
               queryClient.invalidateQueries({ queryKey: ['userListings'] });
@@ -191,12 +194,14 @@ export default function ListingDetail() {
 
     const newSavedState = !isSaved;
     setIsSaved(newSavedState);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       if (newSavedState) {
         await saveListing(userId, id);
       } else {
         await unsaveListing(userId, id);
       }
+      queryClient.invalidateQueries({ queryKey: ['savedIds'] });
       queryClient.invalidateQueries({ queryKey: ['savedListings'] });
     } catch {
       console.error('Error toggling save');
@@ -293,7 +298,10 @@ export default function ListingDetail() {
 
           {/* Floating back button */}
           <TouchableOpacity
-            style={[styles.backButton, { top: 12 }]}
+            style={[
+              styles.backButton,
+              { top: Platform.OS === 'android' ? insets.top : 12 },
+            ]}
             onPress={() => router.back()}
           >
             <Ionicons
@@ -304,16 +312,21 @@ export default function ListingDetail() {
           </TouchableOpacity>
 
           {/* Floating save button */}
-          <TouchableOpacity
-            style={[styles.saveButton, { top: 12 }]}
-            onPress={handleToggleSave}
-          >
-            <Ionicons
-              name={isSaved ? 'heart' : 'heart-outline'}
-              size={22}
-              color={isSaved ? Colors.accent : Colors.backgroundCard}
-            />
-          </TouchableOpacity>
+          {data.user_id !== userId && (
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                { top: Platform.OS === 'android' ? insets.top : 12 },
+              ]}
+              onPress={handleToggleSave}
+            >
+              <Ionicons
+                name={isSaved ? 'heart' : 'heart-outline'}
+                size={22}
+                color={isSaved ? Colors.accent : Colors.backgroundCard}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Content */}

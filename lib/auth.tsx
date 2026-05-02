@@ -110,8 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
     if (data.session?.user?.id) {
-      const profile = await getUserProfile(data.session.user.id);
-      setProfile(profile);
+      getUserProfile(data.session.user.id).then(setProfile);
     } else {
       setProfile(null);
     }

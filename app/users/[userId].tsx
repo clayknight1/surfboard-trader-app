@@ -3,7 +3,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Linking,
@@ -21,14 +20,13 @@ import { Colors, Spacing, Typography } from '../../constants';
 import Avatar from '../../components/ui/Avatar';
 import ListingCard from '../../components/listings/ListingCard';
 import { ListingCardData } from '../../lib/types';
-import { Dimensions } from 'react-native';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH =
-  (SCREEN_WIDTH - Spacing.screenPadding * 2 - Spacing.cardGap) / 2;
+import { getSavedListingIds } from '../../lib/services/savedService';
+import { useAuth } from '../../lib/auth';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { session } = useAuth();
+  const currentUserId = session?.user?.id;
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -41,6 +39,12 @@ export default function UserProfileScreen() {
   const { data: listings, isPending: listingsPending } = useQuery({
     queryKey: ['publicListings', userId],
     queryFn: () => getPublicListings(userId),
+    enabled: !!userId,
+  });
+
+  const { data: savedIds } = useQuery({
+    queryKey: ['savedIds', userId],
+    queryFn: () => getSavedListingIds(currentUserId!),
     enabled: !!userId,
   });
 
@@ -89,36 +93,6 @@ export default function UserProfileScreen() {
                 size={72}
               />
             )}
-
-            {/* <Avatar
-              avatarUrl={
-                isShopOrShaper
-                  ? (businessProfile?.logo_url ?? profile?.avatar_url ?? null)
-                  : (profile?.avatar_url ?? null)
-              }
-              fullName={profile?.full_name ?? null}
-              size={72}
-              shape={isShopOrShaper ? 'rounded' : 'circle'}
-                /> */}
-
-            {/* {isShopOrShaper && businessProfile?.logo_url ? (
-              <Image
-                source={{ uri: businessProfile.logo_url }}
-                style={styles.logo}
-                contentFit='cover'
-              />
-            ) : (
-              <Avatar
-                avatarUrl={
-                  businessProfile
-                    ? (businessProfile.logo_url ?? profile?.avatar_url ?? null)
-                    : (profile?.avatar_url ?? null)
-                }
-                fullName={profile?.full_name ?? null}
-                size={72}
-                shape={businessProfile ? 'rounded' : 'circle'}
-              />
-            )} */}
 
             {/* Name */}
             <View style={styles.nameRow}>
@@ -210,7 +184,8 @@ export default function UserProfileScreen() {
           <ListingCard
             listing={item as ListingCardData}
             hideDistance
-            userId={userId}
+            userId={currentUserId}
+            savedIds={savedIds ?? []}
           />
         )}
         ListEmptyComponent={

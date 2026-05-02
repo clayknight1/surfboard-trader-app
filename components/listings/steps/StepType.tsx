@@ -64,7 +64,17 @@ export default function StepType({
             <TouchableOpacity
               key={option.value}
               style={[styles.option, isSelected && styles.optionActive]}
-              onPress={() => updateField('listing_type', option.value)}
+              onPress={() => {
+                updateField('listing_type', option.value);
+                if (
+                  option.value === 'in_stock' ||
+                  option.value === 'custom_order'
+                ) {
+                  updateField('condition', 'new');
+                } else {
+                  updateField('condition', null);
+                }
+              }}
             >
               <View>
                 <Text

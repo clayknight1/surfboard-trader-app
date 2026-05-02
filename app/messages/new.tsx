@@ -1,19 +1,18 @@
 import {
   View,
   Text,
-  FlatList,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
-import { sendMessage, getMessages } from '../../lib/services/messageService';
+import { sendMessage } from '../../lib/services/messageService';
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,19 +25,11 @@ export default function NewThreadScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id!;
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
 
-  const { data: messages } = useQuery({
-    queryKey: ['thread', threadId],
-    queryFn: () => getMessages(threadId!),
-    enabled: !!threadId,
-  });
-
-  async function handleSend() {
+  async function handleSend(): Promise<void> {
     if (!messageText.trim() || isSending) return;
     setIsSending(true);
     try {
@@ -47,14 +38,16 @@ export default function NewThreadScreen() {
         listingId,
         messageText.trim(),
       );
-      if (!threadId && newThreadId) {
-        setThreadId(newThreadId);
+      if (newThreadId) {
+        router.replace(`/messages/${newThreadId}?listingId=${listingId}`);
+        return;
       }
-      setMessageText('');
-      queryClient.invalidateQueries({ queryKey: ['thread', newThreadId] });
-      queryClient.invalidateQueries({ queryKey: ['inbox', userId] });
     } catch (err) {
       console.error('Error sending message:', err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not send your message. Please try again.',
+      );
     } finally {
       setIsSending(false);
     }
@@ -79,46 +72,12 @@ export default function NewThreadScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        {/* Messages */}
-        <FlatList
-          data={messages ?? []}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messageList}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                Send a message to start the conversation.
-              </Text>
-            </View>
-          }
-          renderItem={({ item }) => {
-            const isMe = item.sender_id === userId;
-            return (
-              <View
-                style={[
-                  styles.bubbleWrapper,
-                  isMe ? styles.bubbleWrapperMe : styles.bubbleWrapperThem,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.bubble,
-                    isMe ? styles.bubbleMe : styles.bubbleThem,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.bubbleText,
-                      isMe ? styles.bubbleTextMe : styles.bubbleTextThem,
-                    ]}
-                  >
-                    {item.body}
-                  </Text>
-                </View>
-              </View>
-            );
-          }}
-        />
+        {/* Empty State */}
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            Send a message to start the conversation.
+          </Text>
+        </View>
 
         {/* Input */}
         <View style={styles.inputRow}>
@@ -169,11 +128,6 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     color: Colors.textPrimary,
   },
-  messageList: {
-    padding: Spacing.screenPadding,
-    gap: Spacing.sm,
-    flexGrow: 1,
-  },
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -184,38 +138,6 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textSecondary,
     textAlign: 'center',
-  },
-  bubbleWrapper: {
-    flexDirection: 'row',
-  },
-  bubbleWrapperMe: {
-    justifyContent: 'flex-end',
-  },
-  bubbleWrapperThem: {
-    justifyContent: 'flex-start',
-  },
-  bubble: {
-    maxWidth: '75%',
-    borderRadius: 18,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  bubbleMe: {
-    backgroundColor: Colors.accent,
-    borderBottomRightRadius: 4,
-  },
-  bubbleThem: {
-    backgroundColor: Colors.backgroundSubtle,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleText: {
-    ...Typography.body,
-  },
-  bubbleTextMe: {
-    color: Colors.backgroundCard,
-  },
-  bubbleTextThem: {
-    color: Colors.textPrimary,
   },
   inputRow: {
     flexDirection: 'row',

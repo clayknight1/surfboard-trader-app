@@ -33,7 +33,12 @@ export async function getListings(
     });
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error(
+        'Supabase error:',
+        error.message,
+        error.code,
+        error.details,
+      );
       return [];
     }
 

@@ -93,3 +93,13 @@ export async function isListingSaved(
   if (error) return false;
   return !!data;
 }
+
+export async function getSavedListingIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('saved_listings')
+    .select('listing_id')
+    .eq('user_id', userId);
+
+  if (error) return [];
+  return data.map((row) => row.listing_id);
+}

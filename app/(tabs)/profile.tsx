@@ -148,6 +148,10 @@ export default function ProfileScreen() {
               value={profile?.location_label ?? 'Not set'}
               onPress={() => setLocationSheetOpen(true)}
             />
+            <SettingsRow
+              label='Blocked Users'
+              onPress={() => router.push('/profile/blocked')}
+            />
           </View>
         </View>
 
@@ -240,6 +244,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    height: 56,
   },
   title: {
     ...Typography.heading,

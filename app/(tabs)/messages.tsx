@@ -19,7 +19,7 @@ import { ThreadPreview } from '../../lib/types';
 import { useState } from 'react';
 
 export default function MessagesScreen() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -33,12 +33,16 @@ export default function MessagesScreen() {
     queryFn: () => getInbox(userId!),
     enabled: !!userId,
     refetchOnWindowFocus: true,
+    staleTime: 1000 * 30,
   });
 
   async function handleRefresh() {
     setIsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ['inbox'] });
     setIsRefreshing(false);
+  }
+  if (loading) {
+    return null;
   }
 
   if (!userId) {
@@ -114,9 +118,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    height: 56,
   },
   title: {
-    ...Typography.displaySmall,
+    ...Typography.heading,
     color: Colors.textPrimary,
   },
   centered: {

@@ -1,4 +1,12 @@
-import { Text, FlatList, View, RefreshControl } from 'react-native';
+import {
+  Text,
+  FlatList,
+  View,
+  RefreshControl,
+  TouchableOpacity,
+  Linking,
+  StyleSheet,
+} from 'react-native';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -8,13 +16,15 @@ import {
 } from '@tanstack/react-query';
 import { FilterState, ListingCardData } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
-import { Colors, Spacing } from '../../constants';
+import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { getListings } from '../../lib/services/listingService';
 import FilterBar, { FilterKey } from '../../components/listings/FilterBar';
 import FilterPanel from '../../components/listings/FilterPanel';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { useAuth } from '../../lib/auth';
+import { getSavedListingIds } from '../../lib/services/savedService';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function BrowseScreen() {
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
@@ -76,6 +86,12 @@ export default function BrowseScreen() {
     enabled: !!location,
   });
 
+  const { data: savedIds } = useQuery({
+    queryKey: ['savedIds', userId],
+    queryFn: () => getSavedListingIds(userId!),
+    enabled: !!userId,
+  });
+
   if (isError) {
     return <Text>Something went wrong</Text>;
   }
@@ -117,6 +133,21 @@ export default function BrowseScreen() {
             openFilter={openFilter}
             onFilterPress={handleFilterPress}
           />
+          {!hasLocationPermission && (
+            <TouchableOpacity
+              style={styles.locationBanner}
+              onPress={() => Linking.openSettings()}
+            >
+              <Ionicons
+                name='location-outline'
+                size={14}
+                color={Colors.textSecondary}
+              />
+              <Text style={styles.locationBannerText}>
+                Using default location — tap to enable location access
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <FlatList
           numColumns={2}
@@ -132,7 +163,11 @@ export default function BrowseScreen() {
             isPending ? (
               <ListingCardSkeleton />
             ) : (
-              <ListingCard listing={item as ListingCardData} userId={userId} />
+              <ListingCard
+                listing={item as ListingCardData}
+                userId={userId}
+                savedIds={savedIds ?? []}
+              />
             )
           }
           keyExtractor={(item) => item.id}
@@ -162,3 +197,18 @@ export default function BrowseScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.backgroundSubtle,
+  },
+  locationBannerText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+});
