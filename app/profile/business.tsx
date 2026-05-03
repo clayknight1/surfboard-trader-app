@@ -26,7 +26,7 @@ import {
 
 export default function BusinessProfileScreen() {
   const router = useRouter();
-  const { profile, session, refreshSession } = useAuth();
+  const { profile, session, refreshProfile } = useAuth();
   const userId = session?.user?.id;
   const isShaper = profile?.role === 'shaper';
   const existing = profile?.business_profiles;
@@ -128,7 +128,7 @@ export default function BusinessProfileScreen() {
         );
       }
 
-      await refreshSession();
+      await refreshProfile();
       router.back();
     } catch {
       Alert.alert(

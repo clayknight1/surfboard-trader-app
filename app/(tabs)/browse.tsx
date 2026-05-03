@@ -79,11 +79,12 @@ export default function BrowseScreen() {
     };
   }, []);
 
-  const { isPending, isError, data } = useQuery({
+  const { isFetching, isError, data } = useQuery({
     queryKey: ['listings', location, filters],
     queryFn: () => getListings(location.lat, location.lng, filters, userId),
     placeholderData: keepPreviousData,
     enabled: !!location,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: savedIds } = useQuery({
@@ -158,9 +159,9 @@ export default function BrowseScreen() {
             paddingBottom: Spacing.xxl,
             rowGap: Spacing.cardGap,
           }}
-          data={isPending ? skeletonData : (data ?? [])}
+          data={isFetching ? skeletonData : (data ?? [])}
           renderItem={({ item }) =>
-            isPending ? (
+            isFetching ? (
               <ListingCardSkeleton />
             ) : (
               <ListingCard

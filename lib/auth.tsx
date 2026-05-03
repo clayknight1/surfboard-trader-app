@@ -16,6 +16,7 @@ type AuthContextType = {
   refreshSession: () => Promise<void>;
   unreadCount: number;
   refreshUnreadCount: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -106,13 +107,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.id]);
 
   async function refreshSession() {
+    const start = Date.now();
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
-    if (data.session?.user?.id) {
-      getUserProfile(data.session.user.id).then(setProfile);
-    } else {
+    if (!data.session) {
       setProfile(null);
+    }
+  }
+
+  async function refreshProfile() {
+    if (session?.user?.id) {
+      const profile = await getUserProfile(session.user.id);
+      setProfile(profile);
     }
   }
 
@@ -141,6 +148,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         signOut,
         refreshSession,
+        refreshProfile,
         unreadCount,
         refreshUnreadCount,
       }}

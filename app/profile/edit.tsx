@@ -23,7 +23,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function EditProfileScreen() {
-  const { profile, refreshSession } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const router = useRouter();
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
@@ -97,7 +97,7 @@ export default function EditProfileScreen() {
         avatar_url: avatarUrl ?? undefined,
       });
 
-      await refreshSession();
+      await refreshProfile();
       router.back();
     } catch {
       Alert.alert(

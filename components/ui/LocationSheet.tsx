@@ -29,7 +29,7 @@ export default function LocationSheet({
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { session, refreshSession } = useAuth();
+  const { session, refreshProfile } = useAuth();
   const userId = session?.user?.id;
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function LocationSheet({
         onLocationUpdated(latitude, longitude, label);
       } else if (userId) {
         await updateUserLocation(userId, latitude, longitude, label);
-        await refreshSession();
+        await refreshProfile();
       }
       onClose();
     } catch {
@@ -101,7 +101,7 @@ export default function LocationSheet({
         onLocationUpdated(latitude, longitude, label);
       } else if (userId) {
         await updateUserLocation(userId, latitude, longitude, label);
-        await refreshSession();
+        await refreshProfile();
       }
       onClose();
     } catch {

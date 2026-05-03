@@ -108,6 +108,8 @@ export type Database = {
           id: string
           instagram_handle: string | null
           is_sponsored: boolean
+          lat: number | null
+          lng: number | null
           location: unknown
           location_label: string | null
           logo_url: string | null
@@ -127,6 +129,8 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           is_sponsored?: boolean
+          lat?: number | null
+          lng?: number | null
           location?: unknown
           location_label?: string | null
           logo_url?: string | null
@@ -146,6 +150,8 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           is_sponsored?: boolean
+          lat?: number | null
+          lng?: number | null
           location?: unknown
           location_label?: string | null
           logo_url?: string | null
@@ -163,6 +169,38 @@ export type Database = {
             foreignKeyName: "business_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deletion_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deletion_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -977,6 +1015,19 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_inbox: {
+        Args: { p_user_id: string }
+        Returns: {
+          buyer: Json
+          buyer_id: string
+          id: string
+          last_message: string
+          last_message_at: string
+          listing: Json
+          seller: Json
+          seller_id: string
+        }[]
+      }
       get_listings_nearby: {
         Args: {
           p_board_type?: Database["public"]["Enums"]["board_type"]
@@ -987,8 +1038,9 @@ export type Database = {
           p_listing_type?: Database["public"]["Enums"]["listing_type"]
           p_lng: number
           p_price_max?: number
-          p_radius_miles?: number
+          p_radius_miles: number
           p_search_term?: string
+          p_user_id?: string
           p_volume_max?: number
           p_volume_min?: number
         }

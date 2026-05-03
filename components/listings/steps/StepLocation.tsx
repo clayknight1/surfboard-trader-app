@@ -27,19 +27,19 @@ export default function StepLocation({
 }: StepLocationProps) {
   const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
   const hasLocation = isShopOrShaper
-    ? !!profile?.business_profiles?.location_label
-    : !!profile?.location_label;
+    ? !!profile?.business_profiles?.lat
+    : !!profile?.lat;
 
   const [locationLabel, setLocationLabel] = useState<string | null>(
     isShopOrShaper
       ? (profile?.business_profiles?.location_label ?? null)
       : (profile?.location_label ?? null),
   );
-  const [isChanging, setIsChanging] = useState(!hasLocation);
+  const [isEditingLocation, setIsEditingLocation] = useState(!hasLocation);
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { refreshSession } = useAuth();
+  const { refreshProfile } = useAuth();
 
   useEffect(() => {
     const savedLabel = isShopOrShaper
@@ -49,7 +49,22 @@ export default function StepLocation({
     if (savedLabel) {
       setLocationLabel(savedLabel);
       updateField('location_label', savedLabel);
-      setIsChanging(false);
+
+      if (
+        isShopOrShaper &&
+        profile?.business_profiles?.lat &&
+        profile?.business_profiles?.lng
+      ) {
+        updateField('lat', profile.business_profiles.lat);
+        updateField('lng', profile.business_profiles.lng);
+        setIsEditingLocation(false);
+      } else if (!isShopOrShaper && profile?.lat && profile?.lng) {
+        updateField('lat', profile.lat);
+        updateField('lng', profile.lng);
+        setIsEditingLocation(false);
+      } else {
+        setIsEditingLocation(true);
+      }
     }
   }, [profile]);
 
@@ -70,18 +85,18 @@ export default function StepLocation({
       });
       const label = `${result.city}, ${result.region}`;
       setLocationLabel(label);
-      setIsChanging(false);
+      setIsEditingLocation(false);
       updateField('lat', latitude);
       updateField('lng', longitude);
       updateField('location_label', label);
 
       if (profile?.id) {
-        if (isShopOrShaper && !profile.business_profiles?.location_label) {
+        if (isShopOrShaper && !profile.business_profiles?.lat) {
           await updateBusinessLocation(profile.id, latitude, longitude, label);
-        } else if (!isShopOrShaper && !profile?.location_label) {
+        } else if (!isShopOrShaper && !profile?.lat) {
           await updateUserLocation(profile.id, latitude, longitude, label);
         }
-        await refreshSession();
+        await refreshProfile();
       }
     } catch {
       setError('Could not get your location. Try again.');
@@ -107,18 +122,18 @@ export default function StepLocation({
       });
       const label = `${result.city}, ${result.region}`;
       setLocationLabel(label);
-      setIsChanging(false);
+      setIsEditingLocation(false);
       updateField('lat', latitude);
       updateField('lng', longitude);
       updateField('location_label', label);
 
       if (profile?.id) {
-        if (isShopOrShaper && !profile.business_profiles?.location_label) {
+        if (isShopOrShaper && !profile.business_profiles?.lat) {
           await updateBusinessLocation(profile.id, latitude, longitude, label);
-        } else if (!isShopOrShaper && !profile?.location_label) {
+        } else if (!isShopOrShaper && !profile?.lat) {
           await updateUserLocation(profile.id, latitude, longitude, label);
         }
-        await refreshSession();
+        await refreshProfile();
       }
     } catch {
       setError('Something went wrong. Try again.');
@@ -134,20 +149,20 @@ export default function StepLocation({
         <Text style={styles.hint}>Only your city will be shown to buyers.</Text>
 
         {/* Current location display */}
-        {locationLabel && !isChanging && (
+        {locationLabel && !isEditingLocation && (
           <View style={styles.locationCard}>
             <View style={styles.locationRow}>
               <Ionicons name='location' size={18} color={Colors.accent} />
               <Text style={styles.locationText}>{locationLabel}</Text>
             </View>
-            <TouchableOpacity onPress={() => setIsChanging(true)}>
+            <TouchableOpacity onPress={() => setIsEditingLocation(true)}>
               <Text style={styles.changeText}>Change</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Change location options */}
-        {isChanging && (
+        {isEditingLocation && (
           <View style={styles.changeOptions}>
             {/* GPS button */}
             <TouchableOpacity
@@ -197,7 +212,7 @@ export default function StepLocation({
 
             {/* Cancel if they already have a location */}
             {locationLabel && (
-              <TouchableOpacity onPress={() => setIsChanging(false)}>
+              <TouchableOpacity onPress={() => setIsEditingLocation(false)}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
             )}
