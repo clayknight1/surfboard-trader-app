@@ -93,6 +93,11 @@ export default function BrowseScreen() {
     enabled: !!userId,
   });
 
+  useEffect(() => {
+    if (data?.length) {
+    }
+  }, [data]);
+
   if (isError) {
     return <Text>Something went wrong</Text>;
   }
@@ -159,7 +164,7 @@ export default function BrowseScreen() {
             paddingBottom: Spacing.xxl,
             rowGap: Spacing.cardGap,
           }}
-          data={isFetching ? skeletonData : (data ?? [])}
+          data={isFetching && !data?.length ? skeletonData : (data ?? [])}
           renderItem={({ item }) =>
             isFetching ? (
               <ListingCardSkeleton />

@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { ListingCardData, PublicListing, PublicProfile, User } from '../types';
+import { getTransformUrl } from '../utils';
 
 export async function getUserProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
@@ -73,7 +74,7 @@ export async function uploadAvatar(
     throw new Error(error.message);
   }
 
-  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  return getTransformUrl('avatars', path, 160);
 }
 
 export async function getPublicProfile(userId: string): Promise<PublicProfile> {
@@ -113,9 +114,7 @@ export async function getPublicListings(
     return {
       ...listing,
       primary_photo: primaryPhoto
-        ? supabase.storage
-            .from('listings')
-            .getPublicUrl(primaryPhoto.storage_path).data.publicUrl
+        ? getTransformUrl('listings', primaryPhoto.storage_path, 400)
         : null,
       distance_miles: 0,
     } as unknown as ListingCardData;

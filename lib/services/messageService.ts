@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { ThreadMessage, ThreadPreview } from '../types';
+import { getTransformUrl } from '../utils';
 
 export async function sendMessage(
   senderId: string,
@@ -42,9 +43,7 @@ export async function getInbox(userId: string): Promise<ThreadPreview[]> {
         listing_photos:
           thread.listing.listing_photos?.map((photo: any) => ({
             ...photo,
-            storage_path: supabase.storage
-              .from('listings')
-              .getPublicUrl(photo.storage_path).data.publicUrl,
+            storage_path: getTransformUrl('listings', photo.storage_path, 160),
           })) ?? [],
       },
     })) as ThreadPreview[];

@@ -41,3 +41,14 @@ export async function processPhoto(
 
   return manipulated.uri;
 }
+
+export function getTransformUrl(
+  bucket: 'listings' | 'avatars',
+  path: string,
+  width: number,
+  quality = 60,
+): string {
+  const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const url = `${baseUrl}/storage/v1/render/image/public/${bucket}/${path}?width=${width}&quality=${quality}&resize=contain`;
+  return url;
+}

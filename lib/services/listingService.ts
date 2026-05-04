@@ -9,6 +9,7 @@ import {
 import * as FileSystem from 'expo-file-system';
 import { readAsStringAsync } from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
+import { getTransformUrl } from '../utils';
 
 export async function getListings(
   lat: number,
@@ -45,8 +46,7 @@ export async function getListings(
     return (data ?? []).map((listing: ListingCardData) => ({
       ...listing,
       primary_photo: listing.primary_photo
-        ? supabase.storage.from('listings').getPublicUrl(listing.primary_photo)
-            .data.publicUrl
+        ? getTransformUrl('listings', listing.primary_photo, 400)
         : null,
     }));
   } catch (err) {
@@ -75,9 +75,7 @@ export async function getListing(
   }
   const photos = data.listing_photos.map((photo: ListingPhoto) => ({
     ...photo,
-    storage_path: supabase.storage
-      .from('listings')
-      .getPublicUrl(photo.storage_path).data.publicUrl,
+    storage_path: getTransformUrl('listings', photo.storage_path, 800),
   }));
   return { ...data, listing_photos: photos };
 }
@@ -102,9 +100,7 @@ export async function getListingsByUser(
     ...listing,
     listing_photos: listing.listing_photos.map((photo: ListingPhoto) => ({
       ...photo,
-      storage_path: supabase.storage
-        .from('listings')
-        .getPublicUrl(photo.storage_path).data.publicUrl,
+      storage_path: getTransformUrl('listings', photo.storage_path, 160),
     })),
   }));
 }

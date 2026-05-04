@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
-import { processPhoto } from '../../lib/utils';
+import { getTransformUrl, processPhoto } from '../../lib/utils';
 import Screen from '../../components/ui/Screen';
 import AuthInput from '../../components/ui/AuthInput';
 import Avatar from '../../components/ui/Avatar';
@@ -90,19 +90,25 @@ export default function BusinessProfileScreen() {
   }
 
   async function uploadLogo(): Promise<string | null> {
-    if (!logoUri || !userId) return existing?.logo_url ?? null;
+    if (!logoUri || !userId) {
+      return existing?.logo_url ?? null;
+    }
     const response = await fetch(logoUri);
     const arrayBuffer = await response.arrayBuffer();
     const path = `${userId}/logo.jpg`;
     const { error } = await supabase.storage
       .from('avatars')
       .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
-    if (error) throw new Error(error.message);
-    return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    if (error) {
+      throw new Error(error.message);
+    }
+    return getTransformUrl('avatars', path, 160);
   }
 
   async function handleSave() {
-    if (!businessName.trim() || !userId) return;
+    if (!businessName.trim() || !userId) {
+      return;
+    }
     setIsSaving(true);
     try {
       const logoUrl = await uploadLogo();

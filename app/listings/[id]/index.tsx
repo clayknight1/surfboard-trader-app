@@ -261,12 +261,13 @@ export default function ListingDetail() {
                   );
                   setActivePhotoIndex(index);
                 }}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                   <Image
                     source={{ uri: item.storage_path }}
                     style={styles.photo}
                     contentFit='contain'
                     transition={200}
+                    priority={index === 0 ? 'high' : 'low'}
                   />
                 )}
               />

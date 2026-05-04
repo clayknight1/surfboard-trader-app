@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getTransformUrl } from '../utils';
 
 export async function getSavedListings(userId: string) {
   const { data, error } = await supabase
@@ -40,9 +41,7 @@ export async function getSavedListings(userId: string) {
     return {
       ...listing,
       primary_photo: primaryPhoto
-        ? supabase.storage
-            .from('listings')
-            .getPublicUrl(primaryPhoto.storage_path).data.publicUrl
+        ? getTransformUrl('listings', primaryPhoto.storage_path, 400)
         : null,
       distance_miles: 0,
     };

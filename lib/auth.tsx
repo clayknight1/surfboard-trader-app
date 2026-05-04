@@ -107,7 +107,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.id]);
 
   async function refreshSession() {
-    const start = Date.now();
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
