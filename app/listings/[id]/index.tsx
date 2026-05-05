@@ -6,7 +6,6 @@ import {
   Dimensions,
   FlatList,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -34,6 +33,7 @@ import {
   unsaveListing,
 } from '../../../lib/services/savedService';
 import * as Haptics from 'expo-haptics';
+import ImageViewing from 'react-native-image-viewing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -45,6 +45,8 @@ export default function ListingDetail() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -330,6 +332,19 @@ export default function ListingDetail() {
               />
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            style={[styles.expandButton]}
+            onPress={() => {
+              setLightboxIndex(activePhotoIndex);
+              setLightboxOpen(true);
+            }}
+          >
+            <Ionicons
+              name='expand-outline'
+              size={18}
+              color={Colors.backgroundCard}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Content */}
@@ -573,6 +588,13 @@ export default function ListingDetail() {
         title='Sign in to message sellers'
         subtitle='Create a free account to contact sellers and buy boards'
       />
+
+      <ImageViewing
+        images={photos.map((p) => ({ uri: p.storage_path }))}
+        imageIndex={lightboxIndex}
+        visible={lightboxOpen}
+        onRequestClose={() => setLightboxOpen(false)}
+      />
     </View>
   );
 }
@@ -637,7 +659,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    left: 46,
+    left: 36,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -647,7 +669,18 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     position: 'absolute',
-    right: 46,
+    right: 36,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expandButton: {
+    position: 'absolute',
+    left: 36,
+    bottom: 14,
     width: 36,
     height: 36,
     borderRadius: 18,

@@ -19,6 +19,7 @@ import {
 } from '../../lib/services/listingService';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import { usePostHog } from 'posthog-react-native';
 
 const TOTAL_STEPS = 6;
 
@@ -30,6 +31,7 @@ export default function CreateListing() {
   const [step, setStep] = useState<number>(1);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const posthog = usePostHog();
   const [formData, setFormData] = useState<ListingFormData>({
     listing_type: 'for_sale',
     title: '',
@@ -77,6 +79,14 @@ export default function CreateListing() {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      posthog.capture('listing_created', {
+        board_type: formData.board_type ?? null,
+        listing_type: formData.listing_type ?? null,
+        has_volume: formData.volume !== null,
+        photo_count: photos.length,
+      });
+
       router.replace(`/listings/${listingId}`);
     } catch (err) {
       console.error('Error creating listing:', err);

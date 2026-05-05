@@ -81,7 +81,7 @@ export default function ProfileScreen() {
     );
   }
 
-  if (loading) {
+  if (loading || (userId && !profile)) {
     return (
       <Screen>
         <View style={styles.centered}>

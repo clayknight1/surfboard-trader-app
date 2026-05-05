@@ -32,10 +32,7 @@ export async function processPhoto(
 
   const manipulated = await ImageManipulator.manipulateAsync(
     uri,
-    [
-      { crop: { originX, originY, width: cropWidth, height: cropHeight } },
-      { resize: { width: 1200 } },
-    ],
+    [{ resize: { width: 1200 } }],
     { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
   );
 
@@ -52,3 +49,4 @@ export function getTransformUrl(
   const url = `${baseUrl}/storage/v1/render/image/public/${bucket}/${path}?width=${width}&quality=${quality}&resize=contain`;
   return url;
 }
+console;

@@ -34,12 +34,14 @@ export default function UserProfileScreen() {
     queryKey: ['publicProfile', userId],
     queryFn: () => getPublicProfile(userId),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: listings, isPending: listingsPending } = useQuery({
     queryKey: ['publicListings', userId],
     queryFn: () => getPublicListings(userId),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: savedIds } = useQuery({

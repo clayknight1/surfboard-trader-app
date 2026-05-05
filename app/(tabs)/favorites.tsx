@@ -26,7 +26,7 @@ export default function FavoritesScreen() {
     queryKey: ['savedListings', userId],
     queryFn: () => getSavedListings(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 5,
   });
   if (loading) {
     return null;

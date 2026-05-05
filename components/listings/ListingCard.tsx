@@ -14,6 +14,7 @@ import { saveListing, unsaveListing } from '../../lib/services/savedService';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import { getListing } from '../../lib/services/listingService';
 
 type ListingCardProps = {
   listing: ListingCardData;
@@ -45,6 +46,12 @@ export default function ListingCard({
   }, [savedIds, listing.id]);
 
   function onSelect(): void {
+    queryClient.prefetchQuery({
+      queryKey: ['listing', listing.id],
+      queryFn: () => getListing(listing.id),
+      staleTime: 1000 * 60 * 5,
+    });
+
     router.push(`/listings/${listing.id}`);
   }
 

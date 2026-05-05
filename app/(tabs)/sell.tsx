@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   View,
   Text,
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -36,7 +35,7 @@ export default function SellScreen() {
     queryKey: ['userListings', userId],
     queryFn: () => getListingsByUser(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 5,
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
@@ -45,7 +44,13 @@ export default function SellScreen() {
     queryKey: ['userListingCount', userId],
     queryFn: () => getUserListingCount(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const sortedData = data?.sort((a, b) => {
+    if (a.status === 'sold' && b.status !== 'sold') return 1;
+    if (a.status !== 'sold' && b.status === 'sold') return -1;
+    return 0;
   });
 
   async function handleRefresh() {
@@ -91,7 +96,7 @@ export default function SellScreen() {
     );
   }
 
-  const isEmpty = !isPending && (!data || data.length === 0);
+  const isEmpty = !isPending && (!sortedData || sortedData.length === 0);
 
   return (
     <Screen>
@@ -133,7 +138,7 @@ export default function SellScreen() {
         </View>
       ) : (
         <FlatList
-          data={isPending ? skeletonData : data}
+          data={isPending ? skeletonData : sortedData}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) =>

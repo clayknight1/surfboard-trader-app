@@ -7,6 +7,7 @@ import { AuthProvider } from '../lib/auth';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PostHogProvider } from 'posthog-react-native';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -18,6 +19,21 @@ import {
   SpaceMono_700Bold,
 } from '@expo-google-fonts/space-mono';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: process.env.EXPO_ROUTER_IMPORT_MODEEXPO_PUBLIC_SENTRY_DSN,
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: false,
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,7 +49,7 @@ const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
 });
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -49,16 +65,21 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister }}
+      <PostHogProvider
+        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY!}
+        options={{ host: 'https://us.i.posthog.com' }}
       >
-        <SafeAreaProvider>
-          <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }} />
-          </AuthProvider>
-        </SafeAreaProvider>
-      </PersistQueryClientProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister }}
+        >
+          <SafeAreaProvider>
+            <AuthProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </AuthProvider>
+          </SafeAreaProvider>
+        </PersistQueryClientProvider>
+      </PostHogProvider>
     </GestureHandlerRootView>
   );
-}
+});

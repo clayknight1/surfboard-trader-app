@@ -54,7 +54,16 @@
           "cameraPermission": "Allow Surfboard Trader to access your camera"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@sentry/react-native",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "surfboard-trader"
+        }
+      ]
     ],
     "extra": {
       "router": {},

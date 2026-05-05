@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -33,7 +26,6 @@ export default function MessagesScreen() {
     queryFn: () => getInbox(userId!),
     enabled: !!userId,
     refetchOnWindowFocus: true,
-    staleTime: 1000 * 30,
   });
 
   async function handleRefresh() {
