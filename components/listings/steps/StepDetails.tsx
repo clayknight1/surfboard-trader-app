@@ -28,6 +28,9 @@ export default function StepDetails({
   onBack,
   isEditing,
 }: StepProps) {
+  const canContinue =
+    formData.title.trim().length > 0 && formData.board_type !== null;
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -40,7 +43,7 @@ export default function StepDetails({
 
         {/* Title */}
         <View style={styles.field}>
-          <Text style={styles.label}>Title</Text>
+          <Text style={styles.label}>Title*</Text>
           <TextInput
             style={styles.input}
             value={formData.title ?? ''}
@@ -58,17 +61,6 @@ export default function StepDetails({
           options={SHAPER_BRAND_OPTIONS}
           placeholder='e.g. Channel Islands, Rusty, local shaper...'
         />
-        {/* <View style={styles.field}>
-          <Text style={styles.label}>Shaper / Brand</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.shaper_brand ?? ''}
-            onChangeText={(value) => updateField('shaper_brand', value)}
-            placeholder='e.g. Channel Islands, Rusty, Local shaper...'
-            placeholderTextColor={Colors.textSecondary}
-          />
-        </View> */}
-
         {/* Board Type */}
         <PillSelector
           label='Board Type'
@@ -96,7 +88,11 @@ export default function StepDetails({
 
       {/* Continue button pinned outside ScrollView */}
       {!isEditing && (
-        <TouchableOpacity style={[styles.nextButton]} onPress={onNext}>
+        <TouchableOpacity
+          style={[styles.nextButton, !canContinue && styles.nextButtonDisabled]}
+          onPress={onNext}
+          disabled={!canContinue}
+        >
           <Text style={styles.nextButtonText}>Continue</Text>
         </TouchableOpacity>
       )}
@@ -148,5 +144,8 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     fontFamily: Typography.fontBold,
     color: Colors.backgroundCard,
+  },
+  nextButtonDisabled: {
+    opacity: 0.4,
   },
 });

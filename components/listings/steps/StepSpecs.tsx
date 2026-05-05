@@ -33,7 +33,9 @@ export default function StepSpecs({
         <Stepper
           label='Volume'
           value={formData.volume ?? null}
-          onChange={(value) => updateField('volume', value)}
+          onChange={(value) =>
+            updateField('volume', value === 0 ? null : value)
+          }
           step={0.5}
           min={0}
           max={150}

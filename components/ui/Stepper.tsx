@@ -48,7 +48,8 @@ export default function Stepper({
     setInputValue(text);
     const parsed = parseFloat(text);
     if (!isNaN(parsed)) {
-      onChange(parsed);
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped === 0 ? null : clamped);
     } else {
       onChange(null);
     }

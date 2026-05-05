@@ -109,8 +109,8 @@ export async function createListing(
   formData: ListingFormData,
 ): Promise<string> {
   const length_inches =
-    formData.length_feet !== null && formData.length_inches_remainder !== null
-      ? formData.length_feet * 12 + formData.length_inches_remainder
+    formData.length_feet !== null
+      ? formData.length_feet * 12 + (formData.length_inches_remainder ?? 0)
       : null;
 
   try {
@@ -221,8 +221,8 @@ export async function updateListing(
   formData: ListingFormData,
 ): Promise<void> {
   const length_inches =
-    formData.length_feet !== null && formData.length_inches_remainder !== null
-      ? formData.length_feet * 12 + formData.length_inches_remainder
+    formData.length_feet !== null
+      ? formData.length_feet * 12 + (formData.length_inches_remainder ?? 0)
       : null;
 
   const { error } = await supabase
