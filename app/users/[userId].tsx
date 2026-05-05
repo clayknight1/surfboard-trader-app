@@ -66,6 +66,7 @@ export default function UserProfileScreen() {
       <TouchableOpacity
         style={[styles.backButton, { top: insets.top + 12 }]}
         onPress={() => router.back()}
+        hitSlop={10}
       >
         <Ionicons name='chevron-back' size={22} color={Colors.textPrimary} />
       </TouchableOpacity>

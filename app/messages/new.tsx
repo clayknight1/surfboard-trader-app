@@ -61,7 +61,7 @@ export default function NewThreadScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
             <Ionicons
               name='chevron-back'
               size={24}
@@ -97,6 +97,7 @@ export default function NewThreadScreen() {
             ]}
             onPress={handleSend}
             disabled={!messageText.trim() || isSending}
+            hitSlop={10}
           >
             {isSending ? (
               <ActivityIndicator size='small' color={Colors.backgroundCard} />

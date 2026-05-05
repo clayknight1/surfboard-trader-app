@@ -132,6 +132,11 @@ export default function ProfileScreen() {
                   : 'Free'}
               </Text>
             </View>
+            {isShopOrShaper && profile?.business_profiles?.business_name && (
+              <Text style={styles.shopIndicator}>
+                Managing {profile.business_profiles.business_name}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -314,6 +319,10 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     ...Typography.body,
+    color: Colors.textSecondary,
+  },
+  shopIndicator: {
+    ...Typography.caption,
     color: Colors.textSecondary,
   },
 });

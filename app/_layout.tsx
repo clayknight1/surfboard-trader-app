@@ -18,7 +18,6 @@ import {
   SpaceMono_700Bold,
 } from '@expo-google-fonts/space-mono';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
 
 SplashScreen.preventAutoHideAsync();
 

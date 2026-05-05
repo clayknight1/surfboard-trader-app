@@ -304,6 +304,7 @@ export default function ListingDetail() {
               { top: Platform.OS === 'android' ? insets.top : 12 },
             ]}
             onPress={() => router.back()}
+            hitSlop={10}
           >
             <Ionicons
               name='chevron-back'
@@ -320,6 +321,7 @@ export default function ListingDetail() {
                 { top: Platform.OS === 'android' ? insets.top : 12 },
               ]}
               onPress={handleToggleSave}
+              hitSlop={10}
             >
               <Ionicons
                 name={isSaved ? 'heart' : 'heart-outline'}

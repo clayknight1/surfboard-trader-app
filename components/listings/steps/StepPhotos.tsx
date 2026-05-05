@@ -149,7 +149,7 @@ export default function StepPhotos({
         <TouchableOpacity
           style={styles.removeButton}
           onPress={() => removePhoto(item.index)}
-          hitSlop={8}
+          hitSlop={10}
         >
           <Ionicons name='close' size={12} color={Colors.textPrimary} />
         </TouchableOpacity>

@@ -62,7 +62,7 @@ export default function BlockedUsersScreen() {
     <Screen>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
           <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Blocked Users</Text>

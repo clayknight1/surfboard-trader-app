@@ -101,7 +101,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
     getUserProfile(session.user.id).then(setProfile);
     fetchUnreadCount(session.user.id).then(setUnreadCount);
   }, [session?.user?.id]);

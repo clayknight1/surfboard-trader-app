@@ -115,10 +115,13 @@ export default function FilterPanel({
             {activeFilter ? FILTER_LABELS[activeFilter] : ''}
           </Text>
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => openFilter && onReset(openFilter)}>
+            <TouchableOpacity
+              onPress={() => openFilter && onReset(openFilter)}
+              hitSlop={10}
+            >
               <Text style={styles.resetText}>Reset</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} hitSlop={10}>
               <Ionicons name='close' size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>

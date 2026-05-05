@@ -148,6 +148,7 @@ export default function ListingCard({
           <TouchableOpacity
             style={styles.heartButton}
             onPress={handleToggleSave}
+            hitSlop={10}
           >
             <Ionicons
               name={isSaved ? 'heart' : 'heart-outline'}

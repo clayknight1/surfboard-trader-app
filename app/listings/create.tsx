@@ -119,6 +119,7 @@ export default function CreateListing() {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => (step === 1 ? router.back() : setStep(step - 1))}
+          hitSlop={10}
         >
           <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
