@@ -49,4 +49,8 @@ export function getTransformUrl(
   const url = `${baseUrl}/storage/v1/render/image/public/${bucket}/${path}?width=${width}&quality=${quality}&resize=contain`;
   return url;
 }
-console;
+
+export function displayName(name: string | null | undefined): string {
+  if (!name || !name.trim()) return 'No name set';
+  return name.trim();
+}

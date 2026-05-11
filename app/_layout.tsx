@@ -22,7 +22,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
-  dsn: process.env.EXPO_ROUTER_IMPORT_MODEEXPO_PUBLIC_SENTRY_DSN,
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -71,7 +71,7 @@ export default Sentry.wrap(function RootLayout() {
       >
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister }}
+          persistOptions={{ persister, buster: 'v4' }}
         >
           <SafeAreaProvider>
             <AuthProvider>

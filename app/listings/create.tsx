@@ -20,6 +20,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { usePostHog } from 'posthog-react-native';
+import * as Sentry from '@sentry/react-native';
 
 const TOTAL_STEPS = 6;
 
@@ -78,7 +79,15 @@ export default function CreateListing() {
       await uploadListingPhotos(listingId, userId!, photos);
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      } catch (err) {
+        Sentry.captureException(err, {
+          extra: { context: 'haptics_notification' },
+        });
+      }
 
       posthog.capture('listing_created', {
         board_type: formData.board_type ?? null,
@@ -90,6 +99,14 @@ export default function CreateListing() {
       router.replace(`/listings/${listingId}`);
     } catch (err) {
       console.error('Error creating listing:', err);
+      Sentry.captureException(err, {
+        extra: {
+          formData,
+          hasPhotos: photos.length > 0,
+          photoCount: photos.length,
+          listingId,
+        },
+      });
       if (listingId) {
         try {
           await deleteListing(listingId, userId!);

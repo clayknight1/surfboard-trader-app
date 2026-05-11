@@ -55,6 +55,11 @@ export default function ApplyScreen() {
     }
     setError('');
 
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;

@@ -22,6 +22,7 @@ import ListingCard from '../../components/listings/ListingCard';
 import { ListingCardData } from '../../lib/types';
 import { getSavedListingIds } from '../../lib/services/savedService';
 import { useAuth } from '../../lib/auth';
+import { displayName } from '../../lib/utils';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -101,8 +102,9 @@ export default function UserProfileScreen() {
             <View style={styles.nameRow}>
               <Text style={styles.name}>
                 {isShopOrShaper
-                  ? (businessProfile?.business_name ?? profile?.full_name)
-                  : (profile?.full_name ?? 'Unknown')}
+                  ? (businessProfile?.business_name ??
+                    displayName(profile?.full_name))
+                  : displayName(profile?.full_name)}
               </Text>
               {isShopOrShaper && (
                 <Ionicons

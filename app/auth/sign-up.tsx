@@ -33,34 +33,36 @@ export default function SignUp() {
   }, [session]);
 
   async function handleSignUp() {
-    setLoading(true);
     setError('');
+
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       return;
     }
 
     if (!birthYear) {
       setError('Please enter your birth year.');
-      setLoading(false);
       return;
     }
 
     const age = new Date().getFullYear() - parseInt(birthYear);
     if (age < 13) {
       setError('You must be at least 13 years old to create an account.');
-      setLoading(false);
       return;
     }
+    setLoading(false);
 
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName },
+          data: { full_name: fullName.trim() },
         },
       });
       if (error) setError(error.message);
@@ -90,7 +92,7 @@ export default function SignUp() {
         {/* Form */}
         <View style={styles.form}>
           <AuthInput
-            label='Full Name'
+            label='Full Name *'
             value={fullName}
             onChangeText={setFullName}
             placeholder='John Doe'

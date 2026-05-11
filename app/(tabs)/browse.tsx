@@ -1,19 +1,23 @@
 import {
   Text,
-  FlatList,
   View,
   RefreshControl,
   TouchableOpacity,
   Linking,
   StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   keepPreviousData,
   useQuery,
   useQueryClient,
+  useInfiniteQuery,
 } from '@tanstack/react-query';
+import { buildFeed, FeedItem } from '../../lib/feedUtils';
 import { FilterState, ListingCardData } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
 import { Colors, Spacing, Typography } from '../../constants';
@@ -25,6 +29,8 @@ import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { useAuth } from '../../lib/auth';
 import { getSavedListingIds } from '../../lib/services/savedService';
 import { Ionicons } from '@expo/vector-icons';
+
+const PAGE_SIZE = 20;
 
 export default function BrowseScreen() {
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
@@ -49,7 +55,8 @@ export default function BrowseScreen() {
   });
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const skeletonData = Array.from({ length: 6 }, (_, i) => ({
+  const skeletonData: FeedItem[] = Array.from({ length: 6 }, (_, i) => ({
+    type: 'skeleton' as const,
     id: `skeleton-${i}`,
   }));
   const queryClient = useQueryClient();
@@ -79,13 +86,29 @@ export default function BrowseScreen() {
     };
   }, []);
 
-  const { isFetching, isError, data } = useQuery({
-    queryKey: ['listings', location, filters],
-    queryFn: () => getListings(location.lat, location.lng, filters, userId),
-    placeholderData: keepPreviousData,
-    enabled: !!location,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { isPending, isFetching, isError, data, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ['listings', location, filters],
+      queryFn: ({ pageParam = 0 }) =>
+        getListings(
+          location.lat,
+          location.lng,
+          filters,
+          userId,
+          PAGE_SIZE,
+          pageParam as number,
+        ),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (!lastPage || lastPage.length < PAGE_SIZE) {
+          return undefined;
+        }
+        return allPages.length * PAGE_SIZE;
+      },
+      placeholderData: keepPreviousData,
+      enabled: !!location,
+      staleTime: 1000 * 60 * 5,
+    });
 
   const { data: savedIds } = useQuery({
     queryKey: ['savedIds', userId],
@@ -93,14 +116,30 @@ export default function BrowseScreen() {
     enabled: !!userId,
   });
 
-  useEffect(() => {
-    if (data?.length) {
-    }
-  }, [data]);
+  const feedItems = useMemo(() => buildFeed(data?.pages.flat() ?? []), [data]);
 
-  if (isError) {
-    return <Text>Something went wrong</Text>;
-  }
+  const renderItem = useCallback(
+    ({ item }: { item: FeedItem }) => {
+      if (item.type === 'skeleton') return <ListingCardSkeleton />;
+      if (item.type === 'listing' || item.type === 'boosted') {
+        return (
+          <ListingCard
+            listing={item.data}
+            userId={userId}
+            savedIds={savedIds ?? []}
+          />
+        );
+      }
+      return null;
+    },
+    [userId, savedIds],
+  );
+
+  const keyExtractor = useCallback(
+    (item: FeedItem) =>
+      item.type === 'skeleton' ? item.id : `${item.type}-${item.data.id}`,
+    [],
+  );
 
   function handleFilterPress(key: FilterKey) {
     setOpenFilter((prev) => (prev === key ? null : key));
@@ -124,11 +163,25 @@ export default function BrowseScreen() {
     }, 500);
   }
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['listings'] });
+    await queryClient.resetQueries({ queryKey: ['listings'] });
     setIsRefreshing(false);
-  }
+  }, [queryClient]);
+
+  // if (isError) {
+  //   return (
+  //     <Screen>
+  //       <View
+  //         style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+  //       >
+  //         <Text style={{ color: Colors.textSecondary }}>
+  //           Something went wrong. Pull down to try again.
+  //         </Text>
+  //       </View>
+  //     </Screen>
+  //   );
+  // }
 
   return (
     <Screen>
@@ -158,31 +211,59 @@ export default function BrowseScreen() {
         <FlatList
           numColumns={2}
           columnWrapperStyle={{ gap: Spacing.cardGap }}
+          onEndReached={() => {
+            if (hasNextPage && !isFetching) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetching && feedItems.some((i) => i.type === 'listing') ? (
+              <ActivityIndicator
+                color={Colors.accent}
+                style={{ paddingVertical: Spacing.xl }}
+              />
+            ) : null
+          }
           contentContainerStyle={{
             paddingHorizontal: Spacing.screenPadding,
             paddingTop: Spacing.screenPadding,
             paddingBottom: Spacing.xxl,
             rowGap: Spacing.cardGap,
           }}
-          data={isFetching && !data?.length ? skeletonData : (data ?? [])}
-          renderItem={({ item }) =>
-            isFetching ? (
-              <ListingCardSkeleton />
-            ) : (
-              <ListingCard
-                listing={item as ListingCardData}
-                userId={userId}
-                savedIds={savedIds ?? []}
-              />
-            )
+          data={
+            isFetching && !feedItems.some((i) => i.type === 'listing')
+              ? skeletonData
+              : feedItems
           }
-          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
               tintColor={Colors.accent}
             />
+          }
+          ListEmptyComponent={
+            isError ? (
+              <View
+                style={{
+                  height: Dimensions.get('window').height * 0.6,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: Spacing.screenPadding,
+                }}
+              >
+                <Text
+                  style={{
+                    ...Typography.body,
+                    color: Colors.textSecondary,
+                    textAlign: 'center',
+                  }}
+                >
+                  Something went wrong. Pull down to try again.
+                </Text>
+              </View>
+            ) : null
           }
         />
         <FilterPanel

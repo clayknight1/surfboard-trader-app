@@ -18,6 +18,7 @@ import { useState } from 'react';
 import LocationSheet from '../../components/ui/LocationSheet';
 import { supabase } from '../../lib/supabase';
 import { submitDeletionRequest } from '../../lib/services/userService';
+import { displayName } from '../../lib/utils';
 
 type SettingsRowProps = {
   label: string;
@@ -122,9 +123,7 @@ export default function ProfileScreen() {
             size={72}
           />
           <View style={styles.identityText}>
-            <Text style={styles.name}>
-              {profile?.full_name ?? 'No name set'}
-            </Text>
+            <Text style={styles.name}>{displayName(profile?.full_name)}</Text>
             <View style={styles.tierBadge}>
               <Text style={styles.tierText}>
                 {profile?.tier

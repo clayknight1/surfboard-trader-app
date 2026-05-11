@@ -83,7 +83,13 @@ export default function EditProfileScreen() {
   }
 
   async function handleSave() {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      return;
+    }
+    if (!fullName.trim()) {
+      Alert.alert('Name required', 'Please enter your full name.');
+      return;
+    }
     setIsSaving(true);
     try {
       let avatarUrl = profile.avatar_url;
@@ -93,7 +99,7 @@ export default function EditProfileScreen() {
       }
 
       await updateUserProfile(profile.id, {
-        full_name: fullName,
+        full_name: fullName.trim(),
         avatar_url: avatarUrl ?? undefined,
       });
 

@@ -34,6 +34,7 @@ import {
 } from '../../../lib/services/savedService';
 import * as Haptics from 'expo-haptics';
 import ImageViewing from 'react-native-image-viewing';
+import { displayName } from '../../../lib/utils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -217,7 +218,18 @@ export default function ListingDetail() {
 
   if (isError || !data) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            position: 'absolute',
+            top: insets.top + 12,
+            left: Spacing.screenPadding,
+          }}
+          hitSlop={10}
+        >
+          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
         <Text style={styles.errorText}>Something went wrong</Text>
       </View>
     );
@@ -226,9 +238,10 @@ export default function ListingDetail() {
   const hasPhotos = photos.length > 0;
   const isBusinessAccount =
     data.users?.role === 'shop' || data.users?.role === 'shaper';
-  const displayName = isBusinessAccount
-    ? (data.users?.business_profiles?.business_name ?? data.users?.full_name)
-    : data.users?.full_name;
+  const sellerName = isBusinessAccount
+    ? (data.users?.business_profiles?.business_name ??
+      displayName(data.users?.full_name))
+    : displayName(data.users?.full_name);
 
   return (
     <View style={styles.container}>
@@ -490,7 +503,7 @@ export default function ListingDetail() {
                 />
                 <View style={styles.sellerInfo}>
                   <Text style={styles.sellerName}>
-                    {displayName ?? 'Unknown'}
+                    {sellerName ?? 'Unknown'}
                   </Text>
                   <Text style={styles.sellerMeta}>Tap to see all listings</Text>
                 </View>

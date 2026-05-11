@@ -19,6 +19,7 @@ import Screen from '../../components/ui/Screen';
 import Avatar from '../../components/ui/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { displayName } from '../../lib/utils';
 
 export default function BlockedUsersScreen() {
   const { session } = useAuth();
@@ -85,11 +86,11 @@ export default function BlockedUsersScreen() {
                 fullName={item.full_name ?? null}
                 size={40}
               />
-              <Text style={styles.name}>{item.full_name ?? 'Unknown'}</Text>
+              <Text style={styles.name}>{displayName(item.full_name)}</Text>
               <TouchableOpacity
                 style={styles.unblockButton}
                 onPress={() =>
-                  handleUnblock(item.id, item.full_name ?? 'this user')
+                  handleUnblock(item.id, item.full_name?.trim() || 'this user')
                 }
               >
                 <Text style={styles.unblockText}>Unblock</Text>

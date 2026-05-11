@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, Spacing, Typography } from '../../constants';
 import { ThreadPreview } from '../../lib/types';
 import Avatar from '../ui/Avatar';
+import { displayName } from '../../lib/utils';
 
 type ThreadRowProps = {
   thread: ThreadPreview;
@@ -35,14 +36,14 @@ export default function ThreadRow({
   return (
     <TouchableOpacity style={styles.row} onPress={onPress}>
       <Avatar
-        avatarUrl={otherUser.avatar_url}
-        fullName={otherUser.full_name}
+        avatarUrl={otherUser.avatar_url ?? null}
+        fullName={otherUser.full_name ?? null}
         size={44}
       />
       <View style={styles.content}>
         <View style={styles.topRow}>
           <Text style={styles.name} numberOfLines={1}>
-            {otherUser.full_name ?? 'Unknown'}
+            {displayName(otherUser.full_name)}
           </Text>
           <Text style={styles.time}>{formatTime(thread.last_message_at)}</Text>
         </View>

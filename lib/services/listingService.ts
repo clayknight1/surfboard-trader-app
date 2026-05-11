@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import * as Sentry from '@sentry/react-native';
 import {
   FilterState,
   ListingCardData,
@@ -16,6 +17,8 @@ export async function getListings(
   lng: number,
   filters: FilterState,
   userId?: string,
+  limit: number = 20,
+  offset: number = 0,
 ): Promise<ListingCardData[]> {
   try {
     const { data, error } = await supabase.rpc('get_listings_nearby', {
@@ -31,6 +34,8 @@ export async function getListings(
       p_length_min: filters.lengthMin ?? undefined,
       p_length_max: filters.lengthMax ?? undefined,
       p_user_id: userId ?? null,
+      p_limit: limit,
+      p_offset: offset,
     });
 
     if (error) {
@@ -40,7 +45,16 @@ export async function getListings(
         error.code,
         error.details,
       );
-      return [];
+      Sentry.captureException(new Error(error.message), {
+        extra: {
+          code: error.code,
+          details: error.details,
+          lat,
+          lng,
+          offset,
+        },
+      });
+      throw new Error(error.message);
     }
 
     return (data ?? []).map((listing: ListingCardData) => ({
@@ -51,7 +65,7 @@ export async function getListings(
     }));
   } catch (err) {
     console.error('Error fetching listings:', err);
-    return [];
+    throw err;
   }
 }
 
