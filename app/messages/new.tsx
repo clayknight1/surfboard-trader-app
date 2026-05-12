@@ -16,6 +16,7 @@ import { sendMessage } from '../../lib/services/messageService';
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 
 export default function NewThreadScreen() {
   const { listingId, sellerId } = useLocalSearchParams<{
@@ -44,6 +45,7 @@ export default function NewThreadScreen() {
       }
     } catch (err) {
       console.error('Error sending message:', err);
+      Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not send your message. Please try again.',
@@ -100,7 +102,7 @@ export default function NewThreadScreen() {
             hitSlop={10}
           >
             {isSending ? (
-              <ActivityIndicator size='small' color={Colors.backgroundCard} />
+              <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Ionicons
                 name='arrow-up'

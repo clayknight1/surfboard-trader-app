@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import * as Sentry from '@sentry/react-native';
 
 export async function blockUser(
   blockerId: string,
@@ -38,6 +39,7 @@ export async function getBlockedUsers(userId: string): Promise<string[]> {
 
   if (error) {
     console.error('Error fetching blocked users:', error);
+    Sentry.captureException(new Error(error.message));
     return [];
   }
 
@@ -55,7 +57,10 @@ export async function isUserBlocked(
     .eq('blocked_id', blockedId)
     .maybeSingle();
 
-  if (error) return false;
+  if (error) {
+    Sentry.captureException(new Error(error.message));
+    return false;
+  }
   return !!data;
 }
 
@@ -88,6 +93,7 @@ export async function getBlockedUsersWithProfiles(userId: string) {
 
   if (error) {
     console.error('Error fetching blocked users:', error);
+    Sentry.captureException(new Error(error.message));
     return [];
   }
 

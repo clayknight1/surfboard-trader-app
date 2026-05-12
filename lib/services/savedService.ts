@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getTransformUrl } from '../utils';
+import * as Sentry from '@sentry/react-native';
 
 export async function getSavedListings(userId: string) {
   const { data, error } = await supabase
@@ -89,7 +90,11 @@ export async function isListingSaved(
     .eq('listing_id', listingId)
     .maybeSingle();
 
-  if (error) return false;
+  if (error) {
+    console.error('Error checking saved status:', error);
+    Sentry.captureException(new Error(error.message));
+    return false;
+  }
   return !!data;
 }
 
@@ -99,6 +104,10 @@ export async function getSavedListingIds(userId: string): Promise<string[]> {
     .select('listing_id')
     .eq('user_id', userId);
 
-  if (error) return [];
+  if (error) {
+    console.error('Error fetching saved IDs:', error);
+    Sentry.captureException(new Error(error.message));
+    return [];
+  }
   return data.map((row) => row.listing_id);
 }

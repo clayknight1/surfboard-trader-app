@@ -55,7 +55,7 @@ export default function SignUp() {
       setError('You must be at least 13 years old to create an account.');
       return;
     }
-    setLoading(false);
+    setLoading(true);
 
     try {
       const { error } = await supabase.auth.signUp({
@@ -144,7 +144,7 @@ export default function SignUp() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.backgroundCard} />
+              <ActivityIndicator color={Colors.accent} />
             ) : (
               <Text style={styles.buttonText}>Create Account</Text>
             )}

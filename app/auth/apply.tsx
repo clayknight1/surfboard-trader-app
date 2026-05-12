@@ -17,6 +17,7 @@ import AuthInput from '../../components/ui/AuthInput';
 import PillSelector from '../../components/ui/PillSelector';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 
 type BusinessType = 'shop' | 'shaper';
 
@@ -113,6 +114,7 @@ export default function ApplyScreen() {
         [{ text: 'OK', onPress: () => router.replace('/(tabs)/browse') }],
       );
     } catch (err: any) {
+      Sentry.captureException(err);
       setError(err.message ?? 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -238,7 +240,7 @@ export default function ApplyScreen() {
             disabled={!canSubmit || isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator color={Colors.backgroundCard} />
+              <ActivityIndicator color={Colors.accent} />
             ) : (
               <Text style={styles.buttonText}>Submit Application</Text>
             )}

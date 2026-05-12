@@ -90,7 +90,7 @@ export default function Login() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.backgroundCard} />
+              <ActivityIndicator color={Colors.accent} />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}

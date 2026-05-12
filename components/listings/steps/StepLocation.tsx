@@ -13,6 +13,7 @@ import { Colors, Spacing, Typography } from '../../../constants';
 import { updateUserLocation } from '../../../lib/services/userService';
 import { useAuth } from '../../../lib/auth';
 import { updateBusinessLocation } from '../../../lib/services/businessService';
+import * as Sentry from '@sentry/react-native';
 
 type StepLocationProps = StepProps & {
   profile: User | null;
@@ -83,7 +84,7 @@ export default function StepLocation({
         latitude,
         longitude,
       });
-      const label = `${result.city}, ${result.region}`;
+      const label = buildLocationLabel(result);
       setLocationLabel(label);
       setIsEditingLocation(false);
       updateField('lat', latitude);
@@ -91,14 +92,24 @@ export default function StepLocation({
       updateField('location_label', label);
 
       if (profile?.id) {
-        if (isShopOrShaper && !profile.business_profiles?.lat) {
-          await updateBusinessLocation(profile.id, latitude, longitude, label);
-        } else if (!isShopOrShaper && !profile?.lat) {
-          await updateUserLocation(profile.id, latitude, longitude, label);
+        try {
+          if (isShopOrShaper && !profile.business_profiles?.lat) {
+            await updateBusinessLocation(
+              profile.id,
+              latitude,
+              longitude,
+              label,
+            );
+          } else if (!isShopOrShaper && !profile?.lat) {
+            await updateUserLocation(profile.id, latitude, longitude, label);
+          }
+          await refreshProfile();
+        } catch (err) {
+          Sentry.captureException(err);
         }
-        await refreshProfile();
       }
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Could not get your location. Try again.');
     } finally {
       setIsLoading(false);
@@ -120,7 +131,7 @@ export default function StepLocation({
         latitude,
         longitude,
       });
-      const label = `${result.city}, ${result.region}`;
+      const label = buildLocationLabel(result);
       setLocationLabel(label);
       setIsEditingLocation(false);
       updateField('lat', latitude);
@@ -128,18 +139,37 @@ export default function StepLocation({
       updateField('location_label', label);
 
       if (profile?.id) {
-        if (isShopOrShaper && !profile.business_profiles?.lat) {
-          await updateBusinessLocation(profile.id, latitude, longitude, label);
-        } else if (!isShopOrShaper && !profile?.lat) {
-          await updateUserLocation(profile.id, latitude, longitude, label);
+        try {
+          if (isShopOrShaper && !profile.business_profiles?.lat) {
+            await updateBusinessLocation(
+              profile.id,
+              latitude,
+              longitude,
+              label,
+            );
+          } else if (!isShopOrShaper && !profile?.lat) {
+            await updateUserLocation(profile.id, latitude, longitude, label);
+          }
+          await refreshProfile();
+        } catch (err) {
+          Sentry.captureException(err);
         }
-        await refreshProfile();
       }
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Something went wrong. Try again.');
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function buildLocationLabel(
+    result: Location.LocationGeocodedAddress,
+  ): string {
+    const city =
+      result.city ?? result.subregion ?? result.district ?? 'Unknown';
+    const region = result.region ?? result.country ?? '';
+    return region ? `${city}, ${region}` : city;
   }
 
   return (

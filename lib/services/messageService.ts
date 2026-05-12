@@ -127,7 +127,7 @@ export async function getExistingThread(
 
   if (error) {
     console.error('Error fetching existing thread:', error);
-    return null;
+    throw new Error(error.message);
   }
 
   return data?.id ?? null;

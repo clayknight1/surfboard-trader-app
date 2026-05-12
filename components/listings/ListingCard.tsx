@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { getListing } from '../../lib/services/listingService';
+import * as Sentry from '@sentry/react-native';
 
 type ListingCardProps = {
   listing: ListingCardData;
@@ -100,16 +101,19 @@ export default function ListingCard({
     }
     const newState = !isSaved;
     setIsSaved(newState);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       if (newState) {
         await saveListing(userId, listing.id);
       } else {
         await unsaveListing(userId, listing.id);
       }
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch {}
       queryClient.invalidateQueries({ queryKey: ['savedIds'] });
       queryClient.invalidateQueries({ queryKey: ['savedListings'] });
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setIsSaved(!newState);
     }
   }

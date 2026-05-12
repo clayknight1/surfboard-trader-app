@@ -7,9 +7,6 @@ import {
   ListingPhoto,
   ListingWithPhotos,
 } from '../types';
-import * as FileSystem from 'expo-file-system';
-import { readAsStringAsync } from 'expo-file-system/legacy';
-import { decode } from 'base64-arraybuffer';
 import { getTransformUrl } from '../utils';
 
 export async function getListings(
@@ -159,7 +156,7 @@ export async function createListing(
 
     return data;
   } catch (err) {
-    console.error('Error updating location', err);
+    console.error('Error creating listing:', err);
     throw err;
   }
 }
@@ -212,6 +209,10 @@ export async function deleteListing(
   const { data: files, error: listError } = await supabase.storage
     .from('listings')
     .list(`${userId}/${listingId}`);
+
+  if (listError) {
+    throw new Error(listError.message);
+  }
 
   if (files && files.length > 0) {
     const paths = files.map((f) => `${userId}/${listingId}/${f.name}`);
@@ -306,7 +307,7 @@ export async function getUserListingCount(userId: string): Promise<number> {
 
   if (error) {
     console.error('Error fetching listing count:', error);
-    return 0;
+    throw new Error(error.message);
   }
 
   return count ?? 0;

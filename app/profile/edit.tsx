@@ -21,6 +21,7 @@ import Avatar from '../../components/ui/Avatar';
 import AuthInput from '../../components/ui/AuthInput';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 
 export default function EditProfileScreen() {
   const { profile, refreshProfile } = useAuth();
@@ -35,46 +36,63 @@ export default function EditProfileScreen() {
       {
         text: 'Camera',
         onPress: async () => {
-          const permission = await ImagePicker.requestCameraPermissionsAsync();
-          if (!permission.granted) {
+          try {
+            const permission =
+              await ImagePicker.requestCameraPermissionsAsync();
+            if (!permission.granted) {
+              Alert.alert(
+                'Permission required',
+                'Please allow camera access in Settings.',
+              );
+              return;
+            }
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              quality: 1,
+            });
+            if (!result.canceled) {
+              const { uri, width, height } = result.assets[0];
+              const processed = await processPhoto(uri, width, height);
+              setAvatarUri(processed);
+            }
+          } catch (err) {
+            Sentry.captureException(err);
             Alert.alert(
-              'Permission required',
-              'Please allow camera access in Settings.',
+              'Something went wrong',
+              'Could not take photo. Please try again.',
             );
-            return;
-          }
-          const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            quality: 1,
-          });
-          if (!result.canceled) {
-            const { uri, width, height } = result.assets[0];
-            const processed = await processPhoto(uri, width, height);
-            setAvatarUri(processed);
           }
         },
       },
       {
         text: 'Photo Library',
         onPress: async () => {
-          const permission =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (!permission.granted) {
+          try {
+            const permission =
+              await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permission.granted) {
+              Alert.alert(
+                'Permission required',
+                'Please allow access to your photo library in Settings.',
+              );
+              return;
+            }
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              allowsMultipleSelection: false,
+              quality: 1,
+            });
+            if (!result.canceled) {
+              const { uri, width, height } = result.assets[0];
+              const processed = await processPhoto(uri, width, height);
+              setAvatarUri(processed);
+            }
+          } catch (err) {
+            Sentry.captureException(err);
             Alert.alert(
-              'Permission required',
-              'Please allow access to your photo library in Settings.',
+              'Something went wrong',
+              'Could not select photo. Please try again.',
             );
-            return;
-          }
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsMultipleSelection: false,
-            quality: 1,
-          });
-          if (!result.canceled) {
-            const { uri, width, height } = result.assets[0];
-            const processed = await processPhoto(uri, width, height);
-            setAvatarUri(processed);
           }
         },
       },
@@ -105,7 +123,8 @@ export default function EditProfileScreen() {
 
       await refreshProfile();
       router.back();
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not save your profile. Please try again.',

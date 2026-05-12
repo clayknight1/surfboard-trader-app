@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { blockUser, submitReport } from '../../lib/services/blockService';
 import * as Haptics from 'expo-haptics';
+import * as Sentry from '@sentry/react-native';
 
 export default function ThreadScreen() {
   const { threadId, listingId } = useLocalSearchParams<{
@@ -53,9 +54,11 @@ export default function ThreadScreen() {
 
   useEffect(() => {
     if (resolvedThreadId && userId) {
-      markThreadRead(resolvedThreadId, userId).then(() => {
-        refreshUnreadCount();
-      });
+      markThreadRead(resolvedThreadId, userId)
+        .then(() => {
+          refreshUnreadCount();
+        })
+        .catch((err) => Sentry.captureException(err));
     }
   }, [resolvedThreadId, userId]);
 
@@ -93,7 +96,6 @@ export default function ThreadScreen() {
   async function handleSend() {
     if (!messageText.trim() || isSending) return;
     setIsSending(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await sendMessage(
         userId,
@@ -102,8 +104,16 @@ export default function ThreadScreen() {
         resolvedThreadId,
       );
       setMessageText('');
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {}
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
     } catch (err) {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not send your message. Please try again.',
+      );
       console.error('Error sending message:', err);
     } finally {
       setIsSending(false);
@@ -124,7 +134,8 @@ export default function ThreadScreen() {
               queryClient.invalidateQueries({ queryKey: ['inbox'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
               router.back();
-            } catch {
+            } catch (err) {
+              Sentry.captureException(err);
               Alert.alert('Something went wrong', 'Could not block user.');
             }
           },
@@ -137,19 +148,43 @@ export default function ThreadScreen() {
     Alert.alert('Report User', 'Why are you reporting this user?', [
       {
         text: 'Spam',
-        onPress: () => submitReport(userId, 'spam', otherUserId!),
+        onPress: async () => {
+          try {
+            await submitReport(userId, 'spam', otherUserId!);
+          } catch (err) {
+            Sentry.captureException(err);
+          }
+        },
       },
       {
         text: 'Inappropriate behavior',
-        onPress: () => submitReport(userId, 'inappropriate', otherUserId!),
+        onPress: async () => {
+          try {
+            await submitReport(userId, 'inappropriate', otherUserId!);
+          } catch (err) {
+            Sentry.captureException(err);
+          }
+        },
       },
       {
         text: 'Scam',
-        onPress: () => submitReport(userId, 'scam', otherUserId!),
+        onPress: async () => {
+          try {
+            await submitReport(userId, 'scam', otherUserId!);
+          } catch (err) {
+            Sentry.captureException(err);
+          }
+        },
       },
       {
         text: 'Other',
-        onPress: () => submitReport(userId, 'other', otherUserId!),
+        onPress: async () => {
+          try {
+            await submitReport(userId, 'other', otherUserId!);
+          } catch (err) {
+            Sentry.captureException(err);
+          }
+        },
       },
       { text: 'Cancel', style: 'cancel' },
     ]);
@@ -261,7 +296,7 @@ export default function ThreadScreen() {
             hitSlop={10}
           >
             {isSending ? (
-              <ActivityIndicator size='small' color={Colors.backgroundCard} />
+              <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Ionicons
                 name='arrow-up'

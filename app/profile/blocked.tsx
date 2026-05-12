@@ -20,6 +20,7 @@ import Avatar from '../../components/ui/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { displayName } from '../../lib/utils';
+import * as Sentry from '@sentry/react-native';
 
 export default function BlockedUsersScreen() {
   const { session } = useAuth();
@@ -43,11 +44,14 @@ export default function BlockedUsersScreen() {
           text: 'Unblock',
           onPress: async () => {
             try {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               await unblockUser(userId, blockedId);
+              try {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              } catch {}
               queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch {
+            } catch (err) {
+              Sentry.captureException(err);
               Alert.alert(
                 'Something went wrong',
                 'Could not unblock user. Please try again.',

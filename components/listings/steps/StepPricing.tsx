@@ -81,7 +81,7 @@ export default function StepPricing({
           disabled={isSubmitting || !canContinue}
         >
           {isSubmitting ? (
-            <ActivityIndicator color={Colors.backgroundCard} />
+            <ActivityIndicator color={Colors.accent} />
           ) : (
             <Text style={styles.nextButtonText}>Post listing</Text>
           )}

@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
@@ -35,6 +34,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import ImageViewing from 'react-native-image-viewing';
 import { displayName } from '../../../lib/utils';
+import * as Sentry from '@sentry/react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -124,14 +124,22 @@ export default function ListingDetail() {
       setSignInModalOpen(true);
       return;
     }
-    const existingThreadId = await getExistingThread(id, userId);
-    if (existingThreadId) {
-      router.push(`/messages/${existingThreadId}?listingId=${id}`);
-    } else {
-      router.push({
-        pathname: '/messages/new',
-        params: { listingId: id, sellerId: data?.user_id },
-      });
+    try {
+      const existingThreadId = await getExistingThread(id, userId);
+      if (existingThreadId) {
+        router.push(`/messages/${existingThreadId}?listingId=${id}`);
+      } else {
+        router.push({
+          pathname: '/messages/new',
+          params: { listingId: id, sellerId: data?.user_id },
+        });
+      }
+    } catch (err) {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not start a conversation. Please try again.',
+      );
     }
   }
 
@@ -146,8 +154,10 @@ export default function ListingDetail() {
           style: 'destructive',
           onPress: async () => {
             try {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
               await markListingAsSold(id);
+              try {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              } catch {}
               queryClient.invalidateQueries({ queryKey: ['listing', id] });
               queryClient.invalidateQueries({ queryKey: ['userListings'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
@@ -197,17 +207,19 @@ export default function ListingDetail() {
 
     const newSavedState = !isSaved;
     setIsSaved(newSavedState);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       if (newSavedState) {
         await saveListing(userId, id);
       } else {
         await unsaveListing(userId, id);
       }
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch {}
       queryClient.invalidateQueries({ queryKey: ['savedIds'] });
       queryClient.invalidateQueries({ queryKey: ['savedListings'] });
-    } catch {
-      console.error('Error toggling save');
+    } catch (err) {
+      Sentry.captureException(err);
       setIsSaved(!newSavedState);
     }
   }

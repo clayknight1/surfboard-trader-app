@@ -161,7 +161,7 @@ export default function LocationSheet({
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator size='small' color={Colors.backgroundCard} />
+              <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Ionicons name='search' size={18} color={Colors.backgroundCard} />
             )}

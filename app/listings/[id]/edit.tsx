@@ -25,6 +25,7 @@ import StepDetails from '../../../components/listings/steps/StepDetails';
 import StepSpecs from '../../../components/listings/steps/StepSpecs';
 import StepPricing from '../../../components/listings/steps/StepPricing';
 import StepLocation from '../../../components/listings/steps/StepLocation';
+import * as Sentry from '@sentry/react-native';
 
 export default function EditListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -115,7 +116,8 @@ export default function EditListingScreen() {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
       router.back();
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not save your listing. Please try again.',
@@ -140,7 +142,8 @@ export default function EditListingScreen() {
               router.replace('/(tabs)/sell');
               queryClient.invalidateQueries({ queryKey: ['userListings'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch {
+            } catch (err) {
+              Sentry.captureException(err);
               Alert.alert(
                 'Something went wrong',
                 'Could not delete your listing.',
@@ -155,6 +158,15 @@ export default function EditListingScreen() {
   if (isPending || !formData) {
     return (
       <Screen>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
+            <Ionicons
+              name='chevron-back'
+              size={24}
+              color={Colors.textPrimary}
+            />
+          </TouchableOpacity>
+        </View>
         <View style={styles.centered}>
           <ActivityIndicator color={Colors.accent} />
         </View>

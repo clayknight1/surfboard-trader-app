@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { ListingCardData, PublicListing, PublicProfile, User } from '../types';
 import { getTransformUrl } from '../utils';
+import * as Sentry from '@sentry/react-native';
 
 export async function getUserProfile(userId: string): Promise<User | null> {
   const { data, error } = await supabase
@@ -11,6 +12,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
 
   if (error) {
     console.error('Error fetching user profile:', error);
+    Sentry.captureException(new Error(error.message));
     return null;
   }
   return data;

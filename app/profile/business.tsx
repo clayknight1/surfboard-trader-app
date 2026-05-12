@@ -23,6 +23,7 @@ import {
   updateBusinessLocation,
   upsertBusinessProfile,
 } from '../../lib/services/businessService';
+import * as Sentry from '@sentry/react-native';
 
 export default function BusinessProfileScreen() {
   const router = useRouter();
@@ -57,31 +58,48 @@ export default function BusinessProfileScreen() {
       {
         text: 'Camera',
         onPress: async () => {
-          const permission = await ImagePicker.requestCameraPermissionsAsync();
-          if (!permission.granted) return;
-          const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            quality: 1,
-          });
-          if (!result.canceled) {
-            const { uri, width, height } = result.assets[0];
-            setLogoUri(await processPhoto(uri, width, height));
+          try {
+            const permission =
+              await ImagePicker.requestCameraPermissionsAsync();
+            if (!permission.granted) return;
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              quality: 1,
+            });
+            if (!result.canceled) {
+              const { uri, width, height } = result.assets[0];
+              setLogoUri(await processPhoto(uri, width, height));
+            }
+          } catch (err) {
+            Sentry.captureException(err);
+            Alert.alert(
+              'Something went wrong',
+              'Could not take photo. Please try again.',
+            );
           }
         },
       },
       {
         text: 'Photo Library',
         onPress: async () => {
-          const permission =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (!permission.granted) return;
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            quality: 1,
-          });
-          if (!result.canceled) {
-            const { uri, width, height } = result.assets[0];
-            setLogoUri(await processPhoto(uri, width, height));
+          try {
+            const permission =
+              await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permission.granted) return;
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              quality: 1,
+            });
+            if (!result.canceled) {
+              const { uri, width, height } = result.assets[0];
+              setLogoUri(await processPhoto(uri, width, height));
+            }
+          } catch (err) {
+            Sentry.captureException(err);
+            Alert.alert(
+              'Something went wrong',
+              'Could not select photo. Please try again.',
+            );
           }
         },
       },
@@ -136,7 +154,8 @@ export default function BusinessProfileScreen() {
 
       await refreshProfile();
       router.back();
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not save your business profile. Please try again.',

@@ -1,4 +1,11 @@
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  Dimensions,
+} from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -22,7 +29,7 @@ export default function FavoritesScreen() {
     id: `skeleton-${i}`,
   }));
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['savedListings', userId],
     queryFn: () => getSavedListings(userId!),
     enabled: !!userId,
@@ -46,11 +53,11 @@ export default function FavoritesScreen() {
 
   async function handleRefresh() {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['inbox'] });
+    await queryClient.invalidateQueries({ queryKey: ['savedListings'] });
     setIsRefreshing(false);
   }
 
-  const isEmpty = !isPending && (!data || data.length === 0);
+  const isEmpty = !isPending && !isError && (!data || data.length === 0);
 
   return (
     <Screen>
@@ -58,41 +65,61 @@ export default function FavoritesScreen() {
         <Text style={styles.title}>Favorites</Text>
       </View>
 
-      {isEmpty ? (
-        <View style={styles.emptyState}>
-          <Ionicons
-            name='heart-outline'
-            size={56}
-            color={Colors.textSecondary}
+      <FlatList
+        data={isPending ? skeletonData : data}
+        numColumns={2}
+        keyExtractor={(item) => item.id}
+        columnWrapperStyle={{ gap: Spacing.cardGap }}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          isError ? (
+            <View
+              style={{
+                height: Dimensions.get('window').height * 0.6,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: Spacing.screenPadding,
+              }}
+            >
+              <Text
+                style={{
+                  ...Typography.body,
+                  color: Colors.textSecondary,
+                  textAlign: 'center',
+                }}
+              >
+                Something went wrong. Pull down to try again.
+              </Text>
+            </View>
+          ) : isEmpty ? (
+            <View style={styles.emptyState}>
+              <Ionicons
+                name='heart-outline'
+                size={56}
+                color={Colors.textSecondary}
+              />
+              <Text style={styles.emptyTitle}>No saved boards yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Tap the heart on any listing to save it for later
+              </Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item }) =>
+          isPending ? (
+            <ListingCardSkeleton />
+          ) : (
+            <ListingCard listing={item as ListingCardData} hideDistance />
+          )
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.accent}
           />
-          <Text style={styles.emptyTitle}>No saved boards yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Tap the heart on any listing to save it for later
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={isPending ? skeletonData : data}
-          numColumns={2}
-          keyExtractor={(item) => item.id}
-          columnWrapperStyle={{ gap: Spacing.cardGap }}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) =>
-            isPending ? (
-              <ListingCardSkeleton />
-            ) : (
-              <ListingCard listing={item as ListingCardData} hideDistance />
-            )
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              tintColor={Colors.accent}
-            />
-          }
-        />
-      )}
+        }
+      />
     </Screen>
   );
 }
