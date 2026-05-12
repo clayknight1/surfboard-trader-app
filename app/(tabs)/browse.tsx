@@ -33,6 +33,7 @@ import { Ionicons } from '@expo/vector-icons';
 const PAGE_SIZE = 20;
 
 export default function BrowseScreen() {
+  const flatListRef = useRef<FlatList>(null);
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -76,9 +77,12 @@ export default function BrowseScreen() {
         lng: location.coords.longitude,
       });
     }
-
     getCurrentLocation();
   }, []);
+
+  useEffect(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [filters]);
 
   useEffect(() => {
     return () => {
@@ -169,20 +173,6 @@ export default function BrowseScreen() {
     setIsRefreshing(false);
   }, [queryClient]);
 
-  // if (isError) {
-  //   return (
-  //     <Screen>
-  //       <View
-  //         style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-  //       >
-  //         <Text style={{ color: Colors.textSecondary }}>
-  //           Something went wrong. Pull down to try again.
-  //         </Text>
-  //       </View>
-  //     </Screen>
-  //   );
-  // }
-
   return (
     <Screen>
       <View style={{ flex: 1, position: 'relative' }}>
@@ -209,6 +199,7 @@ export default function BrowseScreen() {
           )}
         </View>
         <FlatList
+          ref={flatListRef}
           numColumns={2}
           columnWrapperStyle={{ gap: Spacing.cardGap }}
           onEndReached={() => {

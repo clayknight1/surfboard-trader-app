@@ -12,4 +12,14 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  global: {
+    fetch: (url, options) => {
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout')), 10000),
+        ),
+      ]) as Promise<Response>;
+    },
+  },
 });
