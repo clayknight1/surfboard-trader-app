@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { StepProps } from '../../../lib/types';
 import { Colors, Spacing, Typography } from '../../../constants';
+import { useAuth } from '../../../lib/auth';
+import { getCurrencySymbol, userCurrency } from '../../../lib/utils';
 
 type StepPricingProps = StepProps & {
   handleSubmit: () => void;
@@ -22,6 +24,7 @@ export default function StepPricing({
   isSubmitting,
   isEditing,
 }: StepPricingProps) {
+  const { profile } = useAuth();
   const canContinue = formData.price !== null && formData.price > 0;
 
   return (
@@ -38,7 +41,9 @@ export default function StepPricing({
         <View style={styles.field}>
           <Text style={styles.label}>Price</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.currencySymbol}>
+              {getCurrencySymbol(profile?.currency ?? userCurrency)}
+            </Text>
             <TextInput
               style={[styles.input, styles.priceInput]}
               value={formData.price ? (formData.price / 100).toString() : ''}

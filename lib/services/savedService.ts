@@ -12,6 +12,7 @@ export async function getSavedListings(userId: string) {
         id,
         title,
         price,
+        currency,
         volume,
         length_inches,
         board_type,

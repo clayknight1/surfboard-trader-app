@@ -19,6 +19,7 @@ import LocationSheet from '../../components/ui/LocationSheet';
 import { supabase } from '../../lib/supabase';
 import { submitDeletionRequest } from '../../lib/services/userService';
 import { displayName } from '../../lib/utils';
+import CurrencySheet from '../../components/ui/CurrencySheet';
 
 type SettingsRowProps = {
   label: string;
@@ -54,6 +55,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const userId = session?.user?.id;
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
   const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
 
   function handleDeleteAccount() {
@@ -153,6 +155,11 @@ export default function ProfileScreen() {
               onPress={() => setLocationSheetOpen(true)}
             />
             <SettingsRow
+              label='Currency'
+              value={profile?.currency ?? 'USD'}
+              onPress={() => setCurrencySheetOpen(true)}
+            />
+            <SettingsRow
               label='Blocked Users'
               onPress={() => router.push('/profile/blocked')}
             />
@@ -210,26 +217,30 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {/* Legal */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Legal</Text>
+          <View style={styles.sectionContent}>
+            <SettingsRow
+              label='Privacy Policy'
+              onPress={() => router.push('/legal/privacy-policy')}
+            />
+            <SettingsRow
+              label='Terms of Service'
+              onPress={() => router.push('/legal/terms')}
+            />
+          </View>
+        </View>
       </ScrollView>
       <LocationSheet
         isOpen={locationSheetOpen}
         onClose={() => setLocationSheetOpen(false)}
       />
-
-      {/* Legal */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Legal</Text>
-        <View style={styles.sectionContent}>
-          <SettingsRow
-            label='Privacy Policy'
-            onPress={() => router.push('/legal/privacy-policy')}
-          />
-          <SettingsRow
-            label='Terms of Service'
-            onPress={() => router.push('/legal/terms')}
-          />
-        </View>
-      </View>
+      <CurrencySheet
+        isOpen={currencySheetOpen}
+        onClose={() => setCurrencySheetOpen(false)}
+      />
     </Screen>
   );
 }

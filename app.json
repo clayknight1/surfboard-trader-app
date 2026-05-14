@@ -63,7 +63,8 @@
           "project": "react-native",
           "organization": "surfboard-trader"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "router": {},

@@ -58,7 +58,9 @@ export default function SellerListingCard({
         <Text style={styles.cardTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
+        <Text style={styles.cardPrice}>
+          {formatPrice(item.price, item.currency ?? 'USD')}
+        </Text>
         <View style={styles.cardMeta}>
           <View
             style={[

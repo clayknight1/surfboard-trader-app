@@ -14,6 +14,7 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Spacing, Typography } from '../../constants';
 import AuthInput from '../../components/ui/AuthInput';
+import { userCurrency } from '../../lib/utils';
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -59,13 +60,15 @@ export default function SignUp() {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
-          data: { full_name: fullName.trim() },
+          data: { full_name: fullName.trim(), currency: userCurrency },
         },
       });
-      if (error) setError(error.message);
+      if (error) {
+        setError(error.message);
+      }
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {

@@ -51,7 +51,7 @@ export async function getListings(
           offset,
         },
       });
-      throw new Error(error.message);
+      throw error;
     }
 
     return (data ?? []).map((listing: ListingCardData) => ({

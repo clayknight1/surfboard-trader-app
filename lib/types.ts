@@ -87,6 +87,7 @@ export type ListingCardData = {
   id: string;
   title: string;
   price: number;
+  currency: string;
   volume: number;
   length_inches: number;
   board_type: BoardType;

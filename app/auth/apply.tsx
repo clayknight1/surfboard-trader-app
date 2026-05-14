@@ -18,6 +18,7 @@ import PillSelector from '../../components/ui/PillSelector';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
+import { userCurrency } from '../../lib/utils';
 
 type BusinessType = 'shop' | 'shaper';
 
@@ -82,7 +83,7 @@ export default function ApplyScreen() {
         email: email.trim(),
         password,
         options: {
-          data: { full_name: fullName.trim() },
+          data: { full_name: fullName.trim(), currency: userCurrency },
         },
       });
 

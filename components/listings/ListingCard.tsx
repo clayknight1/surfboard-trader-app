@@ -16,6 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { getListing } from '../../lib/services/listingService';
 import * as Sentry from '@sentry/react-native';
+import { formatDistance, formatPrice } from '../../lib/utils';
 
 type ListingCardProps = {
   listing: ListingCardData;
@@ -56,9 +57,9 @@ export default function ListingCard({
     router.push(`/listings/${listing.id}`);
   }
 
-  function formatPrice(cents: number): string {
-    return `$${(cents / 100).toLocaleString()}`;
-  }
+  // function formatPrice(cents: number): string {
+  //   return `$${(cents / 100).toLocaleString()}`;
+  // }
 
   function formatLength(inches: number): string {
     const feet = Math.floor(inches / 12);
@@ -178,7 +179,9 @@ export default function ListingCard({
         </Text>
 
         {/* Price */}
-        <Text style={styles.price}>{formatPrice(listing.price)}</Text>
+        <Text style={styles.price}>
+          {formatPrice(listing.price, listing.currency ?? 'USD')}
+        </Text>
 
         {/* Key specs row */}
         <View style={styles.specsRow}>
@@ -213,7 +216,7 @@ export default function ListingCard({
           )}
           {!hideDistance && (
             <Text style={styles.distance}>
-              {listing.distance_miles.toFixed(1)}mi
+              {formatDistance(listing.distance_miles)}
             </Text>
           )}
         </View>

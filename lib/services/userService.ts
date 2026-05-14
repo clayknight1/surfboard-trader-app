@@ -133,3 +133,18 @@ export async function submitDeletionRequest(userId: string): Promise<void> {
     throw new Error(error.message);
   }
 }
+
+export async function updateUserCurrency(
+  userId: string,
+  currency: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('users')
+    .update({ currency })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error updating user currency:', error);
+    throw new Error(error.message);
+  }
+}

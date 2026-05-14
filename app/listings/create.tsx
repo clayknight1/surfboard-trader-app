@@ -21,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { usePostHog } from 'posthog-react-native';
 import * as Sentry from '@sentry/react-native';
+import { userCurrency } from '../../lib/utils';
 
 const TOTAL_STEPS = 6;
 
@@ -60,7 +61,7 @@ export default function CreateListing() {
     shipping_notes: null,
     accepts_offers: false,
     payment_notes: null,
-    currency: 'USD',
+    currency: profile?.currency ?? userCurrency,
     user_id: userId!,
   });
 

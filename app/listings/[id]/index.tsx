@@ -33,7 +33,7 @@ import {
 } from '../../../lib/services/savedService';
 import * as Haptics from 'expo-haptics';
 import ImageViewing from 'react-native-image-viewing';
-import { displayName } from '../../../lib/utils';
+import { displayName, formatPrice } from '../../../lib/utils';
 import * as Sentry from '@sentry/react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -77,9 +77,9 @@ export default function ListingDetail() {
     if (savedStatus !== undefined) setIsSaved(savedStatus);
   }, [savedStatus]);
 
-  function formatPrice(cents: number): string {
-    return `$${(cents / 100).toLocaleString()}`;
-  }
+  // function formatPrice(cents: number): string {
+  //   return `$${(cents / 100).toLocaleString()}`;
+  // }
 
   function formatLength(inches: number): string {
     const feet = Math.floor(inches / 12);
@@ -377,7 +377,9 @@ export default function ListingDetail() {
           {/* Title + Price */}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{data.title}</Text>
-            <Text style={styles.price}>{formatPrice(data.price)}</Text>
+            <Text style={styles.price}>
+              {formatPrice(data.price, data.currency ?? 'USD')}
+            </Text>
           </View>
 
           {/* Location + distance */}

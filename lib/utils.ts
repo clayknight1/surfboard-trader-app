@@ -1,4 +1,9 @@
 import * as ImageManipulator from 'expo-image-manipulator';
+import { getLocales } from 'expo-localization';
+
+const locale = getLocales()[0];
+export const measurementSystem = locale.measurementSystem ?? 'us';
+export const userCurrency = locale.currencyCode ?? 'USD';
 
 export function formatPrice(cents: number, currency: string = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
@@ -53,4 +58,22 @@ export function getTransformUrl(
 export function displayName(name: string | null | undefined): string {
   if (!name || !name.trim()) return 'No name set';
   return name.trim();
+}
+
+export function formatDistance(miles: number): string {
+  if (measurementSystem === 'metric') {
+    return `${(miles * 1.60934).toFixed(1)}km`;
+  }
+  return `${miles.toFixed(1)}mi`;
+}
+
+export function getCurrencySymbol(currency: string): string {
+  return new Intl.NumberFormat('en', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  })
+    .format(0)
+    .replace(/[\d.,\s]/g, '')
+    .trim();
 }
