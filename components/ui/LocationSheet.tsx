@@ -13,6 +13,7 @@ import * as Location from 'expo-location';
 import { Colors, Spacing, Typography } from '../../constants';
 import { updateUserLocation } from '../../lib/services/userService';
 import { useAuth } from '../../lib/auth';
+import { buildLocationLabel } from '../../lib/utils';
 
 type LocationSheetProps = {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export default function LocationSheet({
         latitude,
         longitude,
       });
-      const label = `${result.city}, ${result.region}`;
+      const label = buildLocationLabel(result);
       if (onLocationUpdated) {
         onLocationUpdated(latitude, longitude, label);
       } else if (userId) {
@@ -96,7 +97,7 @@ export default function LocationSheet({
         latitude,
         longitude,
       });
-      const label = `${result.city}, ${result.region}`;
+      const label = buildLocationLabel(result);
       if (onLocationUpdated) {
         onLocationUpdated(latitude, longitude, label);
       } else if (userId) {

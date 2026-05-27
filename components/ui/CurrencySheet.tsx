@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +37,7 @@ export default function CurrencySheet({ isOpen, onClose }: CurrencySheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { session, profile, refreshProfile } = useAuth();
   const userId = session?.user?.id;
+  const [savingCurrency, setSavingCurrency] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,9 +57,10 @@ export default function CurrencySheet({ isOpen, onClose }: CurrencySheetProps) {
   );
 
   async function handleSelect(currency: string) {
-    if (!userId) {
+    if (!userId || savingCurrency) {
       return;
     }
+    setSavingCurrency(currency);
     try {
       await updateUserCurrency(userId, currency);
       await refreshProfile();
@@ -68,6 +71,8 @@ export default function CurrencySheet({ isOpen, onClose }: CurrencySheetProps) {
         'Something went wrong',
         'Could not update currency. Please try again.',
       );
+    } finally {
+      setSavingCurrency(null);
     }
   }
 
@@ -105,9 +110,11 @@ export default function CurrencySheet({ isOpen, onClose }: CurrencySheetProps) {
                     <Text style={styles.code}>{currency.value}</Text>
                   </View>
                 </View>
-                {isSelected && (
+                {savingCurrency === currency.value ? (
+                  <ActivityIndicator size='small' color={Colors.accent} />
+                ) : isSelected && !savingCurrency ? (
                   <Ionicons name='checkmark' size={20} color={Colors.accent} />
-                )}
+                ) : null}
               </TouchableOpacity>
             );
           })}

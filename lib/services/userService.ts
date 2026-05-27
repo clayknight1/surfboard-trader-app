@@ -82,7 +82,9 @@ export async function uploadAvatar(
 export async function getPublicProfile(userId: string): Promise<PublicProfile> {
   const { data, error } = await supabase
     .from('users')
-    .select('*, business_profiles(*)')
+    .select(
+      'id, full_name, avatar_url, role, location_label, created_at, business_profiles(*)',
+    )
     .eq('id', userId)
     .single();
 

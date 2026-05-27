@@ -4,7 +4,6 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,6 +22,7 @@ import { ListingCardData } from '../../lib/types';
 import { getSavedListingIds } from '../../lib/services/savedService';
 import { useAuth } from '../../lib/auth';
 import { displayName } from '../../lib/utils';
+import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -31,14 +31,26 @@ export default function UserProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { data: profile, isPending: profilePending } = useQuery({
+  const skeletonData = Array.from({ length: 4 }, (_, i) => ({
+    id: `skeleton-${i}`,
+  }));
+
+  const {
+    data: profile,
+    isPending: profilePending,
+    isError: profileError,
+  } = useQuery({
     queryKey: ['publicProfile', userId],
     queryFn: () => getPublicProfile(userId),
     enabled: !!userId,
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: listings, isPending: listingsPending } = useQuery({
+  const {
+    data: listings,
+    isPending: listingsPending,
+    isError: listingsError,
+  } = useQuery({
     queryKey: ['publicListings', userId],
     queryFn: () => getPublicListings(userId),
     enabled: !!userId,
@@ -46,19 +58,29 @@ export default function UserProfileScreen() {
   });
 
   const { data: savedIds } = useQuery({
-    queryKey: ['savedIds', userId],
+    queryKey: ['savedIds', currentUserId],
     queryFn: () => getSavedListingIds(currentUserId!),
-    enabled: !!userId,
+    enabled: !!currentUserId,
   });
 
   const isPending = profilePending || listingsPending;
+  const isError = profileError || listingsError;
   const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
-  const businessProfile = profile?.business_profiles;
+  const businessProfile = profile?.business_profiles?.[0];
 
-  if (isPending) {
+  if (isError) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={Colors.accent} />
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + 12 }]}
+          onPress={() => router.back()}
+          hitSlop={10}
+        >
+          <Ionicons name='chevron-back' size={22} color={Colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={{ ...Typography.body, color: Colors.textSecondary }}>
+          Something went wrong.
+        </Text>
       </View>
     );
   }
@@ -75,7 +97,7 @@ export default function UserProfileScreen() {
       </TouchableOpacity>
 
       <FlatList
-        data={listings}
+        data={isPending ? skeletonData : listings}
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={{ gap: Spacing.cardGap }}
@@ -180,19 +202,25 @@ export default function UserProfileScreen() {
             </View>
 
             {/* Listings header */}
-            <Text style={styles.listingsLabel}>
-              {listings?.length ?? 0} listings
-            </Text>
+            {!listingsPending && (
+              <Text style={styles.listingsLabel}>
+                {listings?.length ?? 0} listings
+              </Text>
+            )}
           </View>
         }
-        renderItem={({ item }) => (
-          <ListingCard
-            listing={item as ListingCardData}
-            hideDistance
-            userId={currentUserId}
-            savedIds={savedIds ?? []}
-          />
-        )}
+        renderItem={({ item }) =>
+          isPending ? (
+            <ListingCardSkeleton />
+          ) : (
+            <ListingCard
+              listing={item as ListingCardData}
+              hideDistance
+              userId={currentUserId}
+              savedIds={savedIds ?? []}
+            />
+          )
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No active listings</Text>

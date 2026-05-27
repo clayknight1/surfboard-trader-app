@@ -1,4 +1,5 @@
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as Location from 'expo-location';
 import { getLocales } from 'expo-localization';
 
 const locale = getLocales()[0];
@@ -76,4 +77,12 @@ export function getCurrencySymbol(currency: string): string {
     .format(0)
     .replace(/[\d.,\s]/g, '')
     .trim();
+}
+
+export function buildLocationLabel(
+  result: Location.LocationGeocodedAddress,
+): string {
+  const city = result.city ?? result.subregion ?? result.district ?? 'Unknown';
+  const region = result.region ?? result.country ?? '';
+  return region ? `${city}, ${region}` : city;
 }

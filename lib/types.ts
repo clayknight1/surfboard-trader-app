@@ -157,8 +157,14 @@ export type ThreadMessage = {
   read_at: string | null;
 };
 
-export type PublicProfile = User & {
-  business_profiles: BusinessProfile | null;
+export type PublicProfile = {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: string | null;
+  location_label: string | null;
+  created_at: string;
+  business_profiles: BusinessProfile[] | null;
 };
 
 export type PublicListing = Listing & {

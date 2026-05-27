@@ -6,7 +6,7 @@ import { ListingFormData } from '../../lib/types';
 import Screen from '../../components/ui/Screen';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
-import StepType from '../../components/listings/steps/StepType';
+// import StepType from '../../components/listings/steps/StepType';
 import StepPhotos from '../../components/listings/steps/StepPhotos';
 import StepDetails from '../../components/listings/steps/StepDetails';
 import StepsSpec from '../../components/listings/steps/StepSpecs';
@@ -23,7 +23,7 @@ import { usePostHog } from 'posthog-react-native';
 import * as Sentry from '@sentry/react-native';
 import { userCurrency } from '../../lib/utils';
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 export default function CreateListing() {
   const { session, profile } = useAuth();
@@ -170,7 +170,8 @@ export default function CreateListing() {
       </View>
 
       {/* Steps */}
-      {step === 1 && (
+      {/* Add step 1 back when we add business listings */}
+      {/* {step === 1 && (
         <StepType
           formData={formData}
           updateField={updateField}
@@ -178,8 +179,8 @@ export default function CreateListing() {
           onNext={() => setStep(2)}
           isEditing={false}
         />
-      )}
-      {step === 2 && (
+      )} */}
+      {step === 1 && (
         <StepPhotos
           photos={photos}
           setPhotos={setPhotos}
@@ -187,7 +188,7 @@ export default function CreateListing() {
           onBack={() => setStep(1)}
         />
       )}
-      {step === 3 && (
+      {step === 2 && (
         <StepDetails
           formData={formData}
           updateField={updateField}
@@ -196,7 +197,7 @@ export default function CreateListing() {
           isEditing={false}
         />
       )}
-      {step === 4 && (
+      {step === 3 && (
         <StepsSpec
           formData={formData}
           updateField={updateField}
@@ -205,7 +206,7 @@ export default function CreateListing() {
           isEditing={false}
         />
       )}
-      {step === 5 && (
+      {step === 4 && (
         <StepLocation
           formData={formData}
           profile={profile}
@@ -215,7 +216,7 @@ export default function CreateListing() {
           isEditing={false}
         />
       )}
-      {step === 6 && (
+      {step === 5 && (
         <StepPricing
           formData={formData}
           updateField={updateField}

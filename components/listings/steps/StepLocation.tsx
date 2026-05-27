@@ -14,6 +14,7 @@ import { updateUserLocation } from '../../../lib/services/userService';
 import { useAuth } from '../../../lib/auth';
 import { updateBusinessLocation } from '../../../lib/services/businessService';
 import * as Sentry from '@sentry/react-native';
+import { buildLocationLabel } from '../../../lib/utils';
 
 type StepLocationProps = StepProps & {
   profile: User | null;
@@ -161,15 +162,6 @@ export default function StepLocation({
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function buildLocationLabel(
-    result: Location.LocationGeocodedAddress,
-  ): string {
-    const city =
-      result.city ?? result.subregion ?? result.district ?? 'Unknown';
-    const region = result.region ?? result.country ?? '';
-    return region ? `${city}, ${region}` : city;
   }
 
   return (

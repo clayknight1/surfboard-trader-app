@@ -110,6 +110,8 @@ export default function BrowseScreen() {
         return allPages.length * PAGE_SIZE;
       },
       placeholderData: keepPreviousData,
+      retry: 1,
+      retryDelay: 2000,
       enabled: !!location,
       staleTime: 1000 * 60 * 5,
     });
@@ -252,6 +254,39 @@ export default function BrowseScreen() {
                   }}
                 >
                   Something went wrong. Pull down to try again.
+                </Text>
+              </View>
+            ) : !isPending && !isFetching && feedItems.length === 0 ? (
+              <View
+                style={{
+                  height: Dimensions.get('window').height * 0.6,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: Spacing.screenPadding,
+                  gap: Spacing.md,
+                }}
+              >
+                <Ionicons
+                  name='search-outline'
+                  size={48}
+                  color={Colors.textSecondary}
+                />
+                <Text
+                  style={{
+                    ...Typography.subheading,
+                    color: Colors.textPrimary,
+                  }}
+                >
+                  No boards nearby
+                </Text>
+                <Text
+                  style={{
+                    ...Typography.body,
+                    color: Colors.textSecondary,
+                    textAlign: 'center',
+                  }}
+                >
+                  Try increasing your search radius or check back later
                 </Text>
               </View>
             ) : null
