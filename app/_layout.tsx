@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryCache, QueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -43,6 +43,9 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
     },
   },
+  queryCache: new QueryCache({
+    onError: (error) => Sentry.captureException(error),
+  }),
 });
 
 const persister = createAsyncStoragePersister({
@@ -71,7 +74,7 @@ export default Sentry.wrap(function RootLayout() {
       >
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister, buster: 'v4' }}
+          persistOptions={{ persister, buster: 'v5' }}
         >
           <SafeAreaProvider>
             <AuthProvider>

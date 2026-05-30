@@ -20,6 +20,9 @@ import { supabase } from '../../lib/supabase';
 import { submitDeletionRequest } from '../../lib/services/userService';
 import { displayName } from '../../lib/utils';
 import CurrencySheet from '../../components/ui/CurrencySheet';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import * as Sentry from '@sentry/react-native';
+import ProfileSkeleton from '../../components/ui/ProfileSkeleton';
 
 type SettingsRowProps = {
   label: string;
@@ -72,7 +75,8 @@ export default function ProfileScreen() {
               await submitDeletionRequest(userId!);
               await supabase.auth.signOut();
               router.replace('/auth/login');
-            } catch {
+            } catch (err) {
+              Sentry.captureException(err);
               Alert.alert(
                 'Something went wrong',
                 'Could not submit your request. Please try again.',
@@ -85,13 +89,7 @@ export default function ProfileScreen() {
   }
 
   if (loading || (userId && !profile)) {
-    return (
-      <Screen>
-        <View style={styles.centered}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
-      </Screen>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!userId) {
@@ -112,10 +110,7 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-        </View>
+        <ScreenHeader title='Profile' />
 
         {/* Avatar + name */}
         <View style={styles.identity}>
@@ -191,7 +186,7 @@ export default function ProfileScreen() {
         )}
 
         {/* Plan section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionLabel}>Plan</Text>
           <View style={styles.sectionContent}>
             <SettingsRow
@@ -204,7 +199,7 @@ export default function ProfileScreen() {
               onPress={() => {}}
             />
           </View>
-        </View>
+        </View> */}
 
         {/* Sign out */}
         <View style={styles.section}>
@@ -253,17 +248,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: Spacing.xxxl,
-  },
-  header: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    height: 56,
-  },
-  title: {
-    ...Typography.heading,
-    color: Colors.textPrimary,
   },
   identity: {
     flexDirection: 'row',

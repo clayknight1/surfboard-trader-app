@@ -24,6 +24,7 @@ import {
   upsertBusinessProfile,
 } from '../../lib/services/businessService';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 export default function BusinessProfileScreen() {
   const router = useRouter();
@@ -67,8 +68,8 @@ export default function BusinessProfileScreen() {
               quality: 1,
             });
             if (!result.canceled) {
-              const { uri, width, height } = result.assets[0];
-              setLogoUri(await processPhoto(uri, width, height));
+              const { uri } = result.assets[0];
+              setLogoUri(await processPhoto(uri, 400));
             }
           } catch (err) {
             Sentry.captureException(err);
@@ -91,8 +92,8 @@ export default function BusinessProfileScreen() {
               quality: 1,
             });
             if (!result.canceled) {
-              const { uri, width, height } = result.assets[0];
-              setLogoUri(await processPhoto(uri, width, height));
+              const { uri } = result.assets[0];
+              setLogoUri(await processPhoto(uri, 400));
             }
           } catch (err) {
             Sentry.captureException(err);
@@ -118,7 +119,7 @@ export default function BusinessProfileScreen() {
       .from('avatars')
       .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
     if (error) {
-      throw new Error(error.message);
+      throw error;
     }
     return getTransformUrl('avatars', path, 160);
   }
@@ -167,22 +168,19 @@ export default function BusinessProfileScreen() {
 
   return (
     <Screen>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {existing ? 'Edit Business Profile' : 'Set Up Business Profile'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size='small' color={Colors.accent} />
-          ) : (
-            <Text style={styles.saveButton}>Save</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={existing ? 'Edit Business Profile' : 'Set Up Business Profile'}
+        onBack={() => router.back()}
+        rightElement={
+          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <ActivityIndicator size='small' color={Colors.accent} />
+            ) : (
+              <Text style={styles.saveButton}>Save</Text>
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -308,19 +306,6 @@ export default function BusinessProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   saveButton: {
     ...Typography.body,
     color: Colors.accent,

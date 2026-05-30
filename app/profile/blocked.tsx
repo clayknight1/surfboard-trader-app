@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../lib/auth';
 import {
   getBlockedUsersWithProfiles,
   unblockUser,
@@ -17,22 +16,27 @@ import {
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import Avatar from '../../components/ui/Avatar';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { displayName } from '../../lib/utils';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import { useRequireAuth } from '../../lib/useRequireAuth';
 
 export default function BlockedUsersScreen() {
-  const { session } = useAuth();
-  const userId = session?.user?.id!;
+  const auth = useRequireAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery({
-    queryKey: ['blockedUsers', userId],
-    queryFn: () => getBlockedUsersWithProfiles(userId),
-    enabled: !!userId,
+    queryKey: ['blockedUsers', auth.userId],
+    queryFn: () => getBlockedUsersWithProfiles(auth.userId!),
+    enabled: !!auth.userId,
   });
+
+  if (!auth.ready) {
+    return auth.redirect ?? null;
+  }
+  const userId = auth.userId;
 
   async function handleUnblock(blockedId: string, name: string) {
     Alert.alert(
@@ -65,15 +69,7 @@ export default function BlockedUsersScreen() {
 
   return (
     <Screen>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Blocked Users</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+      <ScreenHeader title='Blocked Users' onBack={() => router.back()} />
       {isPending ? (
         <View style={styles.centered}>
           <ActivityIndicator color={Colors.accent} />
@@ -115,19 +111,6 @@ export default function BlockedUsersScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   list: {
     padding: Spacing.screenPadding,
     gap: Spacing.sm,

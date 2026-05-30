@@ -11,20 +11,20 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { useAuth } from '../../lib/auth';
 import { sendMessage } from '../../lib/services/messageService';
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import { useRequireAuth } from '../../lib/useRequireAuth';
 
 export default function NewThreadScreen() {
   const { listingId, sellerId } = useLocalSearchParams<{
     listingId: string;
     sellerId: string;
   }>();
-  const { session } = useAuth();
-  const userId = session?.user?.id!;
+  const auth = useRequireAuth();
   const router = useRouter();
 
   const [messageText, setMessageText] = useState('');
@@ -35,7 +35,7 @@ export default function NewThreadScreen() {
     setIsSending(true);
     try {
       const newThreadId = await sendMessage(
-        userId,
+        auth.userId!,
         listingId,
         messageText.trim(),
       );
@@ -55,24 +55,17 @@ export default function NewThreadScreen() {
     }
   }
 
+  if (!auth.ready) {
+    return auth.redirect ?? null;
+  }
+
   return (
     <Screen>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-            <Ionicons
-              name='chevron-back'
-              size={24}
-              color={Colors.textPrimary}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Message</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <ScreenHeader title='New Message' onBack={() => router.back()} />
 
         {/* Empty State */}
         <View style={styles.emptyState}>
@@ -118,19 +111,6 @@ export default function NewThreadScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   emptyState: {
     flex: 1,
     alignItems: 'center',

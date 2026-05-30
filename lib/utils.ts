@@ -1,13 +1,14 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import { getLocales } from 'expo-localization';
+import { Colors } from '../constants';
 
 const locale = getLocales()[0];
 export const measurementSystem = locale.measurementSystem ?? 'us';
 export const userCurrency = locale.currencyCode ?? 'USD';
 
 export function formatPrice(cents: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale.languageTag ?? 'en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
@@ -16,29 +17,11 @@ export function formatPrice(cents: number, currency: string = 'USD'): string {
 
 export async function processPhoto(
   uri: string,
-  width: number,
-  height: number,
+  maxWidth: number = 1200,
 ): Promise<string> {
-  const targetRatio = 4 / 5;
-  const currentRatio = width / height;
-
-  let cropWidth, cropHeight, originX, originY;
-
-  if (currentRatio > targetRatio) {
-    cropHeight = height;
-    cropWidth = height * targetRatio;
-    originX = (width - cropWidth) / 2;
-    originY = 0;
-  } else {
-    cropWidth = width;
-    cropHeight = width / targetRatio;
-    originX = 0;
-    originY = (height - cropHeight) / 2;
-  }
-
   const manipulated = await ImageManipulator.manipulateAsync(
     uri,
-    [{ resize: { width: 1200 } }],
+    [{ resize: { width: maxWidth } }],
     { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
   );
 
@@ -85,4 +68,44 @@ export function buildLocationLabel(
   const city = result.city ?? result.subregion ?? result.district ?? 'Unknown';
   const region = result.region ?? result.country ?? '';
   return region ? `${city}, ${region}` : city;
+}
+
+export function formatLength(inches: number): string {
+  const feet = Math.floor(inches / 12);
+  const remainder = inches % 12;
+  const wholeInches = Math.floor(remainder);
+  const fraction = remainder - wholeInches;
+  const fractions: Record<number, string> = {
+    0.125: '⅛',
+    0.25: '¼',
+    0.375: '⅜',
+    0.5: '½',
+    0.625: '⅝',
+    0.75: '¾',
+    0.875: '⅞',
+  };
+  const nearestSixteenth = Math.round(fraction * 16) / 16;
+  const fractionStr = fractions[nearestSixteenth] ?? '';
+  return `${feet}'${wholeInches}${fractionStr}"`;
+}
+
+export function getConditionColor(condition: string): string {
+  switch (condition) {
+    case 'new':
+      return Colors.conditionNew;
+    case 'excellent':
+      return Colors.conditionExcellent;
+    case 'good':
+      return Colors.conditionGood;
+    case 'fair':
+      return Colors.conditionFair;
+    case 'poor':
+      return Colors.conditionPoor;
+    default:
+      return Colors.textSecondary;
+  }
+}
+
+export function getConditionLabel(condition: string): string {
+  return condition.charAt(0).toUpperCase() + condition.slice(1);
 }

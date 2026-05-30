@@ -22,6 +22,7 @@ import AuthInput from '../../components/ui/AuthInput';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 export default function EditProfileScreen() {
   const { profile, refreshProfile } = useAuth();
@@ -51,8 +52,8 @@ export default function EditProfileScreen() {
               quality: 1,
             });
             if (!result.canceled) {
-              const { uri, width, height } = result.assets[0];
-              const processed = await processPhoto(uri, width, height);
+              const { uri } = result.assets[0];
+              const processed = await processPhoto(uri, 400);
               setAvatarUri(processed);
             }
           } catch (err) {
@@ -83,8 +84,8 @@ export default function EditProfileScreen() {
               quality: 1,
             });
             if (!result.canceled) {
-              const { uri, width, height } = result.assets[0];
-              const processed = await processPhoto(uri, width, height);
+              const { uri } = result.assets[0];
+              const processed = await processPhoto(uri, 400);
               setAvatarUri(processed);
             }
           } catch (err) {
@@ -136,20 +137,19 @@ export default function EditProfileScreen() {
 
   return (
     <Screen>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size='small' color={Colors.accent} />
-          ) : (
-            <Text style={styles.saveButton}>Save</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title='Edit Profile'
+        onBack={() => router.back()}
+        rightElement={
+          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <ActivityIndicator size='small' color={Colors.accent} />
+            ) : (
+              <Text style={styles.saveButton}>Save</Text>
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -188,19 +188,6 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   saveButton: {
     ...Typography.body,
     color: Colors.accent,

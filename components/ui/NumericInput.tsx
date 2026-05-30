@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Colors, Spacing, Typography } from '../../constants';
 
 type NumericInputProps = {
@@ -18,6 +18,13 @@ export default function NumericInput({
   label,
 }: NumericInputProps) {
   const [raw, setRaw] = useState(value?.toString() ?? '');
+  const isFocused = useRef(false);
+
+  useEffect(() => {
+    if (!isFocused.current) {
+      setRaw(value?.toString() ?? '');
+    }
+  }, [value]);
 
   function onChangeText(text: string) {
     setRaw(text);
@@ -32,6 +39,7 @@ export default function NumericInput({
   }
 
   function onBlur() {
+    isFocused.current = false;
     if (value === null) {
       setRaw('');
     } else {
@@ -47,6 +55,9 @@ export default function NumericInput({
           style={styles.input}
           value={raw}
           onChangeText={onChangeText}
+          onFocus={() => {
+            isFocused.current = true;
+          }}
           onBlur={onBlur}
           placeholder={placeholder}
           placeholderTextColor={Colors.textSecondary}

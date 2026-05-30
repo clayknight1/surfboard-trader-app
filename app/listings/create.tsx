@@ -17,7 +17,7 @@ import {
   deleteListing,
   uploadListingPhotos,
 } from '../../lib/services/listingService';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { usePostHog } from 'posthog-react-native';
 import * as Sentry from '@sentry/react-native';
@@ -32,7 +32,6 @@ export default function CreateListing() {
   const router = useRouter();
   const [step, setStep] = useState<number>(1);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const posthog = usePostHog();
   const [formData, setFormData] = useState<ListingFormData>({
     listing_type: 'for_sale',
@@ -65,30 +64,34 @@ export default function CreateListing() {
     user_id: userId!,
   });
 
-  function updateField<K extends keyof ListingFormData>(
-    key: K,
-    value: ListingFormData[K],
-  ) {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function handleSubmit() {
-    setIsSubmitting(true);
-    let listingId: string | null = null;
-    try {
-      listingId = await createListing(formData);
-      await uploadListingPhotos(listingId, userId!, photos);
+  const createListingMutation = useMutation({
+    mutationFn: async () => {
+      const listingId = await createListing(formData);
+      try {
+        await uploadListingPhotos(listingId, userId!, photos);
+      } catch (uploadErr) {
+        // Rollback: delete the listing if photo upload fails
+        try {
+          await deleteListing(listingId, userId!);
+        } catch (deleteErr) {
+          Sentry.captureException(deleteErr, {
+            extra: { context: 'cleanup_after_upload_failure', listingId },
+          });
+        }
+        throw uploadErr;
+      }
+      return listingId;
+    },
+    onSuccess: (listingId) => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
-      try {
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success,
-        );
-      } catch (err) {
-        Sentry.captureException(err, {
-          extra: { context: 'haptics_notification' },
-        });
-      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        (err) =>
+          Sentry.captureException(err, {
+            extra: { context: 'haptics_notification' },
+          }),
+      );
 
       posthog.capture('listing_created', {
         board_type: formData.board_type ?? null,
@@ -98,40 +101,33 @@ export default function CreateListing() {
       });
 
       router.replace(`/listings/${listingId}`);
-    } catch (err) {
-      console.error('Error creating listing:', err);
+    },
+    onError: (err) => {
       Sentry.captureException(err, {
         extra: {
           formData,
           hasPhotos: photos.length > 0,
           photoCount: photos.length,
-          listingId,
         },
       });
-      if (listingId) {
-        try {
-          await deleteListing(listingId, userId!);
-        } catch (deleteErr) {
-          console.error(
-            'Failed to clean up listing after photo error:',
-            deleteErr,
-          );
-        }
-      }
-      const message =
-        err instanceof Error && err.message.includes('Listing limit reached')
+
+      const isLimitError =
+        err instanceof Error && err.message.includes('Listing limit reached');
+
+      Alert.alert(
+        isLimitError ? 'Listing limit reached' : 'Something went wrong',
+        isLimitError
           ? 'You have reached your listing limit. Upgrade your plan to list more boards.'
-          : 'Could not create your listing. Please try again.';
+          : 'Could not create your listing. Please try again.',
+      );
+    },
+  });
 
-      const title =
-        err instanceof Error && err.message.includes('Listing limit reached')
-          ? 'Listing limit reached'
-          : 'Something went wrong';
-
-      Alert.alert(title, message);
-    } finally {
-      setIsSubmitting(false);
-    }
+  function updateField<K extends keyof ListingFormData>(
+    key: K,
+    value: ListingFormData[K],
+  ) {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }
 
   function handleAbandon() {
@@ -184,16 +180,16 @@ export default function CreateListing() {
         <StepPhotos
           photos={photos}
           setPhotos={setPhotos}
-          onNext={() => setStep(3)}
-          onBack={() => setStep(1)}
+          onNext={() => setStep(2)}
+          onBack={() => router.back()}
         />
       )}
       {step === 2 && (
         <StepDetails
           formData={formData}
           updateField={updateField}
-          onNext={() => setStep(4)}
-          onBack={() => setStep(2)}
+          onNext={() => setStep(3)}
+          onBack={() => setStep(1)}
           isEditing={false}
         />
       )}
@@ -201,8 +197,8 @@ export default function CreateListing() {
         <StepsSpec
           formData={formData}
           updateField={updateField}
-          onNext={() => setStep(5)}
-          onBack={() => setStep(3)}
+          onNext={() => setStep(4)}
+          onBack={() => setStep(2)}
           isEditing={false}
         />
       )}
@@ -211,8 +207,8 @@ export default function CreateListing() {
           formData={formData}
           profile={profile}
           updateField={updateField}
-          onNext={() => setStep(6)}
-          onBack={() => setStep(4)}
+          onNext={() => setStep(5)}
+          onBack={() => setStep(3)}
           isEditing={false}
         />
       )}
@@ -220,9 +216,9 @@ export default function CreateListing() {
         <StepPricing
           formData={formData}
           updateField={updateField}
-          onBack={() => setStep(5)}
-          handleSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
+          onBack={() => setStep(4)}
+          handleSubmit={() => createListingMutation.mutate()}
+          isSubmitting={createListingMutation.isPending}
           isEditing={false}
         />
       )}

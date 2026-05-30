@@ -18,6 +18,7 @@ import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { ListingCardData } from '../../lib/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 export default function FavoritesScreen() {
   const { session, loading } = useAuth();
@@ -61,9 +62,7 @@ export default function FavoritesScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Favorites</Text>
-      </View>
+      <ScreenHeader title='Favorites' />
 
       <FlatList
         data={isPending ? skeletonData : data}
@@ -125,17 +124,6 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-    height: 56,
-  },
-  title: {
-    ...Typography.heading,
-    color: Colors.textPrimary,
-  },
   emptyState: {
     flex: 1,
     alignItems: 'center',

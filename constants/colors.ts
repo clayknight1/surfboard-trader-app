@@ -56,8 +56,9 @@ export const Colors = {
   error: palette.error,
 
   // Condition colors
+  conditionNew: '#F43F5E',
   conditionExcellent: palette.success,
-  conditionGood: '#84CC16',
+  conditionGood: '#3B82F6',
   conditionFair: palette.warning,
   conditionPoor: palette.error,
 };

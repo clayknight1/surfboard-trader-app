@@ -15,7 +15,7 @@ export async function updateBusinessLocation(
 
   if (error) {
     console.error('Error updating business location:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -37,11 +37,17 @@ export async function upsertBusinessProfile(
       .from('business_profiles')
       .update(payload)
       .eq('user_id', userId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Error updating business profile:', error);
+      throw error;
+    }
   } else {
     const { error } = await supabase
       .from('business_profiles')
       .insert({ ...payload, user_id: userId });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Error inserting business profile:', error);
+      throw error;
+    }
   }
 }

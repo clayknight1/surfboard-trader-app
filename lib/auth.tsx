@@ -4,7 +4,6 @@ import { User } from './types';
 import { supabase } from './supabase';
 import { getUserProfile } from './services/userService';
 import { fetchUnreadCount } from './services/messageService';
-import { Alert } from 'react-native';
 import { SplashScreen } from 'expo-router';
 
 type AuthContextType = {
@@ -33,22 +32,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     (async () => {
       try {
-        await Promise.race([
-          refreshSession(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Auth timeout')), 10000),
-          ),
-        ]);
+        await refreshSession();
       } catch (err) {
-        if (alive) {
-          setSession(null);
-          if (err instanceof Error && err.message === 'Auth timeout') {
-            Alert.alert(
-              'Connection issue',
-              'Could not connect to the server. Please check your connection and restart the app.',
-            );
-          }
-        }
+        if (alive) setSession(null);
       } finally {
         if (alive) {
           setLoading(false);
@@ -75,7 +61,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      return;
+    }
 
     const userId = session.user.id;
     const channel = supabase
@@ -101,11 +89,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (!session?.user?.id) {
-      return;
-    }
-    getUserProfile(session.user.id).then(setProfile);
-    fetchUnreadCount(session.user.id).then(setUnreadCount);
+    if (!session?.user?.id) return;
+    let cancelled = false;
+    const userId = session.user.id;
+
+    getUserProfile(userId).then((profile) => {
+      if (!cancelled) setProfile(profile);
+    });
+    fetchUnreadCount(userId).then((count) => {
+      if (!cancelled) setUnreadCount(count);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [session?.user?.id]);
 
   async function refreshSession() {

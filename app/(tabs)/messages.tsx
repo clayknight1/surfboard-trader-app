@@ -10,6 +10,7 @@ import SignInPrompt from '../../components/ui/SignInPrompt';
 import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
 import { ThreadPreview } from '../../lib/types';
 import { useState } from 'react';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 export default function MessagesScreen() {
   const { session, loading } = useAuth();
@@ -61,9 +62,7 @@ export default function MessagesScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Messages</Text>
-      </View>
+      <ScreenHeader title='Messages' />
       <FlatList
         data={isPending ? skeletonData : data}
         keyExtractor={(item) => item.id}
@@ -105,17 +104,6 @@ export default function MessagesScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    height: 56,
-  },
-  title: {
-    ...Typography.heading,
-    color: Colors.textPrimary,
-  },
   centered: {
     flex: 1,
     alignItems: 'center',

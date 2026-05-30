@@ -20,17 +20,18 @@ import {
 import { ListingFormData } from '../../../lib/types';
 import Screen from '../../../components/ui/Screen';
 import { Colors, Spacing, Typography } from '../../../constants';
-import { Ionicons } from '@expo/vector-icons';
 import StepDetails from '../../../components/listings/steps/StepDetails';
 import StepSpecs from '../../../components/listings/steps/StepSpecs';
 import StepPricing from '../../../components/listings/steps/StepPricing';
 import StepLocation from '../../../components/listings/steps/StepLocation';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../../components/ui/ScreenHeader';
+import { useRequireAuth } from '../../../lib/useRequireAuth';
 
 export default function EditListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { session, profile } = useAuth();
-  const userId = session?.user?.id!;
+  const auth = useRequireAuth();
+  const { profile } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
@@ -42,7 +43,9 @@ export default function EditListingScreen() {
   });
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || !auth.userId) {
+      return;
+    }
 
     const lengthFeet = data.length_inches
       ? Math.floor(Number(data.length_inches) / 12)
@@ -79,7 +82,7 @@ export default function EditListingScreen() {
       accepts_offers: data.accepts_offers ?? false,
       payment_notes: data.payment_notes,
       currency: data.currency ?? 'USD',
-      user_id: userId,
+      user_id: auth.userId!,
     });
   }, [data]);
 
@@ -138,10 +141,12 @@ export default function EditListingScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteListing(id, userId);
+              await deleteListing(id, auth.userId!);
               router.replace('/(tabs)/sell');
               queryClient.invalidateQueries({ queryKey: ['userListings'] });
+              queryClient.invalidateQueries({ queryKey: ['userListingCount'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
+              queryClient.removeQueries({ queryKey: ['listing', id] });
             } catch (err) {
               Sentry.captureException(err);
               Alert.alert(
@@ -155,18 +160,14 @@ export default function EditListingScreen() {
     );
   }
 
+  if (!auth.ready) {
+    return auth.redirect ?? null;
+  }
+
   if (isPending || !formData) {
     return (
       <Screen>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-            <Ionicons
-              name='chevron-back'
-              size={24}
-              color={Colors.textPrimary}
-            />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader onBack={() => router.back()} />
         <View style={styles.centered}>
           <ActivityIndicator color={Colors.accent} />
         </View>
@@ -176,20 +177,19 @@ export default function EditListingScreen() {
 
   return (
     <Screen>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Listing</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size='small' color={Colors.accent} />
-          ) : (
-            <Text style={styles.saveButton}>Save</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title='Edit Listing'
+        onBack={() => router.back()}
+        rightElement={
+          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <ActivityIndicator size='small' color={Colors.accent} />
+            ) : (
+              <Text style={styles.saveButton}>Save</Text>
+            )}
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -234,19 +234,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
   },
   saveButton: {
     ...Typography.body,

@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { Colors, Spacing, Typography } from '../../constants';
 import AuthInput from '../../components/ui/AuthInput';
 import { userCurrency } from '../../lib/utils';
+import * as Sentry from '@sentry/react-native';
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -51,7 +52,12 @@ export default function SignUp() {
       return;
     }
 
-    const age = new Date().getFullYear() - parseInt(birthYear);
+    const parsedYear = parseInt(birthYear);
+    if (!Number.isFinite(parsedYear) || !/^\d{4}$/.test(birthYear)) {
+      setError('Please enter a valid birth year.');
+      return;
+    }
+    const age = new Date().getFullYear() - parsedYear;
     if (age < 13) {
       setError('You must be at least 13 years old to create an account.');
       return;
@@ -69,7 +75,8 @@ export default function SignUp() {
       if (error) {
         setError(error.message);
       }
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);

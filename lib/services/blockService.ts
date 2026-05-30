@@ -11,7 +11,7 @@ export async function blockUser(
 
   if (error) {
     console.error('Error blocking user:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -27,7 +27,7 @@ export async function unblockUser(
 
   if (error) {
     console.error('Error unblocking user:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -39,7 +39,7 @@ export async function getBlockedUsers(userId: string): Promise<string[]> {
 
   if (error) {
     console.error('Error fetching blocked users:', error);
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return [];
   }
 
@@ -58,7 +58,7 @@ export async function isUserBlocked(
     .maybeSingle();
 
   if (error) {
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return false;
   }
   return !!data;
@@ -79,7 +79,7 @@ export async function submitReport(
 
   if (error) {
     console.error('Error submitting report:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -87,15 +87,14 @@ export async function getBlockedUsersWithProfiles(userId: string) {
   const { data, error } = await supabase
     .from('blocked_users')
     .select(
-      'blocked_id, users!blocked_users_blocked_id_fkey(id, full_name, avatar_url)',
+      'blocked_id, public_users!blocked_users_blocked_id_fkey(id, full_name, avatar_url)',
     )
     .eq('blocker_id', userId);
 
   if (error) {
     console.error('Error fetching blocked users:', error);
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return [];
   }
-
-  return data.map((row: any) => row.users);
+  return data.map((row: any) => row.public_users).filter(Boolean);
 }

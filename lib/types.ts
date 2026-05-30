@@ -104,7 +104,7 @@ export type ListingCardData = {
 
 export type ListingWithPhotos = Listing & {
   listing_photos: ListingPhoto[];
-  users: {
+  public_users: {
     id: string;
     full_name: string | null;
     avatar_url: string | null;

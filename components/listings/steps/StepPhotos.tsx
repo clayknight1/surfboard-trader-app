@@ -59,9 +59,7 @@ export default function StepPhotos({
 
     if (!result.canceled) {
       const processed = await Promise.all(
-        result.assets.map(({ uri, width, height }) =>
-          processPhoto(uri, width, height),
-        ),
+        result.assets.map(({ uri }) => processPhoto(uri)),
       );
       setPhotos([...photos, ...processed].slice(0, MAX_PHOTOS));
     }
@@ -83,8 +81,8 @@ export default function StepPhotos({
     });
 
     if (!result.canceled) {
-      const { uri, width, height } = result.assets[0];
-      const processed = await processPhoto(uri, width, height);
+      const { uri } = result.assets[0];
+      const processed = await processPhoto(uri);
       setPhotos([...photos, processed].slice(0, MAX_PHOTOS));
     }
   }

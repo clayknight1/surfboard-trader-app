@@ -22,6 +22,7 @@ import SignInPrompt from '../../components/ui/SignInPrompt';
 import { ListingWithPhotos } from '../../lib/types';
 import SellerListingCardSkeleton from '../../components/listings/SellerListingCardSkeleton';
 import { useState } from 'react';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 export default function SellScreen() {
   const { session, profile, loading } = useAuth();
@@ -39,13 +40,6 @@ export default function SellScreen() {
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
-
-  const { data: listingCount } = useQuery({
-    queryKey: ['userListingCount', userId],
-    queryFn: () => getUserListingCount(userId!),
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 5,
-  });
 
   const sortedData = data?.sort((a, b) => {
     if (a.status === 'sold' && b.status !== 'sold') return 1;
@@ -68,7 +62,8 @@ export default function SellScreen() {
           ? Infinity
           : 5; // free
 
-  const atLimit = (listingCount ?? 0) >= tierLimit;
+  const atLimit =
+    (data?.filter((l) => l.status === 'active').length ?? 0) >= tierLimit;
 
   if (loading) {
     return null;
@@ -100,23 +95,24 @@ export default function SellScreen() {
 
   return (
     <Screen>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Listings</Text>
-        <TouchableOpacity
-          style={[styles.addButton, atLimit && styles.addButtonDisabled]}
-          onPress={() =>
-            atLimit
-              ? Alert.alert(
-                  'Listing limit reached',
-                  'Upgrade your plan to list more boards.',
-                )
-              : router.push('/listings/create')
-          }
-        >
-          <Ionicons name='add' size={22} color={Colors.backgroundCard} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title='My Listings'
+        rightElement={
+          <TouchableOpacity
+            style={[styles.addButton, atLimit && styles.addButtonDisabled]}
+            onPress={() =>
+              atLimit
+                ? Alert.alert(
+                    'Listing limit reached',
+                    'Upgrade your plan to list more boards.',
+                  )
+                : router.push('/listings/create')
+            }
+          >
+            <Ionicons name='add' size={22} color={Colors.backgroundCard} />
+          </TouchableOpacity>
+        }
+      />
 
       {isEmpty ? (
         <View style={styles.emptyState}>
@@ -173,19 +169,6 @@ const styles = StyleSheet.create({
   errorText: {
     ...Typography.body,
     color: Colors.textSecondary,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-    height: 56,
-  },
-  headerTitle: {
-    ...Typography.heading,
-    color: Colors.textPrimary,
   },
   addButton: {
     width: 36,

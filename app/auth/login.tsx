@@ -14,6 +14,7 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Spacing, Typography } from '../../constants';
 import AuthInput from '../../components/ui/AuthInput';
+import * as Sentry from '@sentry/react-native';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -38,7 +39,8 @@ export default function Login() {
         password,
       });
       if (error) setError(error.message);
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);

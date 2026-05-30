@@ -12,7 +12,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
 
   if (error) {
     console.error('Error fetching user profile:', error);
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return null;
   }
   return data;
@@ -24,21 +24,16 @@ export async function updateUserLocation(
   lng: number,
   label: string,
 ): Promise<void> {
-  try {
-    const { error } = await supabase.rpc('update_user_location', {
-      p_user_id: userId,
-      p_lat: lat,
-      p_lng: lng,
-      p_label: label,
-    });
+  const { error } = await supabase.rpc('update_user_location', {
+    p_user_id: userId,
+    p_lat: lat,
+    p_lng: lng,
+    p_label: label,
+  });
 
-    if (error) {
-      console.error('Supabase error:', error);
-      throw new Error(error.message);
-    }
-  } catch (err) {
-    console.error('Error updating location', err);
-    throw err;
+  if (error) {
+    console.error('Supabase error:', error);
+    throw error;
   }
 }
 
@@ -53,7 +48,7 @@ export async function updateUserProfile(
 
   if (error) {
     console.error('Error updating profile:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -73,7 +68,7 @@ export async function uploadAvatar(
 
   if (error) {
     console.error('Error uploading avatar:', error);
-    throw new Error(error.message);
+    throw error;
   }
 
   return getTransformUrl('avatars', path, 160);
@@ -81,7 +76,7 @@ export async function uploadAvatar(
 
 export async function getPublicProfile(userId: string): Promise<PublicProfile> {
   const { data, error } = await supabase
-    .from('users')
+    .from('public_users')
     .select(
       'id, full_name, avatar_url, role, location_label, created_at, business_profiles(*)',
     )
@@ -90,7 +85,7 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile> {
 
   if (error) {
     console.error('Error fetching public profile:', error);
-    throw new Error(error.message);
+    throw error;
   }
 
   return data;
@@ -108,7 +103,7 @@ export async function getPublicListings(
 
   if (error) {
     console.error('Error fetching public listings:', error);
-    throw new Error(error.message);
+    throw error;
   }
 
   return (data ?? []).map((listing) => {
@@ -132,7 +127,7 @@ export async function submitDeletionRequest(userId: string): Promise<void> {
 
   if (error) {
     console.error('Error submitting deletion request:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -147,6 +142,6 @@ export async function updateUserCurrency(
 
   if (error) {
     console.error('Error updating user currency:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }

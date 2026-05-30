@@ -38,7 +38,21 @@ export type Database = {
             foreignKeyName: "blocked_users_blocked_id_fkey"
             columns: ["blocked_id"]
             isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
             referencedColumns: ["id"]
           },
           {
@@ -91,6 +105,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "business_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "business_applications_user_id_fkey"
             columns: ["user_id"]
@@ -169,6 +190,13 @@ export type Database = {
             foreignKeyName: "business_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -197,6 +225,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "deletion_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deletion_requests_user_id_fkey"
             columns: ["user_id"]
@@ -377,6 +412,13 @@ export type Database = {
             foreignKeyName: "listings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -438,7 +480,21 @@ export type Database = {
             foreignKeyName: "messages_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
             referencedColumns: ["id"]
           },
           {
@@ -494,7 +550,21 @@ export type Database = {
             foreignKeyName: "reports_reported_user_id_fkey"
             columns: ["reported_user_id"]
             isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
             referencedColumns: ["id"]
           },
           {
@@ -528,6 +598,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_listings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
             referencedColumns: ["id"]
           },
           {
@@ -572,6 +649,13 @@ export type Database = {
             foreignKeyName: "threads_buyer_id_fkey"
             columns: ["buyer_id"]
             isOneToOne: false
+            referencedRelation: "public_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "threads_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -580,6 +664,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "threads_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "public_users"
             referencedColumns: ["id"]
           },
           {
@@ -665,27 +756,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_verified: boolean | null
+          location_label: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          location_label?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          location_label?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_listing: {
         Args: {
           p_board_type: Database["public"]["Enums"]["board_type"]
           p_condition: Database["public"]["Enums"]["board_condition"]
-          p_currency?: string
+          p_currency: string
           p_description: string
-          p_era?: Database["public"]["Enums"]["board_era"]
+          p_era: Database["public"]["Enums"]["board_era"]
           p_fin_setup: Database["public"]["Enums"]["fin_setup"]
           p_fin_system: Database["public"]["Enums"]["fin_system"]
-          p_is_rideable?: boolean
+          p_is_rideable: boolean
           p_lat: number
-          p_lead_time_weeks?: number
+          p_lead_time_weeks: number
           p_length_inches: number
           p_listing_type: Database["public"]["Enums"]["listing_type"]
           p_lng: number
           p_location_label: string
           p_price: number
-          p_provenance?: string
+          p_provenance: string
           p_shaper_brand: string
           p_thickness_inches: number
           p_title: string
@@ -708,114 +828,43 @@ export type Database = {
           seller_id: string
         }[]
       }
-      get_listings_nearby:
-        | {
-            Args: {
-              p_board_type?: Database["public"]["Enums"]["board_type"]
-              p_fin_system?: Database["public"]["Enums"]["fin_system"]
-              p_lat: number
-              p_length_max?: number
-              p_length_min?: number
-              p_limit?: number
-              p_listing_type?: Database["public"]["Enums"]["listing_type"]
-              p_lng: number
-              p_offset?: number
-              p_price_max?: number
-              p_radius_miles?: number
-              p_search_term?: string
-              p_user_id?: string
-              p_volume_max?: number
-              p_volume_min?: number
-            }
-            Returns: {
-              board_type: Database["public"]["Enums"]["board_type"]
-              condition: Database["public"]["Enums"]["board_condition"]
-              currency: string
-              distance_miles: number
-              fin_setup: Database["public"]["Enums"]["fin_setup"]
-              fin_system: Database["public"]["Enums"]["fin_system"]
-              id: string
-              is_sponsored: boolean
-              length_inches: number
-              listing_type: Database["public"]["Enums"]["listing_type"]
-              location_label: string
-              price: number
-              primary_photo: string
-              title: string
-              user_id: string
-              volume: number
-            }[]
-          }
-        | {
-            Args: {
-              p_board_type?: Database["public"]["Enums"]["board_type"]
-              p_fin_system?: Database["public"]["Enums"]["fin_system"]
-              p_lat: number
-              p_length_max?: number
-              p_length_min?: number
-              p_listing_type?: Database["public"]["Enums"]["listing_type"]
-              p_lng: number
-              p_price_max?: number
-              p_radius_miles: number
-              p_search_term?: string
-              p_user_id?: string
-              p_volume_max?: number
-              p_volume_min?: number
-            }
-            Returns: {
-              board_type: Database["public"]["Enums"]["board_type"]
-              condition: Database["public"]["Enums"]["board_condition"]
-              distance_miles: number
-              fin_setup: Database["public"]["Enums"]["fin_setup"]
-              fin_system: Database["public"]["Enums"]["fin_system"]
-              id: string
-              is_sponsored: boolean
-              length_inches: number
-              listing_type: Database["public"]["Enums"]["listing_type"]
-              location_label: string
-              price: number
-              primary_photo: string
-              title: string
-              user_id: string
-              volume: number
-            }[]
-          }
-        | {
-            Args: {
-              p_board_type?: Database["public"]["Enums"]["board_type"]
-              p_fin_system?: Database["public"]["Enums"]["fin_system"]
-              p_lat: number
-              p_length_max?: number
-              p_length_min?: number
-              p_limit?: number
-              p_listing_type?: Database["public"]["Enums"]["listing_type"]
-              p_lng: number
-              p_offset?: number
-              p_price_max?: number
-              p_radius_miles: number
-              p_search_term?: string
-              p_user_id?: string
-              p_volume_max?: number
-              p_volume_min?: number
-            }
-            Returns: {
-              board_type: Database["public"]["Enums"]["board_type"]
-              condition: Database["public"]["Enums"]["board_condition"]
-              distance_miles: number
-              fin_setup: Database["public"]["Enums"]["fin_setup"]
-              fin_system: Database["public"]["Enums"]["fin_system"]
-              id: string
-              is_sponsored: boolean
-              length_inches: number
-              listing_type: Database["public"]["Enums"]["listing_type"]
-              location_label: string
-              price: number
-              primary_photo: string
-              title: string
-              user_id: string
-              volume: number
-            }[]
-          }
+      get_listings_nearby: {
+        Args: {
+          p_board_type?: Database["public"]["Enums"]["board_type"]
+          p_fin_system?: Database["public"]["Enums"]["fin_system"]
+          p_lat: number
+          p_length_max?: number
+          p_length_min?: number
+          p_limit?: number
+          p_listing_type?: Database["public"]["Enums"]["listing_type"]
+          p_lng: number
+          p_offset?: number
+          p_price_max?: number
+          p_radius_miles?: number
+          p_search_term?: string
+          p_user_id?: string
+          p_volume_max?: number
+          p_volume_min?: number
+        }
+        Returns: {
+          board_type: Database["public"]["Enums"]["board_type"]
+          condition: Database["public"]["Enums"]["board_condition"]
+          currency: string
+          distance_miles: number
+          fin_setup: Database["public"]["Enums"]["fin_setup"]
+          fin_system: Database["public"]["Enums"]["fin_system"]
+          id: string
+          is_sponsored: boolean
+          length_inches: number
+          listing_type: Database["public"]["Enums"]["listing_type"]
+          location_label: string
+          price: number
+          primary_photo: string
+          title: string
+          user_id: string
+          volume: number
+        }[]
+      }
       send_message: {
         Args: {
           p_body: string

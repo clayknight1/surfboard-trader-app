@@ -14,6 +14,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { updateUserLocation } from '../../lib/services/userService';
 import { useAuth } from '../../lib/auth';
 import { buildLocationLabel } from '../../lib/utils';
+import * as Sentry from '@sentry/react-native';
 
 type LocationSheetProps = {
   isOpen: boolean;
@@ -73,7 +74,8 @@ export default function LocationSheet({
         await refreshProfile();
       }
       onClose();
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Could not get your location. Try again.');
     } finally {
       setIsLoading(false);
@@ -105,7 +107,8 @@ export default function LocationSheet({
         await refreshProfile();
       }
       onClose();
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err);
       setError('Something went wrong. Try again.');
     } finally {
       setIsLoading(false);

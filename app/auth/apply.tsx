@@ -19,6 +19,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import { userCurrency } from '../../lib/utils';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 
 type BusinessType = 'shop' | 'shaper';
 
@@ -71,7 +72,12 @@ export default function ApplyScreen() {
       return;
     }
 
-    const age = new Date().getFullYear() - parseInt(birthYear);
+    const parsedYear = parseInt(birthYear);
+    if (!Number.isFinite(parsedYear) || !/^\d{4}$/.test(birthYear)) {
+      setError('Please enter a valid birth year.');
+      return;
+    }
+    const age = new Date().getFullYear() - parsedYear;
     if (age < 13) {
       setError('You must be at least 13 years old to create an account.');
       return;
@@ -125,13 +131,10 @@ export default function ApplyScreen() {
   return (
     <Screen>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Shop & Shaper Application</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <ScreenHeader
+        title='Shop & Shaper Application'
+        onBack={() => router.back()}
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -146,7 +149,7 @@ export default function ApplyScreen() {
           <Text style={styles.sectionTitle}>Your Account</Text>
 
           <AuthInput
-            label='Full Name'
+            label='Full Name*'
             value={fullName}
             onChangeText={setFullName}
             placeholder='John Doe'
@@ -154,7 +157,7 @@ export default function ApplyScreen() {
             textContentType='name'
           />
           <AuthInput
-            label='Email'
+            label='Email*'
             value={email}
             onChangeText={setEmail}
             placeholder='you@example.com'
@@ -162,7 +165,7 @@ export default function ApplyScreen() {
             textContentType='emailAddress'
           />
           <AuthInput
-            label='Password'
+            label='Password*'
             value={password}
             onChangeText={setPassword}
             placeholder='••••••••'
@@ -170,7 +173,7 @@ export default function ApplyScreen() {
             textContentType='newPassword'
           />
           <AuthInput
-            label='Confirm Password'
+            label='Confirm Password*'
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             placeholder='••••••••'
@@ -185,18 +188,27 @@ export default function ApplyScreen() {
           <Text style={styles.sectionTitle}>Your Business</Text>
 
           <PillSelector
-            label='Business Type'
+            label='Business Type*'
             options={BUSINESS_TYPE_OPTIONS}
             value={businessType}
             onSelect={setBusinessType}
           />
 
           <AuthInput
-            label='Business Name'
+            label='Business Name*'
             value={businessName}
             onChangeText={setBusinessName}
             placeholder='e.g. Surf Ride Oceanside'
             autoCapitalize='words'
+          />
+
+          <AuthInput
+            label='Birth Year*'
+            value={birthYear}
+            onChangeText={setBirthYear}
+            placeholder='1990'
+            keyboardType='numeric'
+            maxLength={4}
           />
 
           <AuthInput
@@ -216,18 +228,9 @@ export default function ApplyScreen() {
             autoCapitalize='none'
           />
 
-          <AuthInput
-            label='Birth Year'
-            value={birthYear}
-            onChangeText={setBirthYear}
-            placeholder='1990'
-            keyboardType='numeric'
-            maxLength={4}
-          />
-
           <Text style={styles.hint}>
-            Please provide at least a website or Instagram so we can verify your
-            business.
+            * Please provide at least a website or Instagram so we can verify
+            your business.
           </Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -253,19 +256,6 @@ export default function ApplyScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   scroll: {
     padding: Spacing.screenPadding,
     gap: Spacing.lg,

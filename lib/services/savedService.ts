@@ -32,7 +32,7 @@ export async function getSavedListings(userId: string) {
 
   if (error) {
     console.error('Error fetching saved listings:', error);
-    throw new Error(error.message);
+    throw error;
   }
 
   return (data ?? []).map((row: any) => {
@@ -60,7 +60,7 @@ export async function saveListing(
 
   if (error) {
     console.error('Error saving listing:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -76,7 +76,7 @@ export async function unsaveListing(
 
   if (error) {
     console.error('Error unsaving listing:', error);
-    throw new Error(error.message);
+    throw error;
   }
 }
 
@@ -93,7 +93,7 @@ export async function isListingSaved(
 
   if (error) {
     console.error('Error checking saved status:', error);
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return false;
   }
   return !!data;
@@ -107,7 +107,7 @@ export async function getSavedListingIds(userId: string): Promise<string[]> {
 
   if (error) {
     console.error('Error fetching saved IDs:', error);
-    Sentry.captureException(new Error(error.message));
+    Sentry.captureException(error);
     return [];
   }
   return data.map((row) => row.listing_id);

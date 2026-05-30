@@ -33,7 +33,13 @@ import {
 } from '../../../lib/services/savedService';
 import * as Haptics from 'expo-haptics';
 import ImageViewing from 'react-native-image-viewing';
-import { displayName, formatPrice } from '../../../lib/utils';
+import {
+  formatLength,
+  displayName,
+  formatPrice,
+  getConditionColor,
+  getConditionLabel,
+} from '../../../lib/utils';
 import * as Sentry from '@sentry/react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -77,48 +83,6 @@ export default function ListingDetail() {
     if (savedStatus !== undefined) setIsSaved(savedStatus);
   }, [savedStatus]);
 
-  // function formatPrice(cents: number): string {
-  //   return `$${(cents / 100).toLocaleString()}`;
-  // }
-
-  function formatLength(inches: number): string {
-    const feet = Math.floor(inches / 12);
-    const remainder = inches % 12;
-    const wholeInches = Math.floor(remainder);
-    const fraction = remainder - wholeInches;
-    const fractions: Record<number, string> = {
-      0.125: '⅛',
-      0.25: '¼',
-      0.375: '⅜',
-      0.5: '½',
-      0.625: '⅝',
-      0.75: '¾',
-      0.875: '⅞',
-    };
-    const nearestSixteenth = Math.round(fraction * 16) / 16;
-    const fractionStr = fractions[nearestSixteenth] ?? '';
-    return `${feet}'${wholeInches}${fractionStr}"`;
-  }
-
-  function getConditionColor(condition: string): string {
-    switch (condition) {
-      case 'excellent':
-        return Colors.conditionExcellent;
-      case 'good':
-        return Colors.conditionGood;
-      case 'fair':
-        return Colors.conditionFair;
-      case 'poor':
-        return Colors.conditionPoor;
-      default:
-        return Colors.textSecondary;
-    }
-  }
-
-  function getConditionLabel(condition: string): string {
-    return condition.charAt(0).toUpperCase() + condition.slice(1);
-  }
-
   async function handleMessageSeller(): Promise<void> {
     if (!userId) {
       setSignInModalOpen(true);
@@ -160,8 +124,10 @@ export default function ListingDetail() {
               } catch {}
               queryClient.invalidateQueries({ queryKey: ['listing', id] });
               queryClient.invalidateQueries({ queryKey: ['userListings'] });
+              queryClient.invalidateQueries({ queryKey: ['userListingCount'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch {
+            } catch (err) {
+              Sentry.captureException(err);
               Alert.alert(
                 'Something went wrong',
                 'Could not mark listing as sold.',
@@ -249,11 +215,11 @@ export default function ListingDetail() {
   const photos = data.listing_photos ?? [];
   const hasPhotos = photos.length > 0;
   const isBusinessAccount =
-    data.users?.role === 'shop' || data.users?.role === 'shaper';
+    data.public_users?.role === 'shop' || data.public_users?.role === 'shaper';
   const sellerName = isBusinessAccount
-    ? (data.users?.business_profiles?.business_name ??
-      displayName(data.users?.full_name))
-    : displayName(data.users?.full_name);
+    ? (data.public_users?.business_profiles?.business_name ??
+      displayName(data.public_users?.full_name))
+    : displayName(data.public_users?.full_name);
 
   return (
     <View style={styles.container}>
@@ -506,12 +472,12 @@ export default function ListingDetail() {
                 <Avatar
                   avatarUrl={
                     isBusinessAccount
-                      ? (data.users?.business_profiles?.logo_url ??
-                        data.users?.avatar_url ??
+                      ? (data.public_users?.business_profiles?.logo_url ??
+                        data.public_users?.avatar_url ??
                         null)
-                      : (data.users?.avatar_url ?? null)
+                      : (data.public_users?.avatar_url ?? null)
                   }
-                  fullName={data.users?.full_name ?? null}
+                  fullName={data.public_users?.full_name ?? null}
                   size={40}
                   shape={isBusinessAccount ? 'rounded' : 'circle'}
                 />

@@ -16,7 +16,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { getListing } from '../../lib/services/listingService';
 import * as Sentry from '@sentry/react-native';
-import { formatDistance, formatPrice } from '../../lib/utils';
+import {
+  formatLength,
+  formatDistance,
+  formatPrice,
+  getConditionColor,
+} from '../../lib/utils';
 
 type ListingCardProps = {
   listing: ListingCardData;
@@ -55,44 +60,6 @@ export default function ListingCard({
     });
 
     router.push(`/listings/${listing.id}`);
-  }
-
-  // function formatPrice(cents: number): string {
-  //   return `$${(cents / 100).toLocaleString()}`;
-  // }
-
-  function formatLength(inches: number): string {
-    const feet = Math.floor(inches / 12);
-    const remainder = inches % 12;
-    const wholeInches = Math.floor(remainder);
-    const fraction = remainder - wholeInches;
-    const fractions: Record<number, string> = {
-      0.125: '⅛',
-      0.25: '¼',
-      0.375: '⅜',
-      0.5: '½',
-      0.625: '⅝',
-      0.75: '¾',
-      0.875: '⅞',
-    };
-    const nearestSixteenth = Math.round(fraction * 16) / 16;
-    const fractionStr = fractions[nearestSixteenth] ?? '';
-    return `${feet}'${wholeInches}${fractionStr}"`;
-  }
-
-  function getConditionColor(condition: string): string {
-    switch (condition) {
-      case 'excellent':
-        return Colors.conditionExcellent;
-      case 'good':
-        return Colors.conditionGood;
-      case 'fair':
-        return Colors.conditionFair;
-      case 'poor':
-        return Colors.conditionPoor;
-      default:
-        return Colors.textSecondary;
-    }
   }
 
   async function handleToggleSave(event: any) {
@@ -319,9 +286,9 @@ const styles = StyleSheet.create({
     color: Colors.textOnCardMuted,
   },
   conditionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   distance: {
     ...Typography.caption,

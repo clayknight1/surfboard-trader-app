@@ -23,18 +23,19 @@ import { supabase } from '../../lib/supabase';
 import { blockUser, submitReport } from '../../lib/services/blockService';
 import * as Haptics from 'expo-haptics';
 import * as Sentry from '@sentry/react-native';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import { useRequireAuth } from '../../lib/useRequireAuth';
 
 export default function ThreadScreen() {
   const { threadId, listingId } = useLocalSearchParams<{
     threadId: string;
     listingId: string;
   }>();
-  const { session, refreshUnreadCount } = useAuth();
-  const userId = session?.user?.id!;
+  const auth = useRequireAuth();
+  const { refreshUnreadCount } = useAuth();
   const router = useRouter();
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const queryClient = useQueryClient();
   const resolvedThreadId = Array.isArray(threadId) ? threadId[0] : threadId;
   const flatListRef = useRef<FlatList>(null);
@@ -47,20 +48,20 @@ export default function ThreadScreen() {
   });
 
   const otherUserId = messages?.[0]
-    ? messages[0].sender_id === userId
+    ? messages[0].sender_id === auth.userId
       ? messages[0].recipient_id
       : messages[0].sender_id
     : null;
 
   useEffect(() => {
-    if (resolvedThreadId && userId) {
-      markThreadRead(resolvedThreadId, userId)
+    if (resolvedThreadId && auth.userId) {
+      markThreadRead(resolvedThreadId, auth.userId)
         .then(() => {
           refreshUnreadCount();
         })
         .catch((err) => Sentry.captureException(err));
     }
-  }, [resolvedThreadId, userId]);
+  }, [resolvedThreadId, auth.userId]);
 
   useEffect(() => {
     if (!resolvedThreadId) return;
@@ -69,7 +70,7 @@ export default function ThreadScreen() {
       await supabase.realtime.setAuth();
 
       const channel = supabase
-        .channel(`topic:${userId}`, { config: { private: true } })
+        .channel(`topic:${auth.userId}`, { config: { private: true } })
         .on('broadcast', { event: 'INSERT' }, (payload) => {
           const incomingThreadId = payload.payload?.record?.thread_id;
           if (incomingThreadId === resolvedThreadId) {
@@ -98,7 +99,7 @@ export default function ThreadScreen() {
     setIsSending(true);
     try {
       await sendMessage(
-        userId,
+        auth.userId!,
         listingId,
         messageText.trim(),
         resolvedThreadId,
@@ -130,7 +131,7 @@ export default function ThreadScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await blockUser(userId, otherUserId!);
+              await blockUser(auth.userId!, otherUserId!);
               queryClient.invalidateQueries({ queryKey: ['inbox'] });
               queryClient.invalidateQueries({ queryKey: ['listings'] });
               router.back();
@@ -150,7 +151,7 @@ export default function ThreadScreen() {
         text: 'Spam',
         onPress: async () => {
           try {
-            await submitReport(userId, 'spam', otherUserId!);
+            await submitReport(auth.userId!, 'spam', otherUserId!);
           } catch (err) {
             Sentry.captureException(err);
           }
@@ -160,7 +161,7 @@ export default function ThreadScreen() {
         text: 'Inappropriate behavior',
         onPress: async () => {
           try {
-            await submitReport(userId, 'inappropriate', otherUserId!);
+            await submitReport(auth.userId!, 'inappropriate', otherUserId!);
           } catch (err) {
             Sentry.captureException(err);
           }
@@ -170,7 +171,7 @@ export default function ThreadScreen() {
         text: 'Scam',
         onPress: async () => {
           try {
-            await submitReport(userId, 'scam', otherUserId!);
+            await submitReport(auth.userId!, 'scam', otherUserId!);
           } catch (err) {
             Sentry.captureException(err);
           }
@@ -180,7 +181,7 @@ export default function ThreadScreen() {
         text: 'Other',
         onPress: async () => {
           try {
-            await submitReport(userId, 'other', otherUserId!);
+            await submitReport(auth.userId!, 'other', otherUserId!);
           } catch (err) {
             Sentry.captureException(err);
           }
@@ -208,30 +209,29 @@ export default function ThreadScreen() {
     ]);
   }
 
+  if (!auth.ready) {
+    return auth.redirect ?? null;
+  }
+
   return (
     <Screen>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-            <Ionicons
-              name='chevron-back'
-              size={24}
-              color={Colors.textPrimary}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Conversation</Text>
-          <TouchableOpacity onPress={handleMenu}>
-            <Ionicons
-              name='ellipsis-horizontal'
-              size={24}
-              color={Colors.textPrimary}
-            />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          title='Conversation'
+          onBack={() => router.back()}
+          rightElement={
+            <TouchableOpacity onPress={handleMenu} disabled={!otherUserId}>
+              <Ionicons
+                name='ellipsis-horizontal'
+                size={24}
+                color={Colors.textPrimary}
+              />
+            </TouchableOpacity>
+          }
+        />
 
         {/* Messages */}
         {isPending ? (
@@ -247,7 +247,7 @@ export default function ThreadScreen() {
               flatListRef.current?.scrollToEnd({ animated: true })
             }
             renderItem={({ item }) => {
-              const isMe = item.sender_id === userId;
+              const isMe = item.sender_id === auth.userId;
               return (
                 <View
                   style={[
@@ -312,19 +312,6 @@ export default function ThreadScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
   messageList: {
     padding: Spacing.screenPadding,
     gap: Spacing.sm,
