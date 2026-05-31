@@ -11,11 +11,14 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../lib/auth';
-import { getMessages, markThreadRead } from '../../lib/services/messageService';
-import { sendMessage } from '../../lib/services/messageService';
+import {
+  getMessages,
+  markThreadRead,
+  sendMessage,
+} from '../../lib/services/messageService';
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +29,8 @@ import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
 
+type ReportReason = 'spam' | 'inappropriate' | 'scam' | 'other';
+
 export default function ThreadScreen() {
   const { threadId, listingId } = useLocalSearchParams<{
     threadId: string;
@@ -35,7 +40,6 @@ export default function ThreadScreen() {
   const { refreshUnreadCount } = useAuth();
   const router = useRouter();
   const [messageText, setMessageText] = useState('');
-  const [isSending, setIsSending] = useState(false);
   const queryClient = useQueryClient();
   const resolvedThreadId = Array.isArray(threadId) ? threadId[0] : threadId;
   const flatListRef = useRef<FlatList>(null);
@@ -94,33 +98,60 @@ export default function ThreadScreen() {
     };
   }, [resolvedThreadId]);
 
-  async function handleSend() {
-    if (!messageText.trim() || isSending) return;
-    setIsSending(true);
-    try {
-      await sendMessage(
-        auth.userId!,
-        listingId,
-        messageText.trim(),
-        resolvedThreadId,
-      );
+  const sendMessageMutation = useMutation({
+    mutationFn: async (body: string) => {
+      if (!resolvedThreadId) throw new Error('Missing thread ID');
+      await sendMessage(auth.userId!, listingId, body, resolvedThreadId);
+    },
+    onSuccess: () => {
       setMessageText('');
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch {}
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
-    } catch (err) {
+    },
+    onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not send your message. Please try again.',
       );
-      console.error('Error sending message:', err);
-    } finally {
-      setIsSending(false);
-    }
-  }
-  async function handleBlock() {
+    },
+  });
+
+  const blockUserMutation = useMutation({
+    mutationFn: async (blockedId: string) => {
+      await blockUser(auth.userId!, blockedId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inbox'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      router.back();
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert('Something went wrong', 'Could not block user.');
+    },
+  });
+
+  const submitReportMutation = useMutation({
+    mutationFn: async ({
+      reason,
+      reportedUserId,
+    }: {
+      reason: ReportReason;
+      reportedUserId: string;
+    }) => {
+      await submitReport(auth.userId!, reason, reportedUserId);
+    },
+    onSuccess: () => {
+      Alert.alert('Report submitted', 'Thanks — our team will review this.');
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+    },
+  });
+
+  function handleBlock() {
+    if (!otherUserId) return;
     Alert.alert(
       'Block User?',
       "They will no longer be able to message you and you won't see their listings.",
@@ -129,63 +160,52 @@ export default function ThreadScreen() {
         {
           text: 'Block',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockUser(auth.userId!, otherUserId!);
-              queryClient.invalidateQueries({ queryKey: ['inbox'] });
-              queryClient.invalidateQueries({ queryKey: ['listings'] });
-              router.back();
-            } catch (err) {
-              Sentry.captureException(err);
-              Alert.alert('Something went wrong', 'Could not block user.');
-            }
-          },
+          onPress: () => blockUserMutation.mutate(otherUserId),
         },
       ],
     );
   }
 
-  async function handleReport() {
+  function handleSend() {
+    const trimmed = messageText.trim();
+    if (!trimmed) return;
+    sendMessageMutation.mutate(trimmed);
+  }
+
+  function handleReport() {
+    if (!otherUserId) return;
     Alert.alert('Report User', 'Why are you reporting this user?', [
       {
         text: 'Spam',
-        onPress: async () => {
-          try {
-            await submitReport(auth.userId!, 'spam', otherUserId!);
-          } catch (err) {
-            Sentry.captureException(err);
-          }
-        },
+        onPress: () =>
+          submitReportMutation.mutate({
+            reason: 'spam',
+            reportedUserId: otherUserId,
+          }),
       },
       {
         text: 'Inappropriate behavior',
-        onPress: async () => {
-          try {
-            await submitReport(auth.userId!, 'inappropriate', otherUserId!);
-          } catch (err) {
-            Sentry.captureException(err);
-          }
-        },
+        onPress: () =>
+          submitReportMutation.mutate({
+            reason: 'inappropriate',
+            reportedUserId: otherUserId,
+          }),
       },
       {
         text: 'Scam',
-        onPress: async () => {
-          try {
-            await submitReport(auth.userId!, 'scam', otherUserId!);
-          } catch (err) {
-            Sentry.captureException(err);
-          }
-        },
+        onPress: () =>
+          submitReportMutation.mutate({
+            reason: 'scam',
+            reportedUserId: otherUserId,
+          }),
       },
       {
         text: 'Other',
-        onPress: async () => {
-          try {
-            await submitReport(auth.userId!, 'other', otherUserId!);
-          } catch (err) {
-            Sentry.captureException(err);
-          }
-        },
+        onPress: () =>
+          submitReportMutation.mutate({
+            reason: 'other',
+            reportedUserId: otherUserId,
+          }),
       },
       { text: 'Cancel', style: 'cancel' },
     ]);
@@ -292,10 +312,10 @@ export default function ThreadScreen() {
               !messageText.trim() && styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!messageText.trim() || isSending}
+            disabled={!messageText.trim() || sendMessageMutation.isPending}
             hitSlop={10}
           >
-            {isSending ? (
+            {sendMessageMutation.isPending ? (
               <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Ionicons

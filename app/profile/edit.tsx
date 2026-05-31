@@ -23,6 +23,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
+import { useMutation } from '@tanstack/react-query';
 
 export default function EditProfileScreen() {
   const { profile, refreshProfile } = useAuth();
@@ -30,7 +31,33 @@ export default function EditProfileScreen() {
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!profile?.id) throw new Error('No profile to update');
+
+      let avatarUrl = profile.avatar_url;
+      if (avatarUri) {
+        avatarUrl = await uploadAvatar(profile.id, avatarUri);
+      }
+
+      await updateUserProfile(profile.id, {
+        full_name: fullName.trim(),
+        avatar_url: avatarUrl ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      refreshProfile().catch((err) => Sentry.captureException(err));
+      router.back();
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not save your profile. Please try again.',
+      );
+    },
+  });
 
   async function pickAvatar() {
     Alert.alert('Change Photo', 'Choose a source', [
@@ -101,38 +128,13 @@ export default function EditProfileScreen() {
     ]);
   }
 
-  async function handleSave() {
-    if (!profile?.id) {
-      return;
-    }
+  function handleSave() {
+    if (!profile?.id) return;
     if (!fullName.trim()) {
       Alert.alert('Name required', 'Please enter your full name.');
       return;
     }
-    setIsSaving(true);
-    try {
-      let avatarUrl = profile.avatar_url;
-
-      if (avatarUri) {
-        avatarUrl = await uploadAvatar(profile.id, avatarUri);
-      }
-
-      await updateUserProfile(profile.id, {
-        full_name: fullName.trim(),
-        avatar_url: avatarUrl ?? undefined,
-      });
-
-      await refreshProfile();
-      router.back();
-    } catch (err) {
-      Sentry.captureException(err);
-      Alert.alert(
-        'Something went wrong',
-        'Could not save your profile. Please try again.',
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    saveProfileMutation.mutate();
   }
 
   return (
@@ -141,8 +143,11 @@ export default function EditProfileScreen() {
         title='Edit Profile'
         onBack={() => router.back()}
         rightElement={
-          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-            {isSaving ? (
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={saveProfileMutation.isPending}
+          >
+            {saveProfileMutation.isPending ? (
               <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Text style={styles.saveButton}>Save</Text>

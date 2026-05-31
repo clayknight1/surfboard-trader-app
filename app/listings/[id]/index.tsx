@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Dimensions,
@@ -78,6 +78,19 @@ export default function ListingDetail() {
     queryFn: () => isListingSaved(userId!, id),
     enabled: !!userId,
   });
+  const markAsSoldMutation = useMutation({
+    mutationFn: () => markListingAsSold(id),
+    onSuccess: () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['listing', id] });
+      queryClient.invalidateQueries({ queryKey: ['userListings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert('Something went wrong', 'Could not mark listing as sold.');
+    },
+  });
 
   useEffect(() => {
     if (savedStatus !== undefined) setIsSaved(savedStatus);
@@ -116,24 +129,7 @@ export default function ListingDetail() {
         {
           text: 'Mark as Sold',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await markListingAsSold(id);
-              try {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              } catch {}
-              queryClient.invalidateQueries({ queryKey: ['listing', id] });
-              queryClient.invalidateQueries({ queryKey: ['userListings'] });
-              queryClient.invalidateQueries({ queryKey: ['userListingCount'] });
-              queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch (err) {
-              Sentry.captureException(err);
-              Alert.alert(
-                'Something went wrong',
-                'Could not mark listing as sold.',
-              );
-            }
-          },
+          onPress: () => markAsSoldMutation.mutate(),
         },
       ],
     );

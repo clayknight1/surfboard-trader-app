@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
+import { useMutation } from '@tanstack/react-query';
 
 export default function NewThreadScreen() {
   const { listingId, sellerId } = useLocalSearchParams<{
@@ -28,31 +29,27 @@ export default function NewThreadScreen() {
   const router = useRouter();
 
   const [messageText, setMessageText] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
-  async function handleSend(): Promise<void> {
-    if (!messageText.trim() || isSending) return;
-    setIsSending(true);
-    try {
-      const newThreadId = await sendMessage(
-        auth.userId!,
-        listingId,
-        messageText.trim(),
-      );
+  const sendMessageMutation = useMutation({
+    mutationFn: (body: string) => sendMessage(auth.userId!, listingId, body),
+    onSuccess: (newThreadId) => {
       if (newThreadId) {
         router.replace(`/messages/${newThreadId}?listingId=${listingId}`);
-        return;
       }
-    } catch (err) {
-      console.error('Error sending message:', err);
+    },
+    onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not send your message. Please try again.',
       );
-    } finally {
-      setIsSending(false);
-    }
+    },
+  });
+
+  function handleSend() {
+    const trimmed = messageText.trim();
+    if (!trimmed) return;
+    sendMessageMutation.mutate(trimmed);
   }
 
   if (!auth.ready) {
@@ -91,10 +88,10 @@ export default function NewThreadScreen() {
               !messageText.trim() && styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!messageText.trim() || isSending}
+            disabled={!messageText.trim() || sendMessageMutation.isPending}
             hitSlop={10}
           >
-            {isSending ? (
+            {sendMessageMutation.isPending ? (
               <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Ionicons

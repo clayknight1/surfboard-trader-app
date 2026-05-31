@@ -25,6 +25,7 @@ import {
 } from '../../lib/services/businessService';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
+import { useMutation } from '@tanstack/react-query';
 
 export default function BusinessProfileScreen() {
   const router = useRouter();
@@ -50,9 +51,54 @@ export default function BusinessProfileScreen() {
   );
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [locationLat, setLocationLat] = useState<number | null>(null);
   const [locationLng, setLocationLng] = useState<number | null>(null);
+
+  const saveBusinessProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error('No user ID');
+
+      const logoUrl = await uploadLogo();
+
+      const payload = {
+        business_name: businessName.trim(),
+        bio: bio.trim() || null,
+        website: website.trim() || null,
+        instagram_handle: instagram.trim() || null,
+        logo_url: logoUrl,
+        price_range_low:
+          priceRangeLow && Number.isFinite(parseInt(priceRangeLow, 10))
+            ? parseInt(priceRangeLow, 10)
+            : null,
+        price_range_high:
+          priceRangeHigh && Number.isFinite(parseInt(priceRangeHigh, 10))
+            ? parseInt(priceRangeHigh, 10)
+            : null,
+      };
+
+      await upsertBusinessProfile(userId, payload, !!existing);
+
+      if (locationLat && locationLng && locationLabel) {
+        await updateBusinessLocation(
+          userId,
+          locationLat,
+          locationLng,
+          locationLabel,
+        );
+      }
+    },
+    onSuccess: () => {
+      refreshProfile().catch((err) => Sentry.captureException(err));
+      router.back();
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not save your business profile. Please try again.',
+      );
+    },
+  });
 
   async function pickLogo() {
     Alert.alert('Change Logo', 'Choose a source', [
@@ -124,46 +170,15 @@ export default function BusinessProfileScreen() {
     return getTransformUrl('avatars', path, 160);
   }
 
-  async function handleSave() {
-    if (!businessName.trim() || !userId) {
+  function handleSave() {
+    if (!userId) {
       return;
     }
-    setIsSaving(true);
-    try {
-      const logoUrl = await uploadLogo();
-
-      const payload = {
-        business_name: businessName.trim(),
-        bio: bio.trim() || null,
-        website: website.trim() || null,
-        instagram_handle: instagram.trim() || null,
-        logo_url: logoUrl,
-        price_range_low: priceRangeLow ? parseInt(priceRangeLow) : null,
-        price_range_high: priceRangeHigh ? parseInt(priceRangeHigh) : null,
-      };
-
-      await upsertBusinessProfile(userId, payload, !!existing);
-
-      if (locationLat && locationLng && locationLabel) {
-        await updateBusinessLocation(
-          userId,
-          locationLat,
-          locationLng,
-          locationLabel,
-        );
-      }
-
-      await refreshProfile();
-      router.back();
-    } catch (err) {
-      Sentry.captureException(err);
-      Alert.alert(
-        'Something went wrong',
-        'Could not save your business profile. Please try again.',
-      );
-    } finally {
-      setIsSaving(false);
+    if (!businessName.trim()) {
+      Alert.alert('Business name required', 'Please enter your business name.');
+      return;
     }
+    saveBusinessProfileMutation.mutate();
   }
 
   return (
@@ -172,8 +187,11 @@ export default function BusinessProfileScreen() {
         title={existing ? 'Edit Business Profile' : 'Set Up Business Profile'}
         onBack={() => router.back()}
         rightElement={
-          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-            {isSaving ? (
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={saveBusinessProfileMutation.isPending}
+          >
+            {saveBusinessProfileMutation.isPending ? (
               <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Text style={styles.saveButton}>Save</Text>

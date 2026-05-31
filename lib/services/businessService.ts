@@ -51,3 +51,36 @@ export async function upsertBusinessProfile(
     }
   }
 }
+
+export async function submitBusinessApplication(
+  userId: string,
+  payload: {
+    business_name: string;
+    business_type: 'shop' | 'shaper';
+    website: string | null;
+    instagram_handle: string | null;
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from('business_applications')
+    .insert({ ...payload, user_id: userId });
+  if (error) {
+    console.error('Error submitting business application:', error);
+    throw error;
+  }
+}
+
+export async function getMyBusinessApplication(
+  userId: string,
+): Promise<{ status: string; created_at: string } | null> {
+  const { data, error } = await supabase
+    .from('business_applications')
+    .select('status, created_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) {
+    console.error('Error fetching business application:', error);
+    throw error;
+  }
+  return data;
+}

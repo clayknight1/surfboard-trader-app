@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getBlockedUsersWithProfiles,
   unblockUser,
@@ -36,9 +36,24 @@ export default function BlockedUsersScreen() {
   if (!auth.ready) {
     return auth.redirect ?? null;
   }
-  const userId = auth.userId;
 
-  async function handleUnblock(blockedId: string, name: string) {
+  const unblockMutation = useMutation({
+    mutationFn: (blockedId: string) => unblockUser(auth.userId!, blockedId),
+    onSuccess: () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not unblock user. Please try again.',
+      );
+    },
+  });
+
+  function handleUnblock(blockedId: string, name: string) {
     Alert.alert(
       'Unblock User',
       `Unblock ${name}? They will be able to message you and you will see their listings again.`,
@@ -46,27 +61,11 @@ export default function BlockedUsersScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Unblock',
-          onPress: async () => {
-            try {
-              await unblockUser(userId, blockedId);
-              try {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              } catch {}
-              queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-              queryClient.invalidateQueries({ queryKey: ['listings'] });
-            } catch (err) {
-              Sentry.captureException(err);
-              Alert.alert(
-                'Something went wrong',
-                'Could not unblock user. Please try again.',
-              );
-            }
-          },
+          onPress: () => unblockMutation.mutate(blockedId),
         },
       ],
     );
   }
-
   return (
     <Screen>
       <ScreenHeader title='Blocked Users' onBack={() => router.back()} />

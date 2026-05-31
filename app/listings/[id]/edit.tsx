@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/auth';
 import {
@@ -34,9 +34,7 @@ export default function EditListingScreen() {
   const { profile } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<ListingFormData | null>(null);
-
   const { data, isPending } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => getListing(id),
@@ -93,18 +91,13 @@ export default function EditListingScreen() {
     setFormData((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
-  async function handleSave() {
-    if (!formData || !id) return;
-    setIsSaving(true);
-    try {
+  const updateListingMutation = useMutation({
+    mutationFn: async () => {
+      if (!formData || !id) throw new Error('Missing form data');
       await updateListing(id, formData);
-
-      const locationChanged = formData.lat !== null && formData.lng !== null;
-
       if (
-        locationChanged &&
-        formData.lat &&
-        formData.lng &&
+        formData.lat !== null &&
+        formData.lng !== null &&
         formData.location_label
       ) {
         await updateListingLocation(
@@ -114,21 +107,37 @@ export default function EditListingScreen() {
           formData.location_label,
         );
       }
-
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listing', id] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
       router.back();
-    } catch (err) {
+    },
+    onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
         'Something went wrong',
         'Could not save your listing. Please try again.',
       );
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    },
+  });
+
+  const deleteListingMutation = useMutation({
+    mutationFn: async () => {
+      await deleteListing(id, auth.userId!);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userListings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.removeQueries({ queryKey: ['listing', id] });
+      router.replace('/(tabs)/sell');
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert('Something went wrong', 'Could not delete your listing.');
+    },
+  });
 
   function handleDelete() {
     Alert.alert(
@@ -139,22 +148,7 @@ export default function EditListingScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteListing(id, auth.userId!);
-              router.replace('/(tabs)/sell');
-              queryClient.invalidateQueries({ queryKey: ['userListings'] });
-              queryClient.invalidateQueries({ queryKey: ['userListingCount'] });
-              queryClient.invalidateQueries({ queryKey: ['listings'] });
-              queryClient.removeQueries({ queryKey: ['listing', id] });
-            } catch (err) {
-              Sentry.captureException(err);
-              Alert.alert(
-                'Something went wrong',
-                'Could not delete your listing.',
-              );
-            }
-          },
+          onPress: () => deleteListingMutation.mutate(),
         },
       ],
     );
@@ -181,8 +175,11 @@ export default function EditListingScreen() {
         title='Edit Listing'
         onBack={() => router.back()}
         rightElement={
-          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-            {isSaving ? (
+          <TouchableOpacity
+            onPress={() => updateListingMutation.mutate()}
+            disabled={updateListingMutation.isPending}
+          >
+            {updateListingMutation.isPending ? (
               <ActivityIndicator size='small' color={Colors.accent} />
             ) : (
               <Text style={styles.saveButton}>Save</Text>
@@ -217,11 +214,15 @@ export default function EditListingScreen() {
         <StepPricing
           formData={formData}
           updateField={updateField}
-          handleSubmit={handleSave}
-          isSubmitting={isSaving}
+          handleSubmit={() => {}}
+          isSubmitting={updateListingMutation.isPending}
           isEditing={true}
         />
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          disabled={deleteListingMutation.isPending}
+        >
           <Text style={styles.deleteButtonText}>Delete Listing</Text>
         </TouchableOpacity>
       </ScrollView>

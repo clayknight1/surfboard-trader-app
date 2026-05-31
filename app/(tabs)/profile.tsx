@@ -23,6 +23,8 @@ import CurrencySheet from '../../components/ui/CurrencySheet';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import * as Sentry from '@sentry/react-native';
 import ProfileSkeleton from '../../components/ui/ProfileSkeleton';
+import { useQuery } from '@tanstack/react-query';
+import { getMyBusinessApplication } from '../../lib/services/businessService';
 
 type SettingsRowProps = {
   label: string;
@@ -60,6 +62,11 @@ export default function ProfileScreen() {
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
   const isShopOrShaper = profile?.role === 'shop' || profile?.role === 'shaper';
+  const { data: application } = useQuery({
+    queryKey: ['businessApplication', userId],
+    queryFn: () => getMyBusinessApplication(userId!),
+    enabled: !!userId && !isShopOrShaper,
+  });
 
   function handleDeleteAccount() {
     Alert.alert(
@@ -160,6 +167,30 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {!isShopOrShaper && !application && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Business</Text>
+            <View style={styles.sectionContent}>
+              <SettingsRow
+                label='Apply for a business account'
+                onPress={() => router.push('/profile/apply-business')}
+              />
+            </View>
+          </View>
+        )}
+
+        {!isShopOrShaper && application?.status === 'pending' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Business</Text>
+            <View style={styles.sectionContent}>
+              <SettingsRow
+                label='Application pending review'
+                onPress={() => {}}
+              />
+            </View>
+          </View>
+        )}
 
         {isShopOrShaper && !profile?.business_profiles && (
           <View style={styles.section}>

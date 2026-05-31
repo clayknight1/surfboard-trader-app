@@ -162,29 +162,31 @@ export default function SignUp() {
         </View>
 
         {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.footerLink}>Sign in</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/auth/apply')}>
+        <View style={styles.bottomGroup}>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <TouchableOpacity onPress={() => router.push('/auth/login')}>
+              <Text style={styles.footerLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.applyLink}>
-            Are you a shop or shaper? Apply here →
+            Shop or shaper? Sign up and apply from your profile.
           </Text>
-        </TouchableOpacity>
 
-        <View style={styles.legalRow}>
-          <Text style={styles.legalText}>By signing up you agree to our </Text>
-          <TouchableOpacity onPress={() => router.push('/legal/terms')}>
-            <Text style={styles.legalLink}>Terms</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalText}> and </Text>
-          <TouchableOpacity
-            onPress={() => router.push('/legal/privacy-policy')}
-          >
-            <Text style={styles.legalLink}>Privacy Policy</Text>
-          </TouchableOpacity>
+          <View style={styles.legalRow}>
+            <Text style={styles.legalText}>
+              By signing up you agree to our{' '}
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/legal/terms')}>
+              <Text style={styles.legalLink}>Terms</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalText}> and </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/legal/privacy-policy')}
+            >
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -271,5 +273,9 @@ const styles = StyleSheet.create({
   legalLink: {
     ...Typography.caption,
     color: Colors.accent,
+  },
+  bottomGroup: {
+    gap: Spacing.sm, // tight gap between the three lines
+    alignItems: 'center', // matches the centered look of the existing items
   },
 });
