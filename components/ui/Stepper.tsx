@@ -68,6 +68,7 @@ export default function Stepper({
         <TouchableOpacity
           style={styles.button}
           onPress={decrement}
+          accessibilityLabel='Decrease'
           disabled={value !== null && value <= min}
         >
           <Text style={styles.buttonText}>−</Text>
@@ -101,6 +102,7 @@ export default function Stepper({
         <TouchableOpacity
           style={styles.button}
           onPress={increment}
+          accessibilityLabel='Increase'
           disabled={value !== null && value >= max}
         >
           <Text style={styles.buttonText}>+</Text>

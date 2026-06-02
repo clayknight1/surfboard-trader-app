@@ -11,6 +11,7 @@ import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
 import { ThreadPreview } from '../../lib/types';
 import { useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function MessagesScreen() {
   const { session, loading } = useAuth();
@@ -83,12 +84,11 @@ export default function MessagesScreen() {
         }
         ListEmptyComponent={
           !isPending ? (
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>No messages yet.</Text>
-              <Text style={styles.emptySubtext}>
-                Find a board you like and message the seller.
-              </Text>
-            </View>
+            <EmptyState
+              icon='chatbubble-outline'
+              title='No messages yet'
+              subtitle='Find a board you like and message the seller.'
+            />
           ) : null
         }
         refreshControl={

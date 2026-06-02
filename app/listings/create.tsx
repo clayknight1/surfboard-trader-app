@@ -143,6 +143,7 @@ export default function CreateListing() {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => (step === 1 ? router.back() : setStep(step - 1))}
+          accessibilityLabel='Go back'
           hitSlop={10}
         >
           <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
@@ -150,7 +151,10 @@ export default function CreateListing() {
         <Text style={styles.stepLabel}>
           Step {step} of {TOTAL_STEPS}
         </Text>
-        <TouchableOpacity onPress={handleAbandon}>
+        <TouchableOpacity
+          onPress={handleAbandon}
+          accessibilityLabel='Cancel listing'
+        >
           <Ionicons name='close' size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -181,7 +185,6 @@ export default function CreateListing() {
           photos={photos}
           setPhotos={setPhotos}
           onNext={() => setStep(2)}
-          onBack={() => router.back()}
         />
       )}
       {step === 2 && (

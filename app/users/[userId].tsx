@@ -19,7 +19,6 @@ import { Colors, Spacing, Typography } from '../../constants';
 import Avatar from '../../components/ui/Avatar';
 import ListingCard from '../../components/listings/ListingCard';
 import { ListingCardData } from '../../lib/types';
-import { getSavedListingIds } from '../../lib/services/savedService';
 import { useAuth } from '../../lib/auth';
 import { displayName } from '../../lib/utils';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
@@ -55,12 +54,6 @@ export default function UserProfileScreen() {
     queryFn: () => getPublicListings(userId),
     enabled: !!userId,
     staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: savedIds } = useQuery({
-    queryKey: ['savedIds', currentUserId],
-    queryFn: () => getSavedListingIds(currentUserId!),
-    enabled: !!currentUserId,
   });
 
   const isPending = profilePending || listingsPending;
@@ -217,7 +210,6 @@ export default function UserProfileScreen() {
               listing={item as ListingCardData}
               hideDistance
               userId={currentUserId}
-              savedIds={savedIds ?? []}
             />
           )
         }

@@ -25,15 +25,15 @@ import {
 } from '../../lib/services/businessService';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function BusinessProfileScreen() {
   const router = useRouter();
   const { profile, session, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
   const userId = session?.user?.id;
   const isShaper = profile?.role === 'shaper';
   const existing = profile?.business_profiles;
-
   const [businessName, setBusinessName] = useState(
     existing?.business_name ?? '',
   );
@@ -88,6 +88,7 @@ export default function BusinessProfileScreen() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listing'] });
       refreshProfile().catch((err) => Sentry.captureException(err));
       router.back();
     },
@@ -108,7 +109,13 @@ export default function BusinessProfileScreen() {
           try {
             const permission =
               await ImagePicker.requestCameraPermissionsAsync();
-            if (!permission.granted) return;
+            if (!permission.granted) {
+              Alert.alert(
+                'Permission required',
+                'Please allow camera access in Settings.',
+              );
+              return;
+            }
             const result = await ImagePicker.launchCameraAsync({
               mediaTypes: ['images'],
               quality: 1,
@@ -132,7 +139,13 @@ export default function BusinessProfileScreen() {
           try {
             const permission =
               await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (!permission.granted) return;
+            if (!permission.granted) {
+              Alert.alert(
+                'Permission required',
+                'Please allow access to your photo library in Settings.',
+              );
+              return;
+            }
             const result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ['images'],
               quality: 1,
@@ -207,7 +220,11 @@ export default function BusinessProfileScreen() {
       >
         {/* Logo */}
         <View style={styles.logoSection}>
-          <TouchableOpacity onPress={pickLogo} style={styles.logoWrapper}>
+          <TouchableOpacity
+            onPress={pickLogo}
+            style={styles.logoWrapper}
+            accessibilityLabel='Change logo'
+          >
             <Avatar
               avatarUrl={logoUri ?? existing?.logo_url ?? null}
               fullName={businessName || null}

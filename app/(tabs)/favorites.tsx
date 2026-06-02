@@ -19,6 +19,7 @@ import { ListingCardData } from '../../lib/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function FavoritesScreen() {
   const { session, loading } = useAuth();
@@ -91,17 +92,11 @@ export default function FavoritesScreen() {
               </Text>
             </View>
           ) : isEmpty ? (
-            <View style={styles.emptyState}>
-              <Ionicons
-                name='heart-outline'
-                size={56}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.emptyTitle}>No saved boards yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Tap the heart on any listing to save it for later
-              </Text>
-            </View>
+            <EmptyState
+              icon='heart-outline'
+              title='No saved boards yet'
+              subtitle='Tap the heart on any listing to save it for later'
+            />
           ) : null
         }
         renderItem={({ item }) =>
@@ -124,22 +119,6 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingHorizontal: Spacing.screenPadding,
-  },
-  emptyTitle: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
-  emptySubtitle: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
   list: {
     paddingHorizontal: Spacing.screenPadding,
     paddingTop: Spacing.screenPadding,

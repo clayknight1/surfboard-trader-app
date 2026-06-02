@@ -107,6 +107,7 @@ export default function ThreadScreen() {
       setMessageText('');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
+      queryClient.invalidateQueries({ queryKey: ['inbox'] });
     },
     onError: (err) => {
       Sentry.captureException(err);
@@ -124,6 +125,7 @@ export default function ThreadScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inbox'] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
       router.back();
     },
     onError: (err) => {
@@ -243,7 +245,11 @@ export default function ThreadScreen() {
           title='Conversation'
           onBack={() => router.back()}
           rightElement={
-            <TouchableOpacity onPress={handleMenu} disabled={!otherUserId}>
+            <TouchableOpacity
+              onPress={handleMenu}
+              disabled={!otherUserId}
+              accessibilityLabel='Conversation options'
+            >
               <Ionicons
                 name='ellipsis-horizontal'
                 size={24}
@@ -313,6 +319,7 @@ export default function ThreadScreen() {
             ]}
             onPress={handleSend}
             disabled={!messageText.trim() || sendMessageMutation.isPending}
+            accessibilityLabel='Send message'
             hitSlop={10}
           >
             {sendMessageMutation.isPending ? (

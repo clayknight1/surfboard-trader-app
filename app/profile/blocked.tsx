@@ -21,6 +21,7 @@ import { displayName } from '../../lib/utils';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function BlockedUsersScreen() {
   const auth = useRequireAuth();
@@ -43,6 +44,7 @@ export default function BlockedUsersScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['inbox'] });
     },
     onError: (err) => {
       Sentry.captureException(err);
@@ -98,9 +100,7 @@ export default function BlockedUsersScreen() {
           )}
           ListEmptyComponent={
             !isPending ? (
-              <View style={styles.centered}>
-                <Text style={styles.emptyText}>No blocked users</Text>
-              </View>
+              <EmptyState icon='ban-outline' title='No blocked users' />
             ) : null
           }
         />
@@ -145,10 +145,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
-  },
-  emptyText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
   },
 });

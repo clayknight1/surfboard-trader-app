@@ -80,25 +80,6 @@ export async function unsaveListing(
   }
 }
 
-export async function isListingSaved(
-  userId: string,
-  listingId: string,
-): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('saved_listings')
-    .select('listing_id')
-    .eq('user_id', userId)
-    .eq('listing_id', listingId)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error checking saved status:', error);
-    Sentry.captureException(error);
-    return false;
-  }
-  return !!data;
-}
-
 export async function getSavedListingIds(userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from('saved_listings')

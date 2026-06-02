@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -33,22 +33,32 @@ export default function StepLocation({
     : !!profile?.lat;
 
   const [locationLabel, setLocationLabel] = useState<string | null>(
-    isShopOrShaper
-      ? (profile?.business_profiles?.location_label ?? null)
-      : (profile?.location_label ?? null),
+    formData.location_label ??
+      (isShopOrShaper
+        ? (profile?.business_profiles?.location_label ?? null)
+        : (profile?.location_label ?? null)),
   );
   const [isEditingLocation, setIsEditingLocation] = useState(!hasLocation);
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { refreshProfile } = useAuth();
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) {
+      return;
+    }
+    if (!profile) {
+      return;
+    }
+
     const savedLabel = isShopOrShaper
       ? profile?.business_profiles?.location_label
       : profile?.location_label;
 
     if (savedLabel) {
+      initialized.current = true;
       setLocationLabel(savedLabel);
       updateField('location_label', savedLabel);
 
@@ -101,10 +111,11 @@ export default function StepLocation({
               longitude,
               label,
             );
+            await refreshProfile();
           } else if (!isShopOrShaper && !profile?.lat) {
             await updateUserLocation(profile.id, latitude, longitude, label);
+            await refreshProfile();
           }
-          await refreshProfile();
         } catch (err) {
           Sentry.captureException(err);
         }
@@ -148,10 +159,11 @@ export default function StepLocation({
               longitude,
               label,
             );
+            await refreshProfile();
           } else if (!isShopOrShaper && !profile?.lat) {
             await updateUserLocation(profile.id, latitude, longitude, label);
+            await refreshProfile();
           }
-          await refreshProfile();
         } catch (err) {
           Sentry.captureException(err);
         }

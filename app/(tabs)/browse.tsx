@@ -18,7 +18,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { buildFeed, FeedItem } from '../../lib/feedUtils';
-import { FilterState, ListingCardData } from '../../lib/types';
+import { FilterState } from '../../lib/types';
 import ListingCard from '../../components/listings/ListingCard';
 import { Colors, Spacing, Typography } from '../../constants';
 import Screen from '../../components/ui/Screen';
@@ -27,7 +27,6 @@ import FilterBar, { FilterKey } from '../../components/listings/FilterBar';
 import FilterPanel from '../../components/listings/FilterPanel';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { useAuth } from '../../lib/auth';
-import { getSavedListingIds } from '../../lib/services/savedService';
 import { Ionicons } from '@expo/vector-icons';
 
 const PAGE_SIZE = 20;
@@ -116,29 +115,17 @@ export default function BrowseScreen() {
       staleTime: 1000 * 60 * 5,
     });
 
-  const { data: savedIds } = useQuery({
-    queryKey: ['savedIds', userId],
-    queryFn: () => getSavedListingIds(userId!),
-    enabled: !!userId,
-  });
-
   const feedItems = useMemo(() => buildFeed(data?.pages.flat() ?? []), [data]);
 
   const renderItem = useCallback(
     ({ item }: { item: FeedItem }) => {
       if (item.type === 'skeleton') return <ListingCardSkeleton />;
       if (item.type === 'listing' || item.type === 'boosted') {
-        return (
-          <ListingCard
-            listing={item.data}
-            userId={userId}
-            savedIds={savedIds ?? []}
-          />
-        );
+        return <ListingCard listing={item.data} userId={userId} />;
       }
       return null;
     },
-    [userId, savedIds],
+    [userId],
   );
 
   const keyExtractor = useCallback(

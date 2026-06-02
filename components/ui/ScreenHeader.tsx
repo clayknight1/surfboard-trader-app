@@ -16,7 +16,11 @@ export default function ScreenHeader({
   return (
     <View style={styles.header}>
       {onBack ? (
-        <TouchableOpacity onPress={onBack} hitSlop={10}>
+        <TouchableOpacity
+          onPress={onBack}
+          accessibilityLabel='Go back'
+          hitSlop={10}
+        >
           <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
       ) : (

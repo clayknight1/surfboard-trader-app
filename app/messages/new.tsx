@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function NewThreadScreen() {
   const { listingId, sellerId } = useLocalSearchParams<{
@@ -27,13 +27,14 @@ export default function NewThreadScreen() {
   }>();
   const auth = useRequireAuth();
   const router = useRouter();
-
   const [messageText, setMessageText] = useState('');
+  const queryClient = useQueryClient();
 
   const sendMessageMutation = useMutation({
     mutationFn: (body: string) => sendMessage(auth.userId!, listingId, body),
     onSuccess: (newThreadId) => {
       if (newThreadId) {
+        queryClient.invalidateQueries({ queryKey: ['inbox'] });
         router.replace(`/messages/${newThreadId}?listingId=${listingId}`);
       }
     },
@@ -89,6 +90,7 @@ export default function NewThreadScreen() {
             ]}
             onPress={handleSend}
             disabled={!messageText.trim() || sendMessageMutation.isPending}
+            accessibilityLabel='Send message'
             hitSlop={10}
           >
             {sendMessageMutation.isPending ? (

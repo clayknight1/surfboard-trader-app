@@ -23,7 +23,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function EditProfileScreen() {
   const { profile, refreshProfile } = useAuth();
@@ -31,6 +31,7 @@ export default function EditProfileScreen() {
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
@@ -47,6 +48,7 @@ export default function EditProfileScreen() {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listing'] });
       refreshProfile().catch((err) => Sentry.captureException(err));
       router.back();
     },
@@ -163,7 +165,11 @@ export default function EditProfileScreen() {
       >
         {/* Avatar */}
         <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={pickAvatar} style={styles.avatarWrapper}>
+          <TouchableOpacity
+            onPress={pickAvatar}
+            style={styles.avatarWrapper}
+            accessibilityLabel='Change profile photo'
+          >
             <Avatar
               avatarUrl={avatarUri ?? profile?.avatar_url ?? null}
               fullName={profile?.full_name ?? null}

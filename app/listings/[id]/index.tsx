@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getListing,
@@ -26,11 +26,6 @@ import ListingDetailSkeleton from '../../../components/listings/ListingDetailSke
 import { Animated } from 'react-native';
 import { getExistingThread } from '../../../lib/services/messageService';
 import { submitReport } from '../../../lib/services/blockService';
-import {
-  isListingSaved,
-  saveListing,
-  unsaveListing,
-} from '../../../lib/services/savedService';
 import * as Haptics from 'expo-haptics';
 import ImageViewing from 'react-native-image-viewing';
 import {
@@ -41,6 +36,7 @@ import {
   getConditionLabel,
 } from '../../../lib/utils';
 import * as Sentry from '@sentry/react-native';
+import { useSaveListing } from '../../../lib/useSaveListing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -51,7 +47,6 @@ export default function ListingDetail() {
   const insets = useSafeAreaInsets();
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const { session } = useAuth();
@@ -65,6 +60,8 @@ export default function ListingDetail() {
     extrapolate: 'clamp',
   });
 
+  const { isSaved, toggle } = useSaveListing(id, userId);
+
   const { isPending, isError, data } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => getListing(id),
@@ -73,11 +70,6 @@ export default function ListingDetail() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: savedStatus } = useQuery({
-    queryKey: ['isSaved', id, userId],
-    queryFn: () => isListingSaved(userId!, id),
-    enabled: !!userId,
-  });
   const markAsSoldMutation = useMutation({
     mutationFn: () => markListingAsSold(id),
     onSuccess: () => {
@@ -85,16 +77,13 @@ export default function ListingDetail() {
       queryClient.invalidateQueries({ queryKey: ['listing', id] });
       queryClient.invalidateQueries({ queryKey: ['userListings'] });
       queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['savedListings'] });
     },
     onError: (err) => {
       Sentry.captureException(err);
       Alert.alert('Something went wrong', 'Could not mark listing as sold.');
     },
   });
-
-  useEffect(() => {
-    if (savedStatus !== undefined) setIsSaved(savedStatus);
-  }, [savedStatus]);
 
   async function handleMessageSeller(): Promise<void> {
     if (!userId) {
@@ -135,55 +124,44 @@ export default function ListingDetail() {
     );
   }
 
+  const reportListingMutation = useMutation({
+    mutationFn: (reason: string) =>
+      submitReport(userId!, reason, undefined, id),
+    onSuccess: () => {
+      Alert.alert('Report submitted', 'Thanks — our team will review this.');
+    },
+    onError: (err) => {
+      Sentry.captureException(err);
+      Alert.alert(
+        'Something went wrong',
+        'Could not submit report. Please try again.',
+      );
+    },
+  });
+
   function handleReportListing() {
     Alert.alert('Report Listing', 'Why are you reporting this listing?', [
-      {
-        text: 'Spam',
-        onPress: () => submitReport(userId!, 'spam', undefined, id),
-      },
+      { text: 'Spam', onPress: () => reportListingMutation.mutate('spam') },
       {
         text: 'Misleading',
-        onPress: () => submitReport(userId!, 'misleading', undefined, id),
+        onPress: () => reportListingMutation.mutate('misleading'),
       },
       {
         text: 'Inappropriate',
-        onPress: () => submitReport(userId!, 'inappropriate', undefined, id),
+        onPress: () => reportListingMutation.mutate('inappropriate'),
       },
-      {
-        text: 'Scam',
-        onPress: () => submitReport(userId!, 'scam', undefined, id),
-      },
-      {
-        text: 'Other',
-        onPress: () => submitReport(userId!, 'other', undefined, id),
-      },
+      { text: 'Scam', onPress: () => reportListingMutation.mutate('scam') },
+      { text: 'Other', onPress: () => reportListingMutation.mutate('other') },
       { text: 'Cancel', style: 'cancel' },
     ]);
   }
 
-  async function handleToggleSave() {
+  function handleToggleSave() {
     if (!userId) {
       setSignInModalOpen(true);
       return;
     }
-
-    const newSavedState = !isSaved;
-    setIsSaved(newSavedState);
-    try {
-      if (newSavedState) {
-        await saveListing(userId, id);
-      } else {
-        await unsaveListing(userId, id);
-      }
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
-      queryClient.invalidateQueries({ queryKey: ['savedIds'] });
-      queryClient.invalidateQueries({ queryKey: ['savedListings'] });
-    } catch (err) {
-      Sentry.captureException(err);
-      setIsSaved(!newSavedState);
-    }
+    toggle();
   }
 
   if (isPending) {
@@ -293,6 +271,7 @@ export default function ListingDetail() {
               { top: Platform.OS === 'android' ? insets.top : 12 },
             ]}
             onPress={() => router.back()}
+            accessibilityLabel='Go back'
             hitSlop={10}
           >
             <Ionicons
@@ -310,6 +289,7 @@ export default function ListingDetail() {
                 { top: Platform.OS === 'android' ? insets.top : 12 },
               ]}
               onPress={handleToggleSave}
+              accessibilityLabel={isSaved ? 'Unsave listing' : 'Save listing'}
               hitSlop={10}
             >
               <Ionicons
@@ -321,6 +301,7 @@ export default function ListingDetail() {
           )}
           <TouchableOpacity
             style={[styles.expandButton]}
+            accessibilityLabel='View photo full screen'
             onPress={() => {
               setLightboxIndex(activePhotoIndex);
               setLightboxOpen(true);

@@ -9,25 +9,21 @@ import {
 import { Image } from 'expo-image';
 import { ListingCardData } from '../../lib/types';
 import { Colors, Typography, Spacing } from '../../constants';
-import { useEffect, useState } from 'react';
-import { saveListing, unsaveListing } from '../../lib/services/savedService';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
 import { getListing } from '../../lib/services/listingService';
-import * as Sentry from '@sentry/react-native';
 import {
   formatLength,
   formatDistance,
   formatPrice,
   getConditionColor,
 } from '../../lib/utils';
+import { useSaveListing } from '../../lib/useSaveListing';
 
 type ListingCardProps = {
   listing: ListingCardData;
   hideDistance?: boolean;
   userId?: string;
-  savedIds?: string[];
 };
 
 const CARD_WIDTH =
@@ -41,16 +37,11 @@ export default function ListingCard({
   listing,
   hideDistance = false,
   userId,
-  savedIds,
 }: ListingCardProps) {
   const router = useRouter();
-  const [isSaved, setIsSaved] = useState(false);
   const showHeart = !!userId && listing.user_id !== userId;
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setIsSaved(savedIds?.includes(listing.id) ?? false);
-  }, [savedIds, listing.id]);
+  const { isSaved, toggle } = useSaveListing(listing.id, userId);
 
   function onSelect(): void {
     queryClient.prefetchQuery({
@@ -61,29 +52,10 @@ export default function ListingCard({
 
     router.push(`/listings/${listing.id}`);
   }
-
-  async function handleToggleSave(event: any) {
+  function handleToggleSave(event: any) {
     event.stopPropagation();
-    if (!userId) {
-      return;
-    }
-    const newState = !isSaved;
-    setIsSaved(newState);
-    try {
-      if (newState) {
-        await saveListing(userId, listing.id);
-      } else {
-        await unsaveListing(userId, listing.id);
-      }
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
-      queryClient.invalidateQueries({ queryKey: ['savedIds'] });
-      queryClient.invalidateQueries({ queryKey: ['savedListings'] });
-    } catch (err) {
-      Sentry.captureException(err);
-      setIsSaved(!newState);
-    }
+    if (!userId) return;
+    toggle();
   }
 
   return (
@@ -127,6 +99,7 @@ export default function ListingCard({
           <TouchableOpacity
             style={styles.heartButton}
             onPress={handleToggleSave}
+            accessibilityLabel={isSaved ? 'Unsave listing' : 'Save listing'}
             hitSlop={10}
           >
             <Ionicons

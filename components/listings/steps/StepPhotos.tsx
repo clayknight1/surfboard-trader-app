@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
@@ -12,6 +13,8 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '../../../constants';
 import { processPhoto } from '../../../lib/utils';
+import * as Sentry from '@sentry/react-native';
+import { useState } from 'react';
 
 const MAX_PHOTOS = 5; // free tier — pass as prop later when wired to tier
 
@@ -25,9 +28,8 @@ const PHOTO_HEIGHT = PHOTO_SIZE * 1.25; // 4:5 ratio
 
 type StepPhotosProps = {
   photos: string[];
-  setPhotos: (photos: string[]) => void;
+  setPhotos: React.Dispatch<React.SetStateAction<string[]>>;
   onNext: () => void;
-  onBack: () => void;
 };
 
 export default function StepPhotos({
@@ -36,8 +38,7 @@ export default function StepPhotos({
   onNext,
 }: StepPhotosProps) {
   const isAtLimit = photos.length >= MAX_PHOTOS;
-
-  // ─── Photo actions ──────────────────────────────────────────────
+  const [isProcessing, setIsProcessing] = useState(false);
 
   async function pickPhotos(): Promise<void> {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -58,10 +59,49 @@ export default function StepPhotos({
     });
 
     if (!result.canceled) {
-      const processed = await Promise.all(
-        result.assets.map(({ uri }) => processPhoto(uri)),
-      );
-      setPhotos([...photos, ...processed].slice(0, MAX_PHOTOS));
+      setIsProcessing(true);
+      try {
+        const results = await Promise.allSettled(
+          result.assets.map(({ uri }) => processPhoto(uri)),
+        );
+
+        const succeeded = results
+          .filter(
+            (r): r is PromiseFulfilledResult<string> =>
+              r.status === 'fulfilled',
+          )
+          .map((r) => r.value);
+
+        const failedCount = results.length - succeeded.length;
+
+        if (succeeded.length > 0) {
+          setPhotos((prev) => [...prev, ...succeeded].slice(0, MAX_PHOTOS));
+        }
+
+        if (failedCount > 0) {
+          // Capture each underlying failure individually for Sentry diagnostics
+          results
+            .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+            .forEach((r) => Sentry.captureException(r.reason));
+
+          Alert.alert(
+            "Some photos couldn't be processed",
+            failedCount === results.length
+              ? 'No photos were added. Please try again.'
+              : `${failedCount} of ${results.length} photos couldn't be processed. The rest were added.`,
+          );
+        }
+      } catch (err) {
+        // This catch is only for unexpected errors *outside* the per-photo processing
+        // (e.g. result.assets being malformed). Promise.allSettled itself never rejects.
+        Sentry.captureException(err);
+        Alert.alert(
+          'Could not process photos',
+          'Something went wrong. Please try again.',
+        );
+      } finally {
+        setIsProcessing(false);
+      }
     }
   }
 
@@ -81,9 +121,19 @@ export default function StepPhotos({
     });
 
     if (!result.canceled) {
-      const { uri } = result.assets[0];
-      const processed = await processPhoto(uri);
-      setPhotos([...photos, processed].slice(0, MAX_PHOTOS));
+      setIsProcessing(true);
+      try {
+        const processed = await processPhoto(result.assets[0].uri);
+        setPhotos((prev) => [...prev, processed].slice(0, MAX_PHOTOS));
+      } catch (err) {
+        Sentry.captureException(err);
+        Alert.alert(
+          'Could not process photo',
+          'Something went wrong. Please try again.',
+        );
+      } finally {
+        setIsProcessing(false);
+      }
     }
   }
 
@@ -115,9 +165,19 @@ export default function StepPhotos({
   function renderItem({ item }: { item: GridItem }) {
     if (item.type === 'add') {
       return (
-        <TouchableOpacity style={styles.addSlot} onPress={pickPhotos}>
-          <Ionicons name='add' size={28} color={Colors.textSecondary} />
-          <Text style={styles.addSlotText}>Add photo</Text>
+        <TouchableOpacity
+          style={[styles.addSlot, isProcessing && styles.addSlotDisabled]}
+          onPress={pickPhotos}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <ActivityIndicator size='small' color={Colors.textSecondary} />
+          ) : (
+            <>
+              <Ionicons name='add' size={28} color={Colors.textSecondary} />
+              <Text style={styles.addSlotText}>Add photo</Text>
+            </>
+          )}
         </TouchableOpacity>
       );
     }
@@ -128,6 +188,7 @@ export default function StepPhotos({
       <TouchableOpacity
         style={[styles.photoSlot, isPrimary && styles.photoSlotPrimary]}
         onPress={() => setPrimary(item.index)}
+        accessibilityLabel={isPrimary ? 'Cover photo' : 'Set as cover photo'}
         activeOpacity={0.85}
       >
         <Image
@@ -147,6 +208,7 @@ export default function StepPhotos({
         <TouchableOpacity
           style={styles.removeButton}
           onPress={() => removePhoto(item.index)}
+          accessibilityLabel='Remove photo'
           hitSlop={10}
         >
           <Ionicons name='close' size={12} color={Colors.textPrimary} />
@@ -198,21 +260,41 @@ export default function StepPhotos({
         {/* Camera / Library row */}
         {!isAtLimit && (
           <View style={styles.mediaRow}>
-            <TouchableOpacity style={styles.mediaButton} onPress={capturePhoto}>
-              <Ionicons
-                name='camera-outline'
-                size={18}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.mediaButtonText}>Camera</Text>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={capturePhoto}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size='small' color={Colors.textSecondary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name='camera-outline'
+                    size={18}
+                    color={Colors.textSecondary}
+                  />
+                  <Text style={styles.mediaButtonText}>Camera</Text>
+                </>
+              )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.mediaButton} onPress={pickPhotos}>
-              <Ionicons
-                name='images-outline'
-                size={18}
-                color={Colors.textSecondary}
-              />
-              <Text style={styles.mediaButtonText}>Library</Text>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={pickPhotos}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size='small' color={Colors.textSecondary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name='images-outline'
+                    size={18}
+                    color={Colors.textSecondary}
+                  />
+                  <Text style={styles.mediaButtonText}>Library</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -285,6 +367,9 @@ const styles = StyleSheet.create({
   addSlotText: {
     ...Typography.caption,
     color: Colors.textSecondary,
+  },
+  addSlotDisabled: {
+    opacity: 0.5,
   },
   primaryBadge: {
     position: 'absolute',
