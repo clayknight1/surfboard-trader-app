@@ -49,7 +49,7 @@ export default function EditProfileScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listing'] });
-      refreshProfile().catch((err) => Sentry.captureException(err));
+      refreshProfile();
       router.back();
     },
     onError: (err) => {

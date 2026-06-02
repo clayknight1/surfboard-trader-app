@@ -3,7 +3,7 @@ import { ListingCardData, PublicListing, PublicProfile, User } from '../types';
 import { getTransformUrl } from '../utils';
 import * as Sentry from '@sentry/react-native';
 
-export async function getUserProfile(userId: string): Promise<User | null> {
+export async function getUserProfile(userId: string): Promise<User> {
   const { data, error } = await supabase
     .from('users')
     .select('*, business_profiles(*)')
@@ -11,9 +11,8 @@ export async function getUserProfile(userId: string): Promise<User | null> {
     .single();
 
   if (error) {
-    console.error('Error fetching user profile:', error);
     Sentry.captureException(error);
-    return null;
+    throw error;
   }
   return data;
 }

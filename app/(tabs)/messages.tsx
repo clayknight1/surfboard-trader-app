@@ -54,6 +54,7 @@ export default function MessagesScreen() {
   if (isError) {
     return (
       <Screen>
+        <ScreenHeader title='Messages' />
         <View style={styles.centered}>
           <Text style={styles.errorText}>Something went wrong.</Text>
         </View>
@@ -64,41 +65,40 @@ export default function MessagesScreen() {
   return (
     <Screen>
       <ScreenHeader title='Messages' />
-      <FlatList
-        data={isPending ? skeletonData : data}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) =>
-          isPending ? (
-            <ThreadRowSkeleton />
-          ) : (
-            <ThreadRow
-              thread={item as ThreadPreview}
-              currentUserId={userId!}
-              onPress={() => {
-                router.push(
-                  `/messages/${item.id}?listingId=${(item as ThreadPreview).listing?.id}`,
-                );
-              }}
+      {!isPending && data?.length === 0 ? (
+        <EmptyState
+          icon='chatbubble-outline'
+          title='No messages yet'
+          subtitle='Find a board you like and message the seller.'
+        />
+      ) : (
+        <FlatList
+          data={isPending ? skeletonData : data}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) =>
+            isPending ? (
+              <ThreadRowSkeleton />
+            ) : (
+              <ThreadRow
+                thread={item as ThreadPreview}
+                currentUserId={userId!}
+                onPress={() => {
+                  router.push(
+                    `/messages/${item.id}?listingId=${(item as ThreadPreview).listing?.id}`,
+                  );
+                }}
+              />
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.accent}
             />
-          )
-        }
-        ListEmptyComponent={
-          !isPending ? (
-            <EmptyState
-              icon='chatbubble-outline'
-              title='No messages yet'
-              subtitle='Find a board you like and message the seller.'
-            />
-          ) : null
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.accent}
-          />
-        }
-      />
+          }
+        />
+      )}
     </Screen>
   );
 }
@@ -108,16 +108,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
     gap: Spacing.sm,
-  },
-  emptyText: {
-    ...Typography.subheading,
-    color: Colors.textPrimary,
-  },
-  emptySubtext: {
-    ...Typography.body,
-    color: Colors.textSecondary,
   },
   errorText: {
     ...Typography.body,

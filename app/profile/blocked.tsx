@@ -75,6 +75,8 @@ export default function BlockedUsersScreen() {
         <View style={styles.centered}>
           <ActivityIndicator color={Colors.accent} />
         </View>
+      ) : !data?.length ? (
+        <EmptyState icon='ban-outline' title='No blocked users' />
       ) : (
         <FlatList
           data={data}
@@ -98,11 +100,11 @@ export default function BlockedUsersScreen() {
               </TouchableOpacity>
             </View>
           )}
-          ListEmptyComponent={
-            !isPending ? (
-              <EmptyState icon='ban-outline' title='No blocked users' />
-            ) : null
-          }
+          // ListEmptyComponent={
+          //   !isPending ? (
+          //     <EmptyState icon='ban-outline' title='No blocked users' />
+          //   ) : null
+          // }
         />
       )}
     </Screen>
@@ -113,7 +115,6 @@ const styles = StyleSheet.create({
   list: {
     padding: Spacing.screenPadding,
     gap: Spacing.sm,
-    flexGrow: 1,
   },
   row: {
     flexDirection: 'row',

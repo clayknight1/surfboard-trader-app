@@ -64,56 +64,41 @@ export default function FavoritesScreen() {
   return (
     <Screen>
       <ScreenHeader title='Favorites' />
-
-      <FlatList
-        data={isPending ? skeletonData : data}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
-        columnWrapperStyle={{ gap: Spacing.cardGap }}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          isError ? (
-            <View
-              style={{
-                height: Dimensions.get('window').height * 0.6,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: Spacing.screenPadding,
-              }}
-            >
-              <Text
-                style={{
-                  ...Typography.body,
-                  color: Colors.textSecondary,
-                  textAlign: 'center',
-                }}
-              >
-                Something went wrong. Pull down to try again.
-              </Text>
-            </View>
-          ) : isEmpty ? (
-            <EmptyState
-              icon='heart-outline'
-              title='No saved boards yet'
-              subtitle='Tap the heart on any listing to save it for later'
+      {isError ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>
+            Something went wrong. Pull down to try again.
+          </Text>
+        </View>
+      ) : isEmpty ? (
+        <EmptyState
+          icon='heart-outline'
+          title='No saved boards yet'
+          subtitle='Tap the heart on any listing to save it for later'
+        />
+      ) : (
+        <FlatList
+          data={isPending ? skeletonData : data}
+          numColumns={2}
+          keyExtractor={(item) => item.id}
+          columnWrapperStyle={{ gap: Spacing.cardGap }}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) =>
+            isPending ? (
+              <ListingCardSkeleton />
+            ) : (
+              <ListingCard listing={item as ListingCardData} hideDistance />
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.accent}
             />
-          ) : null
-        }
-        renderItem={({ item }) =>
-          isPending ? (
-            <ListingCardSkeleton />
-          ) : (
-            <ListingCard listing={item as ListingCardData} hideDistance />
-          )
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.accent}
-          />
-        }
-      />
+          }
+        />
+      )}
     </Screen>
   );
 }
@@ -124,5 +109,16 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.screenPadding,
     paddingBottom: Spacing.xxl,
     rowGap: Spacing.cardGap,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.screenPadding,
+  },
+  errorText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

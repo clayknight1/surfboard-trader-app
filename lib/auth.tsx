@@ -5,6 +5,7 @@ import { supabase } from './supabase';
 import { getUserProfile } from './services/userService';
 import { fetchUnreadCount } from './services/messageService';
 import { SplashScreen } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 type AuthContextType = {
   session: Session | null;
@@ -26,6 +27,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<User | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let alive = true;
@@ -88,16 +91,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id]);
 
+  const { data: fetchedProfile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: () => getUserProfile(session!.user!.id),
+    enabled: !!session?.user?.id,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+    refetchOnReconnect: true,
+    staleTime: 1000 * 60 * 5,
+  });
+
   useEffect(() => {
-    if (!session?.user?.id) return;
+    setProfile(fetchedProfile ?? null);
+  }, [fetchedProfile]);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      return;
+    }
     let cancelled = false;
     const userId = session.user.id;
 
-    getUserProfile(userId).then((profile) => {
-      if (!cancelled) setProfile(profile);
-    });
     fetchUnreadCount(userId).then((count) => {
-      if (!cancelled) setUnreadCount(count);
+      if (!cancelled) {
+        setUnreadCount(count);
+      }
     });
 
     return () => {
@@ -116,8 +134,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   async function refreshProfile() {
     if (session?.user?.id) {
-      const profile = await getUserProfile(session.user.id);
-      setProfile(profile);
+      await queryClient.invalidateQueries({
+        queryKey: ['profile', session.user.id],
+      });
     }
   }
 
