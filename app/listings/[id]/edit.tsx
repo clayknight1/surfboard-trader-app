@@ -125,7 +125,7 @@ export default function EditListingScreen() {
 
   const deleteListingMutation = useMutation({
     mutationFn: async () => {
-      await deleteListing(id, auth.userId!);
+      await deleteListing(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userListings'] });

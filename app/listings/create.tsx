@@ -72,7 +72,7 @@ export default function CreateListing() {
       } catch (uploadErr) {
         // Rollback: delete the listing if photo upload fails
         try {
-          await deleteListing(listingId, userId!);
+          await deleteListing(listingId);
         } catch (deleteErr) {
           Sentry.captureException(deleteErr, {
             extra: { context: 'cleanup_after_upload_failure', listingId },

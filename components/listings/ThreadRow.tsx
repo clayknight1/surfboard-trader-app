@@ -49,6 +49,8 @@ export default function ThreadRow({
         </View>
         <Text style={styles.listing} numberOfLines={1}>
           {thread.listing.title}
+          {thread.listing.status === 'sold' && ' · Sold'}
+          {thread.listing.status === 'deleted' && ' · Removed'}
         </Text>
         <Text style={styles.preview} numberOfLines={1}>
           {thread.last_message ?? 'No messages yet'}

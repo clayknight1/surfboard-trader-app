@@ -100,6 +100,7 @@ export type ListingCardData = {
   listing_type: ListingType;
   user_id: string;
   distance_miles: number;
+  status?: ListingStatus;
 };
 
 export type ListingWithPhotos = Listing & {
@@ -134,6 +135,7 @@ export type ThreadPreview = {
   listing: {
     id: string;
     title: string;
+    status: ListingStatus;
     listing_photos: { storage_path: string; is_primary: boolean }[];
   };
   buyer: {

@@ -88,6 +88,7 @@ export async function getListingsByUser(
     .from('listings')
     .select('*, listing_photos(*)')
     .eq('user_id', userId)
+    .neq('status', 'deleted')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -185,33 +186,15 @@ export async function uploadListingPhotos(
   await Promise.all(uploadPromises);
 }
 
-export async function deleteListing(
-  listingId: string,
-  userId: string,
-): Promise<void> {
-  // Delete photos from storage first
-  const { data: files, error: listError } = await supabase.storage
-    .from('listings')
-    .list(`${userId}/${listingId}`);
-
-  if (listError) {
-    throw listError;
-  }
-
-  if (files && files.length > 0) {
-    const paths = files.map((f) => `${userId}/${listingId}/${f.name}`);
-    await supabase.storage.from('listings').remove(paths);
-  }
-
-  // Then delete the listing
+export async function deleteListing(listingId: string): Promise<void> {
   const { error } = await supabase
     .from('listings')
-    .delete()
+    .update({ status: 'deleted' })
     .eq('id', listingId);
 
   if (error) {
     console.error('Error deleting listing:', error);
-    throw error;
+    throw new Error(error.message);
   }
 }
 

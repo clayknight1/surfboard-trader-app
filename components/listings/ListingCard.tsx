@@ -79,15 +79,24 @@ export default function ListingCard({
           </View>
         )}
 
+        {/* Sold/Removed overlay — takes priority over other badges */}
+        {(listing.status === 'sold' || listing.status === 'deleted') && (
+          <View style={styles.statusOverlay}>
+            <Text style={styles.statusOverlayText}>
+              {listing.status === 'sold' ? 'Sold' : 'Removed'}
+            </Text>
+          </View>
+        )}
+
         {/* Sponsored badge */}
-        {listing.is_sponsored && (
+        {listing.is_sponsored && listing.status === 'active' && (
           <View style={styles.sponsoredBadge}>
             <Text style={styles.sponsoredText}>Featured</Text>
           </View>
         )}
 
         {/* Listing type badge for non-used */}
-        {listing.listing_type !== 'for_sale' && (
+        {listing.listing_type !== 'for_sale' && listing.status === 'active' && (
           <View style={styles.typeBadge}>
             <Text style={styles.typeText}>
               {listing.listing_type === 'vintage' ? 'Vintage' : 'New'}
@@ -278,5 +287,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusOverlayText: {
+    ...Typography.subheading,
+    fontFamily: Typography.fontBold,
+    color: Colors.backgroundCard,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

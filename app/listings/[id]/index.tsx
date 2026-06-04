@@ -531,7 +531,26 @@ export default function ListingDetail() {
             </View>
           )}
         </View>
+      ) : data.status === 'sold' ? (
+        <View
+          style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
+        >
+          <View style={styles.soldBanner}>
+            <Text style={styles.soldBannerText}>This listing is sold</Text>
+          </View>
+        </View>
+      ) : data.status === 'deleted' ? (
+        <View
+          style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
+        >
+          <View style={styles.soldBanner}>
+            <Text style={styles.soldBannerText}>
+              This listing has been removed
+            </Text>
+          </View>
+        </View>
       ) : (
+        // existing "Message Seller" button
         <View
           style={[styles.stickyFooter, { paddingBottom: insets.bottom + 12 }]}
         >
@@ -543,7 +562,7 @@ export default function ListingDetail() {
           </TouchableOpacity>
         </View>
       )}
-      {data.user_id !== userId && (
+      {data.user_id !== userId && data.status !== 'deleted' && (
         <TouchableOpacity
           style={styles.reportLink}
           onPress={handleReportListing}

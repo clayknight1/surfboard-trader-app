@@ -10,6 +10,7 @@ export async function getSavedListings(userId: string) {
       listing_id,
       listings (
         id,
+        status,
         title,
         price,
         currency,
@@ -35,19 +36,21 @@ export async function getSavedListings(userId: string) {
     throw error;
   }
 
-  return (data ?? []).map((row: any) => {
-    const listing = row.listings;
-    const primaryPhoto =
-      listing.listing_photos?.find((p: any) => p.is_primary) ??
-      listing.listing_photos?.[0];
-    return {
-      ...listing,
-      primary_photo: primaryPhoto
-        ? getTransformUrl('listings', primaryPhoto.storage_path, 400)
-        : null,
-      distance_miles: 0,
-    };
-  });
+  return (data ?? [])
+    .filter((row: any) => row.listings)
+    .map((row: any) => {
+      const listing = row.listings;
+      const primaryPhoto =
+        listing.listing_photos?.find((p: any) => p.is_primary) ??
+        listing.listing_photos?.[0];
+      return {
+        ...listing,
+        primary_photo: primaryPhoto
+          ? getTransformUrl('listings', primaryPhoto.storage_path, 400)
+          : null,
+        distance_miles: 0,
+      };
+    });
 }
 
 export async function saveListing(

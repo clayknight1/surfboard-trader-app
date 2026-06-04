@@ -75,7 +75,7 @@ export type Database = {
           location_label: string | null
           reviewed_at: string | null
           status: string
-          user_id: string | null
+          user_id: string
           website: string | null
         }
         Insert: {
@@ -88,7 +88,7 @@ export type Database = {
           location_label?: string | null
           reviewed_at?: string | null
           status?: string
-          user_id?: string | null
+          user_id: string
           website?: string | null
         }
         Update: {
@@ -101,7 +101,7 @@ export type Database = {
           location_label?: string | null
           reviewed_at?: string | null
           status?: string
-          user_id?: string | null
+          user_id?: string
           website?: string | null
         }
         Relationships: [
@@ -927,7 +927,12 @@ export type Database = {
         | "2_plus_1"
         | "other"
       fin_system: "fcs2" | "futures" | "fcs1" | "single" | "other" | "unknown"
-      listing_status: "active" | "sold" | "hidden" | "pending_review"
+      listing_status:
+        | "active"
+        | "sold"
+        | "hidden"
+        | "pending_review"
+        | "deleted"
       listing_type: "for_sale" | "in_stock" | "vintage" | "custom_order"
       message_status: "sent" | "delivered" | "read"
       sponsored_tier: "basic" | "featured" | "premium"
@@ -1086,7 +1091,7 @@ export const Constants = {
         "other",
       ],
       fin_system: ["fcs2", "futures", "fcs1", "single", "other", "unknown"],
-      listing_status: ["active", "sold", "hidden", "pending_review"],
+      listing_status: ["active", "sold", "hidden", "pending_review", "deleted"],
       listing_type: ["for_sale", "in_stock", "vintage", "custom_order"],
       message_status: ["sent", "delivered", "read"],
       sponsored_tier: ["basic", "featured", "premium"],
