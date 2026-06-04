@@ -28,6 +28,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
+import { ThreadMessage } from '../../lib/types';
 
 type ReportReason = 'spam' | 'inappropriate' | 'scam' | 'other';
 
@@ -103,18 +104,60 @@ export default function ThreadScreen() {
       if (!resolvedThreadId) throw new Error('Missing thread ID');
       await sendMessage(auth.userId!, listingId, body, resolvedThreadId);
     },
-    onSuccess: () => {
+    onMutate: async (body) => {
+      await queryClient.cancelQueries({
+        queryKey: ['thread', resolvedThreadId],
+      });
+      const previous = queryClient.getQueryData<ThreadMessage[]>([
+        'thread',
+        resolvedThreadId,
+      ]);
+
+      const optimisticId = `temp-${Date.now()}-${Math.random()}`;
+      const optimistic: ThreadMessage = {
+        id: optimisticId,
+        body,
+        sender_id: auth.userId!,
+        recipient_id: otherUserId ?? '',
+        thread_id: resolvedThreadId!,
+        listing_id: listingId,
+        business_id: null,
+        created_at: new Date().toISOString(),
+        read_at: null,
+        status: 'sent', // server field placeholder
+        clientStatus: 'sending', // client UI state
+      };
+
+      queryClient.setQueryData<ThreadMessage[]>(
+        ['thread', resolvedThreadId],
+        (old = []) => [...old, optimistic],
+      );
+
       setMessageText('');
+
+      return { previous, optimisticId };
+    },
+    onSuccess: () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
       queryClient.invalidateQueries({ queryKey: ['inbox'] });
     },
-    onError: (err) => {
+    onError: (err, body, context) => {
       Sentry.captureException(err);
-      Alert.alert(
-        'Something went wrong',
-        'Could not send your message. Please try again.',
-      );
+
+      if (context?.optimisticId) {
+        queryClient.setQueryData<ThreadMessage[]>(
+          ['thread', resolvedThreadId],
+          (old = []) =>
+            old.map((m) =>
+              m.id === context.optimisticId
+                ? { ...m, clientStatus: 'failed' } // ← mark with clientStatus
+                : m,
+            ),
+        );
+      }
+
+      setMessageText((prev) => prev || body);
     },
   });
 
@@ -172,6 +215,14 @@ export default function ThreadScreen() {
     const trimmed = messageText.trim();
     if (!trimmed) return;
     sendMessageMutation.mutate(trimmed);
+  }
+
+  function retryFailed(failedId: string, body: string) {
+    queryClient.setQueryData<ThreadMessage[]>(
+      ['thread', resolvedThreadId],
+      (old = []) => old.filter((m) => m.id !== failedId),
+    );
+    sendMessageMutation.mutate(body);
   }
 
   function handleReport() {
@@ -274,7 +325,10 @@ export default function ThreadScreen() {
             }
             renderItem={({ item }) => {
               const isMe = item.sender_id === auth.userId;
-              return (
+              const isSending = item.clientStatus === 'sending';
+              const isFailed = item.clientStatus === 'failed';
+
+              const bubbleContent = (
                 <View
                   style={[
                     styles.bubbleWrapper,
@@ -285,6 +339,8 @@ export default function ThreadScreen() {
                     style={[
                       styles.bubble,
                       isMe ? styles.bubbleMe : styles.bubbleThem,
+                      isSending && styles.bubbleSending,
+                      isFailed && styles.bubbleFailed,
                     ]}
                   >
                     <Text
@@ -295,9 +351,28 @@ export default function ThreadScreen() {
                     >
                       {item.body}
                     </Text>
+                    {isSending && (
+                      <Text style={styles.bubbleStatus}>Sending…</Text>
+                    )}
+                    {isFailed && (
+                      <Text style={styles.bubbleStatusFailed}>
+                        Failed — tap to retry
+                      </Text>
+                    )}
                   </View>
                 </View>
               );
+
+              if (isFailed) {
+                return (
+                  <TouchableOpacity
+                    onPress={() => retryFailed(item.id, item.body)}
+                  >
+                    {bubbleContent}
+                  </TouchableOpacity>
+                );
+              }
+              return bubbleContent;
             }}
           />
         )}
@@ -374,6 +449,23 @@ const styles = StyleSheet.create({
   },
   bubbleTextThem: {
     color: Colors.textPrimary,
+  },
+  bubbleSending: {
+    opacity: 0.6,
+  },
+  bubbleFailed: {
+    borderWidth: 1,
+    borderColor: Colors.error,
+  },
+  bubbleStatus: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  bubbleStatusFailed: {
+    ...Typography.label,
+    color: Colors.error,
+    marginTop: 2,
   },
   inputRow: {
     flexDirection: 'row',

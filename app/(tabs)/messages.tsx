@@ -9,9 +9,10 @@ import ThreadRow from '../../components/listings/ThreadRow';
 import SignInPrompt from '../../components/ui/SignInPrompt';
 import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
 import { ThreadPreview } from '../../lib/types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import EmptyState from '../../components/ui/EmptyState';
+import { supabase } from '../../lib/supabase';
 
 export default function MessagesScreen() {
   const { session, loading } = useAuth();
@@ -29,6 +30,30 @@ export default function MessagesScreen() {
     enabled: !!userId,
     refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`inbox:${userId}:${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${userId}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ['inbox'] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
 
   async function handleRefresh() {
     setIsRefreshing(true);

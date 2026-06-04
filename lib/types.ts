@@ -27,6 +27,9 @@ export type BusinessProfileInsert =
   Database['public']['Tables']['business_profiles']['Insert'];
 export type BusinessProfileUpdate =
   Database['public']['Tables']['business_profiles']['Update'];
+export type ThreadMessage = Database['public']['Tables']['messages']['Row'] & {
+  clientStatus?: 'sending' | 'failed';
+};
 
 // Enum types
 export type UserRole = Database['public']['Enums']['user_role'];
@@ -150,14 +153,15 @@ export type ThreadPreview = {
   };
 };
 
-export type ThreadMessage = {
-  id: string;
-  body: string;
-  sender_id: string;
-  recipient_id: string;
-  created_at: string;
-  read_at: string | null;
-};
+// export type ThreadMessage = {
+//   id: string;
+//   body: string;
+//   sender_id: string;
+//   recipient_id: string;
+//   created_at: string;
+//   read_at: string | null;
+//   clientStatus?: 'sending' | 'failed';
+// };
 
 export type PublicProfile = {
   id: string;
