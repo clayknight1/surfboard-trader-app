@@ -115,10 +115,10 @@ export default function CreateListing() {
         err instanceof Error && err.message.includes('Listing limit reached');
 
       Alert.alert(
-        isLimitError ? 'Listing limit reached' : 'Something went wrong',
+        isLimitError ? 'Listing limit reached' : "Couldn't create listing",
         isLimitError
           ? 'You have reached your listing limit. Upgrade your plan to list more boards.'
-          : 'Could not create your listing. Please try again.',
+          : 'Check your connection and try again.',
       );
     },
   });

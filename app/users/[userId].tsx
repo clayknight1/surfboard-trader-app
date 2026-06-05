@@ -7,7 +7,7 @@ import {
   Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import { ListingCardData } from '../../lib/types';
 import { useAuth } from '../../lib/auth';
 import { displayName } from '../../lib/utils';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -29,6 +30,7 @@ export default function UserProfileScreen() {
   const currentUserId = session?.user?.id;
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const skeletonData = Array.from({ length: 4 }, (_, i) => ({
     id: `skeleton-${i}`,
@@ -63,18 +65,19 @@ export default function UserProfileScreen() {
 
   if (isError) {
     return (
-      <View style={styles.centered}>
-        <TouchableOpacity
-          style={[styles.backButton, { top: insets.top + 12 }]}
-          onPress={() => router.back()}
-          hitSlop={10}
-        >
-          <Ionicons name='chevron-back' size={22} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={{ ...Typography.body, color: Colors.textSecondary }}>
-          Something went wrong.
-        </Text>
-      </View>
+      <ErrorState
+        title="Couldn't load this profile"
+        subtitle='Check your connection and try again.'
+        retry={() => {
+          queryClient.invalidateQueries({
+            queryKey: ['publicProfile', userId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['publicListings', userId],
+          });
+        }}
+        onBack={() => router.back()}
+      />
     );
   }
 
@@ -226,12 +229,6 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: Colors.background,
   },
   backButton: {

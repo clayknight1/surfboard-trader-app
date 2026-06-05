@@ -48,10 +48,7 @@ export default function BlockedUsersScreen() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert(
-        'Something went wrong',
-        'Could not unblock user. Please try again.',
-      );
+      Alert.alert("Couldn't unblock user", 'Try again in a moment.');
     },
   });
 

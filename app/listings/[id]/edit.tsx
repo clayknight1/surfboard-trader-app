@@ -117,8 +117,8 @@ export default function EditListingScreen() {
     onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not save your listing. Please try again.',
+        "Couldn't save changes",
+        'Check your connection and try again.',
       );
     },
   });
@@ -135,7 +135,7 @@ export default function EditListingScreen() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert('Something went wrong', 'Could not delete your listing.');
+      Alert.alert("Couldn't delete listing", 'Try again in a moment.');
     },
   });
 

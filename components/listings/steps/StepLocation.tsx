@@ -15,6 +15,7 @@ import { useAuth } from '../../../lib/auth';
 import { updateBusinessLocation } from '../../../lib/services/businessService';
 import * as Sentry from '@sentry/react-native';
 import { buildLocationLabel } from '../../../lib/utils';
+import FormError from '../../ui/FormError';
 
 type StepLocationProps = StepProps & {
   profile: User | null;
@@ -86,7 +87,7 @@ export default function StepLocation({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission denied.');
+        setError('We need location access. Enable it in Settings.');
         return;
       }
       const location = await Location.getCurrentPositionAsync();
@@ -122,7 +123,7 @@ export default function StepLocation({
       }
     } catch (err) {
       Sentry.captureException(err);
-      setError('Could not get your location. Try again.');
+      setError("Couldn't get your location. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -170,7 +171,7 @@ export default function StepLocation({
       }
     } catch (err) {
       Sentry.captureException(err);
-      setError('Something went wrong. Try again.');
+      setError("Couldn't find that address. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +182,6 @@ export default function StepLocation({
       <View style={styles.content}>
         <Text style={styles.question}>Where is the board located?</Text>
         <Text style={styles.hint}>Only your city will be shown to buyers.</Text>
-
         {/* Current location display */}
         {locationLabel && !isEditingLocation && (
           <View style={styles.locationCard}>
@@ -194,7 +194,6 @@ export default function StepLocation({
             </TouchableOpacity>
           </View>
         )}
-
         {/* Change location options */}
         {isEditingLocation && (
           <View style={styles.changeOptions}>
@@ -252,11 +251,8 @@ export default function StepLocation({
             )}
           </View>
         )}
-
         {/* Error */}
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        {/* First listing hint */}
+        <FormError>{error}</FormError>.{/* First listing hint */}
         {!hasLocation && (
           <Text style={styles.saveHint}>
             This will be saved to your profile for future listings.
@@ -375,10 +371,6 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textSecondary,
     textAlign: 'center',
-  },
-  errorText: {
-    ...Typography.caption,
-    color: Colors.error,
   },
   saveHint: {
     ...Typography.caption,

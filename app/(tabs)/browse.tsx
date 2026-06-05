@@ -240,7 +240,7 @@ export default function BrowseScreen() {
                     textAlign: 'center',
                   }}
                 >
-                  Something went wrong. Pull down to try again.
+                  Couldn't load listings. Pull down to try again.
                 </Text>
               </View>
             ) : !isPending && !isFetching && feedItems.length === 0 ? (

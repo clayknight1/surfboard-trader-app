@@ -95,8 +95,8 @@ export default function BusinessProfileScreen() {
     onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not save your business profile. Please try again.',
+        "Couldn't save business profile",
+        'Check your connection and try again.',
       );
     },
   });
@@ -126,10 +126,7 @@ export default function BusinessProfileScreen() {
             }
           } catch (err) {
             Sentry.captureException(err);
-            Alert.alert(
-              'Something went wrong',
-              'Could not take photo. Please try again.',
-            );
+            Alert.alert("Couldn't take photo", 'Try again in a moment.');
           }
         },
       },
@@ -156,10 +153,7 @@ export default function BusinessProfileScreen() {
             }
           } catch (err) {
             Sentry.captureException(err);
-            Alert.alert(
-              'Something went wrong',
-              'Could not select photo. Please try again.',
-            );
+            Alert.alert("Couldn't select photo", 'Try again in a moment.');
           }
         },
       },

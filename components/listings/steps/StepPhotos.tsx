@@ -95,10 +95,7 @@ export default function StepPhotos({
         // This catch is only for unexpected errors *outside* the per-photo processing
         // (e.g. result.assets being malformed). Promise.allSettled itself never rejects.
         Sentry.captureException(err);
-        Alert.alert(
-          'Could not process photos',
-          'Something went wrong. Please try again.',
-        );
+        Alert.alert("Couldn't process photos", 'Try again in a moment.');
       } finally {
         setIsProcessing(false);
       }
@@ -127,10 +124,7 @@ export default function StepPhotos({
         setPhotos((prev) => [...prev, processed].slice(0, MAX_PHOTOS));
       } catch (err) {
         Sentry.captureException(err);
-        Alert.alert(
-          'Could not process photo',
-          'Something went wrong. Please try again.',
-        );
+        Alert.alert("Couldn't process photo", 'Try again in a moment.');
       } finally {
         setIsProcessing(false);
       }

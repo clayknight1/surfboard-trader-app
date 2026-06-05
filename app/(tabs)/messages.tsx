@@ -1,9 +1,9 @@
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { getInbox } from '../../lib/services/messageService';
-import { Colors, Spacing, Typography } from '../../constants';
+import { Colors } from '../../constants';
 import Screen from '../../components/ui/Screen';
 import ThreadRow from '../../components/listings/ThreadRow';
 import SignInPrompt from '../../components/ui/SignInPrompt';
@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import EmptyState from '../../components/ui/EmptyState';
 import { supabase } from '../../lib/supabase';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function MessagesScreen() {
   const { session, loading } = useAuth();
@@ -24,7 +25,7 @@ export default function MessagesScreen() {
     id: `skeleton-${i}`,
   }));
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['inbox', userId],
     queryFn: () => getInbox(userId!),
     enabled: !!userId,
@@ -80,9 +81,11 @@ export default function MessagesScreen() {
     return (
       <Screen>
         <ScreenHeader title='Messages' />
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>Something went wrong.</Text>
-        </View>
+        <ErrorState
+          title="Couldn't load messages"
+          subtitle='Check your connection and try again.'
+          retry={() => refetch()}
+        />
       </Screen>
     );
   }
@@ -127,16 +130,3 @@ export default function MessagesScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  errorText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-  },
-});

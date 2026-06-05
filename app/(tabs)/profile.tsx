@@ -85,8 +85,8 @@ export default function ProfileScreen() {
             } catch (err) {
               Sentry.captureException(err);
               Alert.alert(
-                'Something went wrong',
-                'Could not submit your request. Please try again.',
+                "Couldn't submit your request",
+                'Check your connection and try again.',
               );
             }
           },

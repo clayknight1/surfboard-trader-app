@@ -74,7 +74,7 @@ export default Sentry.wrap(function RootLayout() {
       >
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister, buster: 'v7' }}
+          persistOptions={{ persister, buster: 'v9' }}
         >
           <SafeAreaProvider>
             <AuthProvider>

@@ -68,8 +68,8 @@ export default function CurrencySheet({ isOpen, onClose }: CurrencySheetProps) {
     } catch (err) {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not update currency. Please try again.',
+        "Couldn't update currency",
+        'Check your connection and try again.',
       );
     } finally {
       setSavingCurrency(null);

@@ -20,6 +20,7 @@ import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { submitBusinessApplication } from '../../lib/services/businessService';
 import { useRequireAuth } from '../../lib/useRequireAuth';
+import FormError from '../../components/ui/FormError';
 
 type BusinessType = 'shop' | 'shaper';
 
@@ -66,7 +67,7 @@ export default function ApplyScreen() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Something went wrong. Please try again.',
+          : "Couldn't sign you up. Check your connection and try again.",
       );
     },
   });
@@ -100,14 +101,12 @@ export default function ApplyScreen() {
         >
           {/* Business section */}
           <Text style={styles.sectionTitle}>Your Business</Text>
-
           <PillSelector
             label='Business Type*'
             options={BUSINESS_TYPE_OPTIONS}
             value={businessType}
             onSelect={setBusinessType}
           />
-
           <AuthInput
             label='Business Name*'
             value={businessName}
@@ -115,7 +114,6 @@ export default function ApplyScreen() {
             placeholder='e.g. Surf Ride Oceanside'
             autoCapitalize='words'
           />
-
           <AuthInput
             label='Website'
             value={website}
@@ -124,7 +122,6 @@ export default function ApplyScreen() {
             keyboardType='url'
             autoCapitalize='none'
           />
-
           <AuthInput
             label='Instagram'
             value={instagram}
@@ -132,14 +129,11 @@ export default function ApplyScreen() {
             placeholder='@yourhandle'
             autoCapitalize='none'
           />
-
           <Text style={styles.hint}>
             * Please provide at least a website or Instagram so we can verify
             your business.
           </Text>
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
+          <FormError>{error}</FormError>.
           <TouchableOpacity
             style={[
               styles.button,
@@ -188,9 +182,5 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     fontFamily: Typography.fontBold,
     color: Colors.backgroundCard,
-  },
-  error: {
-    ...Typography.caption,
-    color: Colors.error,
   },
 });

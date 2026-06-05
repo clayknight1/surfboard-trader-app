@@ -173,7 +173,7 @@ export default function ThreadScreen() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert('Something went wrong', 'Could not block user.');
+      Alert.alert("Couldn't block user", 'Try again in a moment."');
     },
   });
 
@@ -192,6 +192,7 @@ export default function ThreadScreen() {
     },
     onError: (err) => {
       Sentry.captureException(err);
+      Alert.alert("Couldn't submit report", 'Try again in a moment.');
     },
   });
 

@@ -16,6 +16,7 @@ import { Colors, Spacing, Typography } from '../../constants';
 import AuthInput from '../../components/ui/AuthInput';
 import { userCurrency } from '../../lib/utils';
 import * as Sentry from '@sentry/react-native';
+import FormError from '../../components/ui/FormError';
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -43,7 +44,7 @@ export default function SignUp() {
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords don't match.");
       return;
     }
 
@@ -77,7 +78,9 @@ export default function SignUp() {
       }
     } catch (err) {
       Sentry.captureException(err);
-      setError('Something went wrong. Please try again.');
+      setError(
+        "Couldn't create your account. Check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -145,9 +148,7 @@ export default function SignUp() {
             keyboardType='numeric'
             maxLength={4}
           />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
+          <FormError>{error}</FormError>.
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSignUp}
@@ -221,10 +222,6 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.lg,
-  },
-  error: {
-    ...Typography.caption,
-    color: Colors.error,
   },
   button: {
     backgroundColor: Colors.accent,

@@ -57,7 +57,7 @@ export default function LocationSheet({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission denied.');
+        setError('We need location access. Enable it in Settings.');
         return;
       }
       const location = await Location.getCurrentPositionAsync();
@@ -76,7 +76,7 @@ export default function LocationSheet({
       onClose();
     } catch (err) {
       Sentry.captureException(err);
-      setError('Could not get your location. Try again.');
+      setError("Couldn't get your location. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +109,7 @@ export default function LocationSheet({
       onClose();
     } catch (err) {
       Sentry.captureException(err);
-      setError('Something went wrong. Try again.');
+      setError("Couldn't update your location. Try again.");
     } finally {
       setIsLoading(false);
     }

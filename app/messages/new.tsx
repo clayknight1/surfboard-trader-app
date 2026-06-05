@@ -41,8 +41,8 @@ export default function NewThreadScreen() {
     onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not send your message. Please try again.',
+        "Couldn't send message",
+        'Check your connection and try again.',
       );
     },
   });

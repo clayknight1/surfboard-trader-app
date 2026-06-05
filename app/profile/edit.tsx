@@ -55,8 +55,8 @@ export default function EditProfileScreen() {
     onError: (err) => {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not save your profile. Please try again.',
+        "Couldn't save profile",
+        'Check your connection and try again.',
       );
     },
   });
@@ -87,10 +87,7 @@ export default function EditProfileScreen() {
             }
           } catch (err) {
             Sentry.captureException(err);
-            Alert.alert(
-              'Something went wrong',
-              'Could not take photo. Please try again.',
-            );
+            Alert.alert("Couldn't take photo", 'Try again in a moment.');
           }
         },
       },
@@ -119,10 +116,7 @@ export default function EditProfileScreen() {
             }
           } catch (err) {
             Sentry.captureException(err);
-            Alert.alert(
-              'Something went wrong',
-              'Could not select photo. Please try again.',
-            );
+            Alert.alert("Couldn't select photo", 'Try again in a moment.');
           }
         },
       },

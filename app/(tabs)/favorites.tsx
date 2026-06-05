@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import EmptyState from '../../components/ui/EmptyState';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function FavoritesScreen() {
   const { session, loading } = useAuth();
@@ -31,7 +32,7 @@ export default function FavoritesScreen() {
     id: `skeleton-${i}`,
   }));
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['savedListings', userId],
     queryFn: () => getSavedListings(userId!),
     enabled: !!userId,
@@ -65,11 +66,11 @@ export default function FavoritesScreen() {
     <Screen>
       <ScreenHeader title='Favorites' />
       {isError ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>
-            Something went wrong. Pull down to try again.
-          </Text>
-        </View>
+        <ErrorState
+          title="Couldn't load favorites"
+          subtitle='Check your connection and try again.'
+          retry={() => refetch()}
+        />
       ) : isEmpty ? (
         <EmptyState
           icon='heart-outline'

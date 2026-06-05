@@ -23,6 +23,7 @@ import { ListingWithPhotos } from '../../lib/types';
 import SellerListingCardSkeleton from '../../components/listings/SellerListingCardSkeleton';
 import { useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
+import ErrorState from '../../components/ui/ErrorState';
 
 export default function SellScreen() {
   const { session, profile, loading } = useAuth();
@@ -32,7 +33,7 @@ export default function SellScreen() {
     id: `skeleton-${i}`,
   }));
 
-  const { isPending, isError, data } = useQuery({
+  const { isPending, isError, data, refetch } = useQuery({
     queryKey: ['userListings', userId],
     queryFn: () => getListingsByUser(userId!),
     enabled: !!userId,
@@ -84,9 +85,12 @@ export default function SellScreen() {
   if (isError) {
     return (
       <Screen>
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>Something went wrong</Text>
-        </View>
+        <ScreenHeader title='Sell' />
+        <ErrorState
+          title="Couldn't load your listings"
+          subtitle='Check your connection and try again.'
+          retry={() => refetch()}
+        />
       </Screen>
     );
   }

@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { Colors, Spacing, Typography } from '../../constants';
 import AuthInput from '../../components/ui/AuthInput';
 import * as Sentry from '@sentry/react-native';
+import FormError from '../../components/ui/FormError';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -41,7 +42,7 @@ export default function Login() {
       if (error) setError(error.message);
     } catch (err) {
       Sentry.captureException(err);
-      setError('Something went wrong. Please try again.');
+      setError("Couldn't sign you in. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -83,9 +84,7 @@ export default function Login() {
             textContentType='password'
             autoComplete='password'
           />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
+          <FormError>{error}</FormError>.
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSignIn}
@@ -139,10 +138,6 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.lg,
-  },
-  error: {
-    ...Typography.caption,
-    color: Colors.error,
   },
   button: {
     backgroundColor: Colors.accent,

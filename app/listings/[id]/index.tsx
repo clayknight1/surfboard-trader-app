@@ -37,6 +37,7 @@ import {
 } from '../../../lib/utils';
 import * as Sentry from '@sentry/react-native';
 import { useSaveListing } from '../../../lib/useSaveListing';
+import ErrorState from '../../../components/ui/ErrorState';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -62,7 +63,7 @@ export default function ListingDetail() {
 
   const { isSaved, toggle } = useSaveListing(id, userId);
 
-  const { isPending, isError, data } = useQuery({
+  const { isPending, isError, data, refetch } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => getListing(id),
     retry: 2,
@@ -81,7 +82,7 @@ export default function ListingDetail() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert('Something went wrong', 'Could not mark listing as sold.');
+      Alert.alert("Couldn't mark as sold", 'Try again in a moment."');
     },
   });
 
@@ -103,8 +104,8 @@ export default function ListingDetail() {
     } catch (err) {
       Sentry.captureException(err);
       Alert.alert(
-        'Something went wrong',
-        'Could not start a conversation. Please try again.',
+        "Couldn't start the conversation",
+        'Check your connection and try again.',
       );
     }
   }
@@ -132,10 +133,7 @@ export default function ListingDetail() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert(
-        'Something went wrong',
-        'Could not submit report. Please try again.',
-      );
+      Alert.alert("Couldn't submit report", 'Try again in a moment."');
     },
   });
 
@@ -170,20 +168,12 @@ export default function ListingDetail() {
 
   if (isError || !data) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            position: 'absolute',
-            top: insets.top + 12,
-            left: Spacing.screenPadding,
-          }}
-          hitSlop={10}
-        >
-          <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.errorText}>Something went wrong</Text>
-      </View>
+      <ErrorState
+        title="Couldn't load this listing"
+        subtitle='Check your connection and try again.'
+        retry={() => refetch()}
+        onBack={() => router.back()}
+      />
     );
   }
   const photos = data.listing_photos ?? [];
