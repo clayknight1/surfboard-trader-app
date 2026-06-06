@@ -8,13 +8,13 @@ import {
   Alert,
 } from 'react-native';
 import { useAuth } from '../../lib/auth';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Screen from '../../components/ui/Screen';
 import SignInPrompt from '../../components/ui/SignInPrompt';
 import Avatar from '../../components/ui/Avatar';
 import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import LocationSheet from '../../components/ui/LocationSheet';
 import { supabase } from '../../lib/supabase';
 import { submitDeletionRequest } from '../../lib/services/userService';
@@ -67,6 +67,15 @@ export default function ProfileScreen() {
     queryFn: () => getMyBusinessApplication(userId!),
     enabled: !!userId && !isShopOrShaper,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setLocationSheetOpen(false);
+        setCurrencySheetOpen(false);
+      };
+    }, []),
+  );
 
   function handleDeleteAccount() {
     Alert.alert(
