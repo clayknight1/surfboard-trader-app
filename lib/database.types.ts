@@ -692,6 +692,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          is_banned: boolean
           is_verified: boolean
           last_seen_at: string | null
           lat: number | null
@@ -715,6 +716,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_banned?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
           lat?: number | null
@@ -738,6 +740,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_banned?: boolean
           is_verified?: boolean
           last_seen_at?: string | null
           lat?: number | null

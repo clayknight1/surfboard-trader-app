@@ -6,6 +6,7 @@ import { getUserProfile } from './services/userService';
 import { fetchUnreadCount } from './services/messageService';
 import { SplashScreen } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 type AuthContextType = {
   session: Session | null;
@@ -91,15 +92,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id]);
 
-  const { data: fetchedProfile } = useQuery({
+  const { data: fetchedProfile, isFetching } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: () => getUserProfile(session!.user!.id),
     enabled: !!session?.user?.id,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     refetchOnReconnect: true,
+    refetchOnMount: 'always',
     staleTime: 1000 * 60 * 5,
   });
+
+  useEffect(() => {
+    if (!isFetching && fetchedProfile?.is_banned) {
+      supabase.auth.signOut();
+      Alert.alert(
+        'Account suspended',
+        'Your account has been suspended. Contact support@surfboardtrader.com if you think this is a mistake.',
+      );
+    }
+  }, [fetchedProfile, isFetching]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      queryClient.invalidateQueries({
+        queryKey: ['profile', session.user.id],
+      });
+    }
+  }, [session?.user?.id, queryClient]);
 
   useEffect(() => {
     setProfile(fetchedProfile ?? null);

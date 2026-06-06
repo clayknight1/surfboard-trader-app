@@ -252,7 +252,8 @@ export default function StepLocation({
           </View>
         )}
         {/* Error */}
-        <FormError>{error}</FormError>.{/* First listing hint */}
+        <FormError>{error}</FormError>
+        {/* First listing hint */}
         {!hasLocation && (
           <Text style={styles.saveHint}>
             This will be saved to your profile for future listings.

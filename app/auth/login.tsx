@@ -26,20 +26,40 @@ export default function Login() {
   const { session } = useAuth();
 
   useEffect(() => {
-    if (session) {
+    if (session && !loading) {
       router.replace('/(tabs)/browse');
     }
-  }, [session]);
+  }, [session, loading]);
 
   async function handleSignIn() {
     setLoading(true);
     setError('');
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) setError(error.message);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Ban check
+      if (authData.user) {
+        const { data: profileRow } = await supabase
+          .from('users')
+          .select('is_banned')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (profileRow?.is_banned) {
+          await supabase.auth.signOut();
+          setError(
+            'Your account has been suspended. Contact support@surfboardtrader.app if you think this is a mistake.',
+          );
+          return;
+        }
+      }
     } catch (err) {
       Sentry.captureException(err);
       setError("Couldn't sign you in. Check your connection and try again.");
@@ -84,7 +104,7 @@ export default function Login() {
             textContentType='password'
             autoComplete='password'
           />
-          <FormError>{error}</FormError>.
+          <FormError>{error}</FormError>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSignIn}
