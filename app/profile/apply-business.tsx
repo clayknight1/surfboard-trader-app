@@ -133,7 +133,7 @@ export default function ApplyScreen() {
             * Please provide at least a website or Instagram so we can verify
             your business.
           </Text>
-          <FormError>{error}</FormError>.
+          <FormError>{error}</FormError>
           <TouchableOpacity
             style={[
               styles.button,
@@ -143,7 +143,7 @@ export default function ApplyScreen() {
             disabled={!canSubmit || applyMutation.isPending}
           >
             {applyMutation.isPending ? (
-              <ActivityIndicator color={Colors.accent} />
+              <ActivityIndicator color={Colors.background} />
             ) : (
               <Text style={styles.buttonText}>Submit Application</Text>
             )}

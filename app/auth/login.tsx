@@ -111,7 +111,7 @@ export default function Login() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.accent} />
+              <ActivityIndicator color={Colors.background} />
             ) : (
               <Text style={styles.buttonText}>Sign In</Text>
             )}

@@ -148,14 +148,14 @@ export default function SignUp() {
             keyboardType='numeric'
             maxLength={4}
           />
-          <FormError>{error}</FormError>.
+          <FormError>{error}</FormError>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleSignUp}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.accent} />
+              <ActivityIndicator color={Colors.background} />
             ) : (
               <Text style={styles.buttonText}>Create Account</Text>
             )}
