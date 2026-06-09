@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Spacing, Typography } from '../../constants';
@@ -18,12 +18,17 @@ import * as Sentry from '@sentry/react-native';
 import FormError from '../../components/ui/FormError';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const params = useLocalSearchParams<{
+    justSignedUp?: string;
+    email?: string;
+  }>();
+  const [email, setEmail] = useState(params.email ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { session } = useAuth();
+  const showConfirmEmailBanner = params.justSignedUp === '1';
 
   useEffect(() => {
     if (session && !loading) {
@@ -83,6 +88,15 @@ export default function Login() {
           <Text style={styles.wordmarkTitle}>Surfboard</Text>
           <Text style={styles.wordmarkSubtitle}>Trader</Text>
         </View>
+
+        {/* Just-signed-up confirmation banner */}
+        {showConfirmEmailBanner && (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>
+              Check your email to confirm your account, then sign in.
+            </Text>
+          </View>
+        )}
 
         {/* Form */}
         <View style={styles.form}>
@@ -187,5 +201,15 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.accent,
     fontFamily: Typography.fontMedium,
+  },
+  banner: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 12,
+    padding: Spacing.lg,
+  },
+  bannerText: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+    textAlign: 'center',
   },
 });

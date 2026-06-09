@@ -66,7 +66,7 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -75,6 +75,14 @@ export default function SignUp() {
       });
       if (error) {
         setError(error.message);
+        return;
+      }
+      // If no session was returned, email confirmation is ON — bounce to login
+      if (!data.session) {
+        router.replace({
+          pathname: '/auth/login',
+          params: { justSignedUp: '1', email: email.trim() },
+        });
       }
     } catch (err) {
       Sentry.captureException(err);
