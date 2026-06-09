@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       supabase.auth.signOut();
       Alert.alert(
         'Account suspended',
-        'Your account has been suspended. Contact support@surfboardtrader.com if you think this is a mistake.',
+        'Your account has been suspended. Contact support@surfboardtrader.app if you think this is a mistake.',
       );
     }
   }, [fetchedProfile, isFetching]);

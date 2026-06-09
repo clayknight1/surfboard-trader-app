@@ -15,7 +15,7 @@ export default function PrivacyPolicyScreen() {
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name='chevron-back' size={24} color={Colors.textPrimary} />
       </TouchableOpacity>
-      <WebView source={{ uri: 'https://surfboardtrader.com/terms' }} />
+      <WebView source={{ uri: 'https://surfboardtrader.app/terms' }} />
     </View>
   );
 }
