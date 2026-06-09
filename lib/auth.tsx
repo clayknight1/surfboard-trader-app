@@ -6,6 +6,7 @@ import { getUserProfile } from './services/userService';
 import { fetchUnreadCount } from './services/messageService';
 import { SplashScreen } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react-native';
 import { Alert } from 'react-native';
 
 type AuthContextType = {
@@ -92,7 +93,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id]);
 
-  const { data: fetchedProfile, isFetching } = useQuery({
+  const {
+    data: fetchedProfile,
+    isFetching,
+    isError: profileIsError,
+    error: profileError,
+  } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: () => getUserProfile(session!.user!.id),
     enabled: !!session?.user?.id,
@@ -102,6 +108,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refetchOnMount: 'always',
     staleTime: 1000 * 60 * 5,
   });
+
+  // Sign out if profile fetch fails after retries — auth user was deleted,
+  // RLS broke, or network is down so long we can't recover. Bouncing to login
+  useEffect(() => {
+    if (profileIsError && session?.user?.id) {
+      Sentry.captureException(profileError, {
+        tags: { reason: 'profile_fetch_failed_signout' },
+      });
+      supabase.auth.signOut();
+    }
+  }, [profileIsError, profileError, session?.user?.id]);
 
   useEffect(() => {
     if (!isFetching && fetchedProfile?.is_banned) {
