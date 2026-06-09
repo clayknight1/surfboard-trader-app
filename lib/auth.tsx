@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<User | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const queryClient = useQueryClient();
@@ -54,7 +53,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (!session) {
-        setProfile(null);
         setUnreadCount(0);
       }
     });
@@ -131,18 +129,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchedProfile, isFetching]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      queryClient.invalidateQueries({
-        queryKey: ['profile', session.user.id],
-      });
-    }
-  }, [session?.user?.id, queryClient]);
-
-  useEffect(() => {
-    setProfile(fetchedProfile ?? null);
-  }, [fetchedProfile]);
-
-  useEffect(() => {
     if (!session?.user?.id) {
       return;
     }
@@ -164,9 +150,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
     setUser(data.session?.user ?? null);
-    if (!data.session) {
-      setProfile(null);
-    }
   }
 
   async function refreshProfile() {
@@ -182,7 +165,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    setProfile(null);
     setUnreadCount(0);
   };
 
@@ -198,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         session,
         user,
-        profile,
+        profile: fetchedProfile ?? null,
         loading,
         signOut,
         refreshSession,
