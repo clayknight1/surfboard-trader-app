@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -104,11 +105,12 @@ export default function SignUp() {
         keyboardShouldPersistTaps='handled'
         showsVerticalScrollIndicator={false}
       >
-        {/* Wordmark */}
-        <View style={styles.wordmark}>
-          <Text style={styles.wordmarkTitle}>Surfboard</Text>
-          <Text style={styles.wordmarkSubtitle}>Trader</Text>
-        </View>
+        {/* Logo */}
+        <Image
+          source={require('../../assets/login-screen-logo.png')}
+          style={styles.logo}
+          resizeMode='contain'
+        />
 
         {/* Form */}
         <View style={styles.form}>
@@ -214,19 +216,10 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxxl,
     gap: Spacing.xxxl,
   },
-  wordmark: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  wordmarkTitle: {
-    ...Typography.displayLarge,
-    color: Colors.textPrimary,
-    letterSpacing: -1,
-  },
-  wordmarkSubtitle: {
-    ...Typography.displayLarge,
-    color: Colors.accent,
-    letterSpacing: -1,
+  logo: {
+    width: 240,
+    height: 160,
+    alignSelf: 'center',
   },
   form: {
     gap: Spacing.lg,

@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -83,11 +84,12 @@ export default function Login() {
         keyboardShouldPersistTaps='handled'
         showsVerticalScrollIndicator={false}
       >
-        {/* Wordmark */}
-        <View style={styles.wordmark}>
-          <Text style={styles.wordmarkTitle}>Surfboard</Text>
-          <Text style={styles.wordmarkSubtitle}>Trader</Text>
-        </View>
+        {/* Logo */}
+        <Image
+          source={require('../../assets/login-screen-logo.png')}
+          style={styles.logo}
+          resizeMode='contain'
+        />
 
         {/* Just-signed-up confirmation banner */}
         {showConfirmEmailBanner && (
@@ -109,15 +111,23 @@ export default function Login() {
             textContentType='emailAddress'
             autoComplete='email'
           />
-          <AuthInput
-            label='Password'
-            value={password}
-            onChangeText={setPassword}
-            placeholder='••••••••'
-            secureTextEntry
-            textContentType='password'
-            autoComplete='password'
-          />
+          <View style={styles.passwordGroup}>
+            <AuthInput
+              label='Password'
+              value={password}
+              onChangeText={setPassword}
+              placeholder='••••••••'
+              secureTextEntry
+              textContentType='password'
+              autoComplete='password'
+            />
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => router.push('/auth/forgot-password')}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </View>
           <FormError>{error}</FormError>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -152,23 +162,15 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 80,
+    paddingTop: 40,
     paddingBottom: Spacing.xxxl,
     gap: Spacing.xxxl,
+    justifyContent: 'center',
   },
-  wordmark: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  wordmarkTitle: {
-    ...Typography.displayLarge,
-    color: Colors.textPrimary,
-    letterSpacing: -1,
-  },
-  wordmarkSubtitle: {
-    ...Typography.displayLarge,
-    color: Colors.accent,
-    letterSpacing: -1,
+  logo: {
+    width: 240,
+    height: 160,
+    alignSelf: 'center',
   },
   form: {
     gap: Spacing.lg,
@@ -211,5 +213,16 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.textPrimary,
     textAlign: 'center',
+  },
+  passwordGroup: {
+    gap: Spacing.sm,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+  },
+  forgotPasswordText: {
+    fontSize: Typography.size14,
+    color: Colors.accent,
+    fontFamily: Typography.fontMedium,
   },
 });
