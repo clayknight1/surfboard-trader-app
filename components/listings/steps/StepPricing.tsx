@@ -1,5 +1,8 @@
 import {
   ActivityIndicator,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +19,9 @@ type StepPricingProps = StepProps & {
   handleSubmit: () => void;
   isSubmitting: boolean;
 };
+
+const DESCRIPTION_ACCESSORY_ID = 'stepPricingDoneDescription';
+const PRICE_ACCESSORY_ID = 'stepPricingDonePrice';
 
 export default function StepPricing({
   formData,
@@ -54,6 +60,9 @@ export default function StepPricing({
                   isNaN(dollars) ? null : Math.round(dollars * 100),
                 );
               }}
+              inputAccessoryViewID={
+                Platform.OS === 'ios' ? PRICE_ACCESSORY_ID : undefined
+              }
               placeholder='0'
               placeholderTextColor={Colors.textSecondary}
               keyboardType='decimal-pad'
@@ -73,6 +82,9 @@ export default function StepPricing({
             multiline
             numberOfLines={6}
             textAlignVertical='top'
+            inputAccessoryViewID={
+              Platform.OS === 'ios' ? DESCRIPTION_ACCESSORY_ID : undefined
+            }
           />
         </View>
       </ScrollView>
@@ -91,6 +103,34 @@ export default function StepPricing({
             <Text style={styles.nextButtonText}>Post listing</Text>
           )}
         </TouchableOpacity>
+      )}
+
+      {/* iOS Done toolbar for the description keyboard */}
+      {Platform.OS === 'ios' && (
+        <>
+          <InputAccessoryView nativeID={DESCRIPTION_ACCESSORY_ID}>
+            <View style={styles.accessoryBar}>
+              <TouchableOpacity
+                onPress={() => Keyboard.dismiss()}
+                hitSlop={10}
+                accessibilityLabel='Done'
+              >
+                <Text style={styles.accessoryDone}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </InputAccessoryView>
+          <InputAccessoryView nativeID={PRICE_ACCESSORY_ID}>
+            <View style={styles.accessoryBar}>
+              <TouchableOpacity
+                onPress={() => Keyboard.dismiss()}
+                hitSlop={10}
+                accessibilityLabel='Done'
+              >
+                <Text style={styles.accessoryDone}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </InputAccessoryView>
+        </>
       )}
     </View>
   );
@@ -163,5 +203,17 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     fontFamily: Typography.fontBold,
     color: Colors.backgroundCard,
+  },
+  accessoryBar: {
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  accessoryDone: {
+    ...Typography.body,
+    fontFamily: Typography.fontBold,
+    color: Colors.accent,
   },
 });

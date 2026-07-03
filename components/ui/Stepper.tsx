@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ type StepperProps = {
   min?: number;
   max?: number;
   unit?: string;
+  inputAccessoryViewID?: string;
 };
 
 export default function Stepper({
@@ -26,9 +27,18 @@ export default function Stepper({
   min = 0,
   max = 999,
   unit,
+  inputAccessoryViewID,
 }: StepperProps) {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value?.toString() ?? '');
+  const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (editing) {
+      const id = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+  }, [editing]);
 
   function increment() {
     const current = value ?? 0;
@@ -81,13 +91,14 @@ export default function Stepper({
         >
           {editing ? (
             <TextInput
+              ref={inputRef}
               style={styles.input}
               value={inputValue}
               onChangeText={onChangeText}
               onBlur={onBlur}
               keyboardType='decimal-pad'
-              autoFocus
               selectTextOnFocus
+              inputAccessoryViewID={inputAccessoryViewID}
             />
           ) : (
             <Text style={styles.value}>

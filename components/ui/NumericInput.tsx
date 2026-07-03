@@ -8,6 +8,7 @@ type NumericInputProps = {
   placeholder?: string;
   unit?: string;
   label?: string;
+  inputAccessoryViewID?: string;
 };
 
 export default function NumericInput({
@@ -16,6 +17,7 @@ export default function NumericInput({
   placeholder,
   unit,
   label,
+  inputAccessoryViewID,
 }: NumericInputProps) {
   const [raw, setRaw] = useState(value?.toString() ?? '');
   const isFocused = useRef(false);
@@ -62,6 +64,7 @@ export default function NumericInput({
           placeholder={placeholder}
           placeholderTextColor={Colors.textSecondary}
           keyboardType='decimal-pad'
+          inputAccessoryViewID={inputAccessoryViewID}
         />
         {unit && <Text style={styles.unit}>{unit}</Text>}
       </View>

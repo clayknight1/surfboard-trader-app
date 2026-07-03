@@ -1,9 +1,11 @@
 import { StepProps } from '../../../lib/types';
 import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,6 +14,16 @@ import { CONDITION_OPTIONS } from '../../../constants';
 import Stepper from '../../ui/Stepper';
 import PillSelector from '../../ui/PillSelector';
 import NumericInput from '../../ui/NumericInput';
+
+const IDS = {
+  volume: 'stepSpecsDoneVolume',
+  lengthFt: 'stepSpecsDoneLengthFt',
+  lengthIn: 'stepSpecsDoneLengthIn',
+  width: 'stepSpecsDoneWidth',
+  thickness: 'stepSpecsDoneThickness',
+};
+
+const idIOS = (id: string) => (Platform.OS === 'ios' ? id : undefined);
 
 export default function StepSpecs({
   formData,
@@ -40,6 +52,7 @@ export default function StepSpecs({
           min={0}
           max={150}
           unit='L'
+          inputAccessoryViewID={idIOS(IDS.volume)}
         />
 
         {/* Length */}
@@ -51,6 +64,7 @@ export default function StepSpecs({
               onChange={(value) => updateField('length_feet', value)}
               placeholder='5'
               unit='ft'
+              inputAccessoryViewID={idIOS(IDS.lengthFt)}
             />
             <NumericInput
               value={formData.length_inches_remainder ?? null}
@@ -59,9 +73,11 @@ export default function StepSpecs({
               }
               placeholder='10.5'
               unit='in'
+              inputAccessoryViewID={idIOS(IDS.lengthIn)}
             />
           </View>
         </View>
+
         {/* Width */}
         <NumericInput
           label='Width'
@@ -69,6 +85,7 @@ export default function StepSpecs({
           onChange={(value) => updateField('width_inches', value)}
           placeholder='20.5'
           unit='in'
+          inputAccessoryViewID={idIOS(IDS.width)}
         />
 
         {/* Thickness */}
@@ -78,6 +95,7 @@ export default function StepSpecs({
           onChange={(value) => updateField('thickness_inches', value)}
           placeholder='2.5'
           unit='in'
+          inputAccessoryViewID={idIOS(IDS.thickness)}
         />
 
         {/* Condition */}
@@ -98,6 +116,22 @@ export default function StepSpecs({
           <Text style={styles.nextButtonText}>Continue</Text>
         </TouchableOpacity>
       )}
+
+      {/* iOS keyboard Done toolbars — one per input */}
+      {Platform.OS === 'ios' &&
+        Object.values(IDS).map((id) => (
+          <InputAccessoryView key={id} nativeID={id}>
+            <View style={styles.accessoryBar}>
+              <TouchableOpacity
+                onPress={() => Keyboard.dismiss()}
+                hitSlop={10}
+                accessibilityLabel='Done'
+              >
+                <Text style={styles.accessoryDone}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </InputAccessoryView>
+        ))}
     </View>
   );
 }
@@ -126,39 +160,9 @@ const styles = StyleSheet.create({
     ...Typography.label,
     color: Colors.textSecondary,
   },
-  input: {
-    backgroundColor: Colors.backgroundInput,
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
-    ...Typography.body,
-    color: Colors.textPrimary,
-  },
   lengthRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-  },
-  lengthFeet: {
-    width: 72,
-  },
-  lengthInches: {
-    width: 88,
-  },
-  lengthSeparator: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-  },
-  inlineInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  dimensionInput: {
-    width: 120,
-  },
-  unit: {
-    ...Typography.body,
-    color: Colors.textSecondary,
   },
   nextButton: {
     backgroundColor: Colors.accent,
@@ -172,5 +176,19 @@ const styles = StyleSheet.create({
     ...Typography.subheading,
     fontFamily: Typography.fontBold,
     color: Colors.backgroundCard,
+  },
+  accessoryBar: {
+    backgroundColor: Colors.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  accessoryDone: {
+    ...Typography.body,
+    fontFamily: Typography.fontBold,
+    color: Colors.accent,
   },
 });
