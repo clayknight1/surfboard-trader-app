@@ -51,6 +51,7 @@ export default function StepSpecs({
           step={0.5}
           min={0}
           max={150}
+          maxSuggest={150}
           unit='L'
           inputAccessoryViewID={idIOS(IDS.volume)}
         />
@@ -85,6 +86,7 @@ export default function StepSpecs({
           onChange={(value) => updateField('width_inches', value)}
           placeholder='20.5'
           unit='in'
+          maxSuggest={30}
           inputAccessoryViewID={idIOS(IDS.width)}
         />
 
@@ -95,6 +97,7 @@ export default function StepSpecs({
           onChange={(value) => updateField('thickness_inches', value)}
           placeholder='2.5'
           unit='in'
+          maxSuggest={6}
           inputAccessoryViewID={idIOS(IDS.thickness)}
         />
 

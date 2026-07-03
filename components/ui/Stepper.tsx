@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   TextInput,
@@ -17,6 +18,7 @@ type StepperProps = {
   max?: number;
   unit?: string;
   inputAccessoryViewID?: string;
+  maxSuggest?: number;
 };
 
 export default function Stepper({
@@ -28,6 +30,7 @@ export default function Stepper({
   max = 999,
   unit,
   inputAccessoryViewID,
+  maxSuggest,
 }: StepperProps) {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value?.toString() ?? '');
@@ -67,6 +70,31 @@ export default function Stepper({
 
   function onBlur() {
     setEditing(false);
+    const typed = parseFloat(inputValue);
+    if (maxSuggest !== undefined && !isNaN(typed) && typed > maxSuggest) {
+      const suggested = parseFloat((typed / 10).toFixed(1));
+      const unitLabel = unit ? ` ${unit}` : '';
+      const currentValue = value ?? 0;
+      Alert.alert(
+        'That looks high',
+        `Did you mean ${suggested}${unitLabel}? Max is ${max}${unitLabel}.`,
+        [
+          {
+            text: `Keep ${currentValue}${unitLabel}`,
+            style: 'cancel',
+            onPress: () => setInputValue(currentValue.toString()),
+          },
+          {
+            text: `Use ${suggested}${unitLabel}`,
+            onPress: () => {
+              onChange(suggested);
+              setInputValue(suggested.toString());
+            },
+          },
+        ],
+      );
+      return;
+    }
     if (value === null) setInputValue('');
     else setInputValue(value.toString());
   }

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Colors, Spacing, Typography } from '../../constants';
 
@@ -9,6 +9,7 @@ type NumericInputProps = {
   unit?: string;
   label?: string;
   inputAccessoryViewID?: string;
+  maxSuggest?: number;
 };
 
 export default function NumericInput({
@@ -18,6 +19,7 @@ export default function NumericInput({
   unit,
   label,
   inputAccessoryViewID,
+  maxSuggest,
 }: NumericInputProps) {
   const [raw, setRaw] = useState(value?.toString() ?? '');
   const isFocused = useRef(false);
@@ -42,6 +44,25 @@ export default function NumericInput({
 
   function onBlur() {
     isFocused.current = false;
+    if (maxSuggest !== undefined && value !== null && value > maxSuggest) {
+      const suggested = parseFloat((value / 10).toFixed(1));
+      const unitLabel = unit ? ` ${unit}` : '';
+      Alert.alert('That looks high', `Did you mean ${suggested}${unitLabel}?`, [
+        {
+          text: `Keep ${value}${unitLabel}`,
+          style: 'cancel',
+          onPress: () => setRaw(value.toString()),
+        },
+        {
+          text: `Use ${suggested}${unitLabel}`,
+          onPress: () => {
+            onChange(suggested);
+            setRaw(suggested.toString());
+          },
+        },
+      ]);
+      return;
+    }
     if (value === null) {
       setRaw('');
     } else {
