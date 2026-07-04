@@ -29,6 +29,8 @@ import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
 import { ThreadMessage } from '../../lib/types';
+import { usePushPrompt } from '../../lib/usePushPrompt';
+import PushPrePrompt from '../../components/push/PushPrePrompt';
 
 type ReportReason = 'spam' | 'inappropriate' | 'scam' | 'other';
 
@@ -41,6 +43,14 @@ export default function ThreadScreen() {
   const { refreshUnreadCount } = useAuth();
   const router = useRouter();
   const [messageText, setMessageText] = useState('');
+  const [showPushModal, setShowPushModal] = useState(false);
+  const {
+    permission,
+    canPromptNow,
+    requestAndRegister,
+    markDismissed,
+    openSettings,
+  } = usePushPrompt();
   const queryClient = useQueryClient();
   const resolvedThreadId = Array.isArray(threadId) ? threadId[0] : threadId;
   const flatListRef = useRef<FlatList>(null);
@@ -141,6 +151,9 @@ export default function ThreadScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
       queryClient.invalidateQueries({ queryKey: ['inbox'] });
+      if (canPromptNow) {
+        setShowPushModal(true);
+      }
     },
     onError: (err, body, context) => {
       Sentry.captureException(err);
@@ -283,6 +296,23 @@ export default function ThreadScreen() {
     ]);
   }
 
+  async function handlePushEnable() {
+    setShowPushModal(false);
+    if (permission === 'denied') {
+      await openSettings();
+    } else {
+      const status = await requestAndRegister();
+      if (status !== 'granted') {
+        await markDismissed();
+      }
+    }
+  }
+
+  async function handlePushDismiss() {
+    setShowPushModal(false);
+    await markDismissed();
+  }
+
   if (!auth.ready) {
     return auth.redirect ?? null;
   }
@@ -410,6 +440,14 @@ export default function ThreadScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <PushPrePrompt
+        visible={showPushModal}
+        permission={permission}
+        onEnable={handlePushEnable}
+        onDismiss={handlePushDismiss}
+        message='Get notified when they reply.'
+      />
     </Screen>
   );
 }

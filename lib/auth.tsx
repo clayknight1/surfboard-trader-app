@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from './types';
 import { supabase } from './supabase';
@@ -8,6 +14,11 @@ import { SplashScreen } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { Alert } from 'react-native';
+import {
+  registerForPushNotificationsAsync,
+  unregisterPushTokenAsync,
+} from './services/pushService';
+import * as Notifications from 'expo-notifications';
 
 type AuthContextType = {
   session: Session | null;
@@ -28,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const pushTokenRef = useRef<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -88,6 +100,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    Notifications.setBadgeCountAsync(unreadCount).catch(() => {});
+  }, [unreadCount]);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let cancelled = false;
+
+    registerForPushNotificationsAsync().then((token) => {
+      if (!cancelled && token) {
+        pushTokenRef.current = token;
+      }
+    });
+
+    return () => {
+      cancelled = true;
     };
   }, [session?.user?.id]);
 
@@ -161,6 +192,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const signOut = async () => {
+    if (pushTokenRef.current) {
+      await unregisterPushTokenAsync(pushTokenRef.current);
+      pushTokenRef.current = null;
+    }
     await supabase.removeAllChannels();
     await supabase.auth.signOut();
     setSession(null);

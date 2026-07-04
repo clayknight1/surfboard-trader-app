@@ -24,6 +24,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePushPrompt } from '../../lib/usePushPrompt';
+import { PushPermissionStatus } from '../../lib/services/pushService';
 
 export default function EditProfileScreen() {
   const { profile, refreshProfile } = useAuth();
@@ -32,6 +34,23 @@ export default function EditProfileScreen() {
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { permission, requestAndRegister, markDismissed, openSettings } =
+    usePushPrompt();
+
+  const notificationStatusLabel: Record<PushPermissionStatus, string> = {
+    granted: 'On',
+    denied: 'Off',
+    undetermined: 'Enable',
+  };
+
+  async function handleNotificationTap() {
+    if (permission === 'undetermined') {
+      const status = await requestAndRegister();
+      if (status !== 'granted') await markDismissed();
+    } else {
+      await openSettings();
+    }
+  }
 
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
@@ -187,6 +206,33 @@ export default function EditProfileScreen() {
             textContentType='name'
           />
         </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Preferences</Text>
+          <TouchableOpacity
+            style={styles.settingsRow}
+            onPress={handleNotificationTap}
+            accessibilityLabel='Notification settings'
+          >
+            <View style={styles.settingsRowLeft}>
+              <Ionicons
+                name='notifications-outline'
+                size={22}
+                color={Colors.textPrimary}
+              />
+              <Text style={styles.settingsRowLabel}>Notifications</Text>
+            </View>
+            <View style={styles.settingsRowRight}>
+              <Text style={styles.settingsRowValue}>
+                {notificationStatusLabel[permission]}
+              </Text>
+              <Ionicons
+                name='chevron-forward'
+                size={16}
+                color={Colors.textSecondary}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -229,5 +275,41 @@ const styles = StyleSheet.create({
   },
   fields: {
     gap: Spacing.lg,
+  },
+  section: {
+    gap: Spacing.sm,
+  },
+  sectionTitle: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  settingsRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  settingsRowLabel: {
+    ...Typography.body,
+    color: Colors.textPrimary,
+  },
+  settingsRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  settingsRowValue: {
+    ...Typography.body,
+    color: Colors.textSecondary,
   },
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -22,6 +22,8 @@ import * as Haptics from 'expo-haptics';
 import { usePostHog } from 'posthog-react-native';
 import * as Sentry from '@sentry/react-native';
 import { userCurrency } from '../../lib/utils';
+import { usePushPrompt } from '../../lib/usePushPrompt';
+import PushPrePrompt from '../../components/push/PushPrePrompt';
 
 const TOTAL_STEPS = 5;
 
@@ -32,6 +34,15 @@ export default function CreateListing() {
   const router = useRouter();
   const [step, setStep] = useState<number>(1);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [showPushModal, setShowPushModal] = useState(false);
+  const pendingListingIdRef = useRef<string | null>(null);
+  const {
+    permission,
+    canPromptNow,
+    requestAndRegister,
+    markDismissed,
+    openSettings,
+  } = usePushPrompt();
   const posthog = usePostHog();
   const [formData, setFormData] = useState<ListingFormData>({
     listing_type: 'for_sale',
@@ -100,7 +111,12 @@ export default function CreateListing() {
         photo_count: photos.length,
       });
 
-      router.replace(`/listings/${listingId}`);
+      if (canPromptNow) {
+        pendingListingIdRef.current = listingId;
+        setShowPushModal(true);
+      } else {
+        router.replace(`/listings/${listingId}`);
+      }
     },
     onError: (err) => {
       Sentry.captureException(err, {
@@ -128,6 +144,29 @@ export default function CreateListing() {
     value: ListingFormData[K],
   ) {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handlePushEnable() {
+    setShowPushModal(false);
+    if (permission === 'denied') {
+      await openSettings();
+    } else {
+      const status = await requestAndRegister();
+      if (status !== 'granted') {
+        await markDismissed();
+      }
+    }
+    const id = pendingListingIdRef.current;
+    pendingListingIdRef.current = null;
+    if (id) router.replace(`/listings/${id}`);
+  }
+
+  async function handlePushDismiss() {
+    setShowPushModal(false);
+    await markDismissed();
+    const id = pendingListingIdRef.current;
+    pendingListingIdRef.current = null;
+    if (id) router.replace(`/listings/${id}`);
   }
 
   function handleAbandon() {
@@ -225,6 +264,14 @@ export default function CreateListing() {
           isEditing={false}
         />
       )}
+
+      <PushPrePrompt
+        visible={showPushModal}
+        permission={permission}
+        onEnable={handlePushEnable}
+        onDismiss={handlePushDismiss}
+        message='Get notified when buyers reach out about your board.'
+      />
     </Screen>
   );
 }

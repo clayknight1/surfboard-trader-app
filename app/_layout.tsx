@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -20,6 +20,9 @@ import {
 } from '@expo-google-fonts/space-mono';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
+import * as Notifications from 'expo-notifications';
+import { useEffect } from 'react';
+import { setupAndroidChannel } from '../lib/services/pushService';
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -33,6 +36,15 @@ Sentry.init({
 
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
+});
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
 });
 
 SplashScreen.preventAutoHideAsync();
@@ -61,6 +73,25 @@ export default Sentry.wrap(function RootLayout() {
     SpaceMono_400Regular,
     SpaceMono_700Bold,
   });
+
+  const router = useRouter();
+
+  const lastResponse = Notifications.useLastNotificationResponse();
+
+  useEffect(() => {
+    setupAndroidChannel();
+  }, []);
+
+  useEffect(() => {
+    if (!lastResponse) return;
+    const data = lastResponse.notification.request.content.data as {
+      type?: string;
+      threadId?: string;
+    };
+    if (data?.type === 'message' && data?.threadId) {
+      router.push(`/messages/${data.threadId}`);
+    }
+  }, [lastResponse, router]);
 
   if (!fontsLoaded) {
     return null;

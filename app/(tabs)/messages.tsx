@@ -9,17 +9,28 @@ import ThreadRow from '../../components/listings/ThreadRow';
 import SignInPrompt from '../../components/ui/SignInPrompt';
 import ThreadRowSkeleton from '../../components/listings/ThreadRowSkeleton';
 import { ThreadPreview } from '../../lib/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import EmptyState from '../../components/ui/EmptyState';
 import { supabase } from '../../lib/supabase';
 import ErrorState from '../../components/ui/ErrorState';
+import { usePushPrompt } from '../../lib/usePushPrompt';
+import PushPrePrompt from '../../components/push/PushPrePrompt';
 
 export default function MessagesScreen() {
   const { session, loading } = useAuth();
   const userId = session?.user?.id;
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showPushModal, setShowPushModal] = useState(false);
+  const shownThisSessionRef = useRef(false);
+  const {
+    permission,
+    canPromptNow,
+    requestAndRegister,
+    markDismissed,
+    openSettings,
+  } = usePushPrompt();
   const queryClient = useQueryClient();
   const skeletonData = Array.from({ length: 6 }, (_, i) => ({
     id: `skeleton-${i}`,
@@ -56,11 +67,37 @@ export default function MessagesScreen() {
     };
   }, [userId, queryClient]);
 
+  useEffect(() => {
+    if (!userId) return;
+    if (canPromptNow && !shownThisSessionRef.current) {
+      shownThisSessionRef.current = true;
+      setShowPushModal(true);
+    }
+  }, [userId, canPromptNow]);
+
   async function handleRefresh() {
     setIsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ['inbox'] });
     setIsRefreshing(false);
   }
+
+  async function handlePushEnable() {
+    setShowPushModal(false);
+    if (permission === 'denied') {
+      await openSettings();
+    } else {
+      const status = await requestAndRegister();
+      if (status !== 'granted') {
+        await markDismissed();
+      }
+    }
+  }
+
+  async function handlePushDismiss() {
+    setShowPushModal(false);
+    await markDismissed();
+  }
+
   if (loading) {
     return null;
   }
@@ -127,6 +164,14 @@ export default function MessagesScreen() {
           }
         />
       )}
+
+      <PushPrePrompt
+        visible={showPushModal}
+        permission={permission}
+        onEnable={handlePushEnable}
+        onDismiss={handlePushDismiss}
+        message='Get a push when someone messages you about a board.'
+      />
     </Screen>
   );
 }
