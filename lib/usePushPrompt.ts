@@ -16,12 +16,14 @@ export function usePushPrompt() {
   const [permission, setPermission] =
     useState<PushPermissionStatus>('undetermined');
   const [lastDismissedAt, setLastDismissedAt] = useState<number | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     const status = await getPushPermissionStatus();
     setPermission(status);
     const raw = await AsyncStorage.getItem(DISMISS_KEY);
     setLastDismissedAt(raw ? parseInt(raw, 10) : null);
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function usePushPrompt() {
   const pastCooldown =
     lastDismissedAt === null || Date.now() - lastDismissedAt > COOLDOWN_MS;
 
-  const canPromptNow = permission !== 'granted' && pastCooldown;
+  const canPromptNow = loaded && permission !== 'granted' && pastCooldown;
 
   const markDismissed = useCallback(async () => {
     const now = Date.now();

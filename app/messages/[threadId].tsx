@@ -68,6 +68,11 @@ export default function ThreadScreen() {
       : messages[0].sender_id
     : null;
 
+  const effectiveListingId =
+    listingId && listingId !== 'undefined'
+      ? listingId
+      : (messages?.[0]?.listing_id ?? null);
+
   useEffect(() => {
     if (resolvedThreadId && auth.userId) {
       markThreadRead(resolvedThreadId, auth.userId)
@@ -111,8 +116,18 @@ export default function ThreadScreen() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
-      if (!resolvedThreadId) throw new Error('Missing thread ID');
-      await sendMessage(auth.userId!, listingId, body, resolvedThreadId);
+      if (!resolvedThreadId) {
+        throw new Error('Missing thread ID');
+      }
+      if (!effectiveListingId) {
+        throw new Error('Missing listing ID');
+      }
+      await sendMessage(
+        auth.userId!,
+        effectiveListingId,
+        body,
+        resolvedThreadId,
+      );
     },
     onMutate: async (body) => {
       await queryClient.cancelQueries({
@@ -130,7 +145,7 @@ export default function ThreadScreen() {
         sender_id: auth.userId!,
         recipient_id: otherUserId ?? '',
         thread_id: resolvedThreadId!,
-        listing_id: listingId,
+        listing_id: effectiveListingId!,
         business_id: null,
         created_at: new Date().toISOString(),
         read_at: null,

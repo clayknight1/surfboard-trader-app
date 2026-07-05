@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -77,6 +77,7 @@ export default Sentry.wrap(function RootLayout() {
   const router = useRouter();
 
   const lastResponse = Notifications.useLastNotificationResponse();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
     setupAndroidChannel();
@@ -84,14 +85,19 @@ export default Sentry.wrap(function RootLayout() {
 
   useEffect(() => {
     if (!lastResponse) return;
+    if (!navigationState?.key) return;
     const data = lastResponse.notification.request.content.data as {
       type?: string;
       threadId?: string;
+      listingId?: string;
     };
     if (data?.type === 'message' && data?.threadId) {
-      router.push(`/messages/${data.threadId}`);
+      const path = data.listingId
+        ? `/messages/${data.threadId}?listingId=${data.listingId}`
+        : `/messages/${data.threadId}`;
+      router.push(path);
     }
-  }, [lastResponse, router]);
+  }, [lastResponse, router, navigationState?.key]);
 
   if (!fontsLoaded) {
     return null;
