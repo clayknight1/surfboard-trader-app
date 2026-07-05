@@ -21,7 +21,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { setupAndroidChannel } from '../lib/services/pushService';
 
 Sentry.init({
@@ -78,14 +78,25 @@ export default Sentry.wrap(function RootLayout() {
 
   const lastResponse = Notifications.useLastNotificationResponse();
   const navigationState = useRootNavigationState();
+  const handledResponseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setupAndroidChannel();
   }, []);
 
   useEffect(() => {
-    if (!lastResponse) return;
-    if (!navigationState?.key) return;
+    if (!lastResponse) {
+      return;
+    }
+    if (!navigationState?.key) {
+      return;
+    }
+    const notificationId = lastResponse.notification.request.identifier;
+    if (handledResponseIdRef.current === notificationId) {
+      return;
+    }
+    handledResponseIdRef.current = notificationId;
+
     const data = lastResponse.notification.request.content.data as {
       type?: string;
       threadId?: string;
