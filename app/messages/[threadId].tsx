@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -113,6 +114,15 @@ export default function ThreadScreen() {
       }
     };
   }, [resolvedThreadId]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => {
+      showSub.remove();
+    };
+  }, []);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
@@ -366,9 +376,11 @@ export default function ThreadScreen() {
             contentContainerStyle={styles.messageList}
             ref={flatListRef}
             keyboardDismissMode='on-drag'
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: true })
-            }
+            onContentSizeChange={() => {
+              requestAnimationFrame(() => {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              });
+            }}
             renderItem={({ item }) => {
               const isMe = item.sender_id === auth.userId;
               const isSending = item.clientStatus === 'sending';
