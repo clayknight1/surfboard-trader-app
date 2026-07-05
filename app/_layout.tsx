@@ -1,4 +1,4 @@
-import { Stack, useRootNavigationState, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -21,8 +21,9 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { setupAndroidChannel } from '../lib/services/pushService';
+import NotificationTapHandler from '../components/push/NotificationTapHandler';
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -74,41 +75,9 @@ export default Sentry.wrap(function RootLayout() {
     SpaceMono_700Bold,
   });
 
-  const router = useRouter();
-
-  const lastResponse = Notifications.useLastNotificationResponse();
-  const navigationState = useRootNavigationState();
-  const handledResponseIdRef = useRef<string | null>(null);
-
   useEffect(() => {
     setupAndroidChannel();
   }, []);
-
-  useEffect(() => {
-    if (!lastResponse) {
-      return;
-    }
-    if (!navigationState?.key) {
-      return;
-    }
-    const notificationId = lastResponse.notification.request.identifier;
-    if (handledResponseIdRef.current === notificationId) {
-      return;
-    }
-    handledResponseIdRef.current = notificationId;
-
-    const data = lastResponse.notification.request.content.data as {
-      type?: string;
-      threadId?: string;
-      listingId?: string;
-    };
-    if (data?.type === 'message' && data?.threadId) {
-      const path = data.listingId
-        ? `/messages/${data.threadId}?listingId=${data.listingId}`
-        : `/messages/${data.threadId}`;
-      router.push(path);
-    }
-  }, [lastResponse, router, navigationState?.key]);
 
   if (!fontsLoaded) {
     return null;
@@ -126,6 +95,7 @@ export default Sentry.wrap(function RootLayout() {
         >
           <SafeAreaProvider>
             <AuthProvider>
+              <NotificationTapHandler />
               <Stack screenOptions={{ headerShown: false }} />
             </AuthProvider>
           </SafeAreaProvider>
