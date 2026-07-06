@@ -41,6 +41,7 @@ export default function MessagesScreen() {
     queryFn: () => getInbox(userId!),
     enabled: !!userId,
     refetchOnWindowFocus: true,
+    staleTime: 1000 * 60,
   });
 
   useEffect(() => {

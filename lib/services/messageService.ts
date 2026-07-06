@@ -8,7 +8,6 @@ export async function sendMessage(
   messageText: string,
   threadId?: string,
 ): Promise<string | null> {
-  await new Promise((r) => setTimeout(r, 2000));
   const { data, error } = await supabase.rpc('send_message', {
     p_listing_id: listingId,
     p_sender_id: senderId,

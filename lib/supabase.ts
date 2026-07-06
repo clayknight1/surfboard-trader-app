@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
       return Promise.race([
         fetch(url, options),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), 10000),
+          setTimeout(() => reject(new Error('Request timeout')), 30000),
         ),
       ]) as Promise<Response>;
     },

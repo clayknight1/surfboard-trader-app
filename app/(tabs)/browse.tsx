@@ -35,6 +35,7 @@ export default function BrowseScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [location, setLocation] = useState({ lat: 33.1959, lng: -117.3795 }); // Oceanside default
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [locationLoaded, setLocationLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -66,6 +67,7 @@ export default function BrowseScreen() {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setHasLocationPermission(false);
+        setLocationLoaded(true);
         return;
       }
 
@@ -75,6 +77,7 @@ export default function BrowseScreen() {
         lat: location.coords.latitude,
         lng: location.coords.longitude,
       });
+      setLocationLoaded(true);
     }
     getCurrentLocation();
   }, []);
@@ -82,6 +85,14 @@ export default function BrowseScreen() {
   useEffect(() => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [filters]);
+
+  const roundedLocation = useMemo(
+    () => ({
+      lat: Math.round(location.lat * 100) / 100,
+      lng: Math.round(location.lng * 100) / 100,
+    }),
+    [location.lat, location.lng],
+  );
 
   useEffect(() => {
     return () => {
@@ -91,28 +102,26 @@ export default function BrowseScreen() {
 
   const { isPending, isFetching, isError, data, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
-      queryKey: ['listings', location, filters],
+      queryKey: ['listings', roundedLocation, filters],
       queryFn: ({ pageParam = 0 }) =>
         getListings(
-          location.lat,
-          location.lng,
+          roundedLocation.lat,
+          roundedLocation.lng,
           filters,
           userId,
           PAGE_SIZE,
           pageParam as number,
         ),
       initialPageParam: 0,
+      enabled: locationLoaded,
+      refetchOnWindowFocus: true,
+      staleTime: 1000 * 60,
       getNextPageParam: (lastPage, allPages) => {
         if (!lastPage || lastPage.length < PAGE_SIZE) {
           return undefined;
         }
         return allPages.length * PAGE_SIZE;
       },
-      placeholderData: keepPreviousData,
-      retry: 1,
-      retryDelay: 2000,
-      enabled: !!location,
-      staleTime: 1000 * 60 * 5,
     });
 
   const feedItems = useMemo(() => buildFeed(data?.pages.flat() ?? []), [data]);
