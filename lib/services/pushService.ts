@@ -77,8 +77,14 @@ export async function unregisterPushTokenAsync(token: string): Promise<void> {
   }
 }
 
-export function openNotificationSettings(): Promise<void> {
-  return Linking.openSettings();
+export async function openNotificationSettings(): Promise<void> {
+  try {
+    await Linking.openSettings();
+  } catch (err) {
+    Sentry.captureException(err, {
+      extra: { context: 'open_notification_settings' },
+    });
+  }
 }
 
 export async function setupAndroidChannel(): Promise<void> {

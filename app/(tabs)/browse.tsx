@@ -13,7 +13,6 @@ import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   keepPreviousData,
-  useQuery,
   useQueryClient,
   useInfiniteQuery,
 } from '@tanstack/react-query';
@@ -28,6 +27,7 @@ import FilterPanel from '../../components/listings/FilterPanel';
 import ListingCardSkeleton from '../../components/listings/ListingCardSkeleton';
 import { useAuth } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 
 const PAGE_SIZE = 20;
 
@@ -174,7 +174,15 @@ export default function BrowseScreen() {
           {!hasLocationPermission && (
             <TouchableOpacity
               style={styles.locationBanner}
-              onPress={() => Linking.openSettings()}
+              onPress={async () => {
+                try {
+                  await Linking.openSettings();
+                } catch (err) {
+                  Sentry.captureException(err, {
+                    extra: { context: 'open_settings_location_banner' },
+                  });
+                }
+              }}
             >
               <Ionicons
                 name='location-outline'
