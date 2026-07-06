@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 'auto',
+    marginBottom: Spacing.xs,
   },
   nextButtonText: {
     ...Typography.subheading,

@@ -177,7 +177,7 @@ export default function CreateListing() {
   }
 
   return (
-    <Screen>
+    <Screen bottomInset>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity

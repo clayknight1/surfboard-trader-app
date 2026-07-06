@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   nextButtonText: {
     ...Typography.subheading,

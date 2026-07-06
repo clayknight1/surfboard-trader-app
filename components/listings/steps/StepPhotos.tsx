@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   nextButtonDisabled: {
     opacity: 0.4,

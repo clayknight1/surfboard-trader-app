@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   nextButtonDisabled: {
     opacity: 0.4,

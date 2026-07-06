@@ -7,9 +7,10 @@ import { View } from 'react-native';
 
 type ScreenProps = {
   children: React.ReactNode;
+  bottomInset?: boolean;
 };
 
-export default function Screen({ children }: ScreenProps) {
+export default function Screen({ children, bottomInset = false }: ScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <View
@@ -17,6 +18,7 @@ export default function Screen({ children }: ScreenProps) {
         flex: 1,
         backgroundColor: Colors.background,
         paddingTop: insets.top,
+        paddingBottom: bottomInset ? insets.bottom : 0,
       }}
     >
       {children}
