@@ -103,7 +103,7 @@ export default function BrowseScreen() {
   const { isPending, isFetching, isError, data, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
       queryKey: ['listings', roundedLocation, filters],
-      queryFn: ({ pageParam = 0 }) =>
+      queryFn: ({ pageParam = 0, signal }) =>
         getListings(
           roundedLocation.lat,
           roundedLocation.lng,
@@ -111,6 +111,7 @@ export default function BrowseScreen() {
           userId,
           PAGE_SIZE,
           pageParam as number,
+          signal,
         ),
       initialPageParam: 0,
       enabled: locationLoaded,

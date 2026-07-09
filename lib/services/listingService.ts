@@ -16,8 +16,9 @@ export async function getListings(
   userId?: string,
   limit: number = 20,
   offset: number = 0,
+  signal?: AbortSignal
 ): Promise<ListingCardData[]> {
-  const { data, error } = await supabase.rpc('get_listings_nearby', {
+  let query =  supabase.rpc('get_listings_nearby', {
     p_lat: lat,
     p_lng: lng,
     p_radius_miles: filters.radiusMiles,
@@ -34,17 +35,25 @@ export async function getListings(
     p_offset: offset,
   });
 
+  if (signal) {
+    query = query.abortSignal(signal);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
-    console.error('Supabase error:', error.message, error.code, error.details);
-    Sentry.captureException(error, {
-      extra: {
-        code: error.code,
-        details: error.details,
-        lat,
-        lng,
-        offset,
-      },
-    });
+    const isAbort =
+      signal?.aborted ||
+      error.code === '20' ||
+      error.message?.includes('AbortError') ||
+      error.message?.includes('aborted');
+
+    if (!isAbort) {
+      console.error('Supabase error:', error.message, error.code, error.details);
+      Sentry.captureException(error, {
+        extra: { code: error.code, details: error.details, lat, lng, offset },
+      });
+    }
     throw error;
   }
 
