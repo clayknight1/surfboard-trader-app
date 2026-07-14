@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform, Linking } from 'react-native';
+import { Platform, Linking, Alert } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { supabase } from '../supabase';
 
@@ -84,6 +84,10 @@ export async function openNotificationSettings(): Promise<void> {
     Sentry.captureException(err, {
       extra: { context: 'open_notification_settings' },
     });
+        Alert.alert(
+      'Settings did not open',
+      'Please open the Settings app manually and go to Surfboard Trader to change permissions.'
+    );
   }
 }
 

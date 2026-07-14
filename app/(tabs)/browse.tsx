@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  Alert,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -191,6 +192,10 @@ export default function BrowseScreen() {
                   Sentry.captureException(err, {
                     extra: { context: 'open_settings_location_banner' },
                   });
+                  Alert.alert(
+                    'Settings did not open',
+                    'Please open the Settings app manually and go to Surfboard Trader to change permissions.',
+                  );
                 }
               }}
             >
