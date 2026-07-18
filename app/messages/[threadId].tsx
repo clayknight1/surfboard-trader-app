@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  AppState,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -87,33 +88,76 @@ export default function ThreadScreen() {
   useEffect(() => {
     if (!resolvedThreadId) return;
 
-    const setupRealtime = async () => {
-      await supabase.realtime.setAuth();
-
-      const channel = supabase
-        .channel(`topic:${auth.userId}`, { config: { private: true } })
-        .on('broadcast', { event: 'INSERT' }, (payload) => {
-          const incomingThreadId = payload.payload?.record?.thread_id;
-          if (incomingThreadId === resolvedThreadId) {
-            queryClient.invalidateQueries({
-              queryKey: ['thread', resolvedThreadId],
-            });
-          }
-        })
-        .subscribe();
-
-      return channel;
-    };
-
-    let channel: any;
-    setupRealtime().then((c) => (channel = c));
+    const channel = supabase
+      .channel(`thread:${resolvedThreadId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `thread_id=eq.${resolvedThreadId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: ['thread', resolvedThreadId],
+          });
+        },
+      )
+      .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [resolvedThreadId]);
+  }, [resolvedThreadId, queryClient]);
+
+  // useEffect(() => {
+  //   if (!resolvedThreadId) return;
+
+  //   const channel = supabase
+  //     .channel(`thread:${resolvedThreadId}`)
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: 'INSERT',
+  //         schema: 'public',
+  //         table: 'messages',
+  //         filter: `thread_id=eq.${resolvedThreadId}`,
+  //       },
+  //       (payload) => {
+  //         console.log('[realtime] INSERT received', payload);
+  //         const newMessage = payload.new as ThreadMessage;
+  //         queryClient.setQueryData<ThreadMessage[]>(
+  //           ['thread', resolvedThreadId],
+  //           (old = []) => {
+  //             if (old.some((m) => m.id === newMessage.id)) return old;
+  //             return [...old, newMessage];
+  //           },
+  //         );
+  //       },
+  //     )
+  //     .subscribe((status, err) => {
+  //       console.log('[realtime] channel status:', status, err);
+  //     });
+
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [resolvedThreadId, queryClient]);
+
+  useEffect(() => {
+    if (!resolvedThreadId) return;
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        queryClient.invalidateQueries({
+          queryKey: ['thread', resolvedThreadId],
+        });
+      }
+    });
+
+    return () => sub.remove();
+  }, [resolvedThreadId, queryClient]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
