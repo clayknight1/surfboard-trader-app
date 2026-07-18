@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   bannerText: {
     ...Typography.body,
-    color: Colors.textPrimary,
+    color: Colors.textOnCard,
     textAlign: 'center',
   },
   passwordGroup: {

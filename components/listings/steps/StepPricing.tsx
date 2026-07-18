@@ -54,10 +54,13 @@ export default function StepPricing({
               style={[styles.input, styles.priceInput]}
               value={formData.price ? (formData.price / 100).toString() : ''}
               onChangeText={(text) => {
-                const dollars = parseFloat(text);
+                const cleaned = text.replace(/[^0-9.]/g, '');
+                const dollars = parseFloat(cleaned);
                 updateField(
                   'price',
-                  isNaN(dollars) ? null : Math.round(dollars * 100),
+                  Number.isFinite(dollars) && dollars > 0
+                    ? Math.round(dollars * 100)
+                    : null,
                 );
               }}
               inputAccessoryViewID={
@@ -66,6 +69,7 @@ export default function StepPricing({
               placeholder='0'
               placeholderTextColor={Colors.textSecondary}
               keyboardType='decimal-pad'
+              maxLength={10}
             />
           </View>
         </View>

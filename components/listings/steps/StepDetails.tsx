@@ -50,6 +50,7 @@ export default function StepDetails({
             onChangeText={(value) => updateField('title', value)}
             placeholder="e.g. Channel Islands Fever 6'2"
             placeholderTextColor={Colors.textSecondary}
+            maxLength={80}
           />
         </View>
 
