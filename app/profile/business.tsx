@@ -239,6 +239,7 @@ export default function BusinessProfileScreen() {
           onChangeText={setBusinessName}
           placeholder='e.g. Surf Ride Oceanside'
           autoCapitalize='words'
+          maxLength={60}
         />
 
         {/* Bio */}
@@ -250,6 +251,7 @@ export default function BusinessProfileScreen() {
           multiline
           numberOfLines={4}
           style={{ height: 100, textAlignVertical: 'top', paddingTop: 14 }}
+          maxLength={300}
         />
 
         {/* Location */}
@@ -278,6 +280,7 @@ export default function BusinessProfileScreen() {
           placeholder='https://yourwebsite.com'
           keyboardType='url'
           autoCapitalize='none'
+          maxLength={200}
         />
 
         {/* Instagram */}
@@ -287,6 +290,7 @@ export default function BusinessProfileScreen() {
           onChangeText={setInstagram}
           placeholder='@yourhandle'
           autoCapitalize='none'
+          maxLength={30}
         />
 
         {/* Shaper only fields */}
@@ -302,18 +306,24 @@ export default function BusinessProfileScreen() {
                 <AuthInput
                   label='Starting from ($)'
                   value={priceRangeLow}
-                  onChangeText={setPriceRangeLow}
+                  onChangeText={(text) =>
+                    setPriceRangeLow(text.replace(/[^0-9]/g, ''))
+                  }
                   placeholder='800'
-                  keyboardType='numeric'
+                  keyboardType='number-pad'
+                  maxLength={7}
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <AuthInput
                   label='Up to ($)'
                   value={priceRangeHigh}
-                  onChangeText={setPriceRangeHigh}
+                  onChangeText={(text) =>
+                    setPriceRangeHigh(text.replace(/[^0-9]/g, ''))
+                  }
                   placeholder='1200'
-                  keyboardType='numeric'
+                  keyboardType='number-pad'
+                  maxLength={7}
                 />
               </View>
             </View>

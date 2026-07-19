@@ -204,6 +204,7 @@ export default function EditProfileScreen() {
             placeholder='Your name'
             autoCapitalize='words'
             textContentType='name'
+            maxLength={40}
           />
         </View>
         <View style={styles.section}>

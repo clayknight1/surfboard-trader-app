@@ -119,9 +119,9 @@ export default function SignUp() {
             value={fullName}
             onChangeText={setFullName}
             placeholder='John Doe'
-            textContentType='name'
-            autoComplete='name'
             autoCapitalize='words'
+            textContentType='name'
+            maxLength={40}
           />
           <AuthInput
             label='Email'
@@ -130,7 +130,8 @@ export default function SignUp() {
             placeholder='you@example.com'
             keyboardType='email-address'
             textContentType='emailAddress'
-            autoComplete='email'
+            autoCapitalize='none'
+            maxLength={100}
           />
           <AuthInput
             label='Password'
@@ -139,7 +140,10 @@ export default function SignUp() {
             placeholder='••••••••'
             secureTextEntry
             textContentType='newPassword'
-            autoComplete='password-new'
+            passwordRules='minlength: 8;'
+            autoCapitalize='none'
+            autoCorrect={false}
+            maxLength={72}
           />
           <AuthInput
             label='Confirm Password'
@@ -148,14 +152,17 @@ export default function SignUp() {
             placeholder='••••••••'
             secureTextEntry
             textContentType='newPassword'
-            autoComplete='password-new'
+            passwordRules='minlength: 8;'
+            autoCapitalize='none'
+            autoCorrect={false}
+            maxLength={72}
           />
           <AuthInput
             label='Birth Year'
             value={birthYear}
             onChangeText={setBirthYear}
             placeholder='1990'
-            keyboardType='numeric'
+            keyboardType='number-pad'
             maxLength={4}
           />
           <FormError>{error}</FormError>
