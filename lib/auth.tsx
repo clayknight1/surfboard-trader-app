@@ -138,14 +138,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Sign out if profile fetch fails after retries — auth user was deleted,
-  // RLS broke, or network is down so long we can't recover. Bouncing to login
+  // Sign out only on definitive auth errors (session revoked, user deleted).
+  // Network errors keep the session — persisted cache carries the UI until reconnect.
   useEffect(() => {
     if (profileIsError && session?.user?.id) {
+      const err = profileError as { status?: number; code?: string } | null;
+      const status = err?.status ?? err?.code;
+      const isAuthError =
+        status === 401 || status === 403 || status === 'PGRST301';
       Sentry.captureException(profileError, {
-        tags: { reason: 'profile_fetch_failed_signout' },
+        tags: {
+          reason: isAuthError
+            ? 'profile_fetch_failed_signout'
+            : 'profile_fetch_failed_network',
+        },
       });
-      supabase.auth.signOut();
+      if (isAuthError) {
+        supabase.auth.signOut().catch((signOutErr) => {
+          Sentry.captureException(signOutErr, {
+            tags: { reason: 'signout_failed' },
+          });
+        });
+      }
     }
   }, [profileIsError, profileError, session?.user?.id]);
 
