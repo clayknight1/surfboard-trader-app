@@ -34,10 +34,6 @@ export default function BlockedUsersScreen() {
     enabled: !!auth.userId,
   });
 
-  if (!auth.ready) {
-    return auth.redirect ?? null;
-  }
-
   const unblockMutation = useMutation({
     mutationFn: (blockedId: string) => unblockUser(auth.userId!, blockedId),
     onSuccess: () => {
@@ -51,6 +47,10 @@ export default function BlockedUsersScreen() {
       Alert.alert("Couldn't unblock user", 'Try again in a moment.');
     },
   });
+
+  if (!auth.ready) {
+    return auth.redirect ?? null;
+  }
 
   function handleUnblock(blockedId: string, name: string) {
     Alert.alert(
