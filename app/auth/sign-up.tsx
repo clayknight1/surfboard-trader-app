@@ -60,8 +60,8 @@ export default function SignUp() {
       return;
     }
     const age = new Date().getFullYear() - parsedYear;
-    if (age < 13) {
-      setError('You must be at least 13 years old to create an account.');
+    if (age < 18) {
+      setError('You must be at least 18 years old to create an account.');
       return;
     }
     setLoading(true);
