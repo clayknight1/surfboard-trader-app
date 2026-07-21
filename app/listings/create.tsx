@@ -24,10 +24,12 @@ import * as Sentry from '@sentry/react-native';
 import { userCurrency } from '../../lib/utils';
 import { usePushPrompt } from '../../lib/usePushPrompt';
 import PushPrePrompt from '../../components/push/PushPrePrompt';
+import { useRequireAuth } from '../../lib/useRequireAuth';
 
 const TOTAL_STEPS = 5;
 
 export default function CreateListing() {
+  const auth = useRequireAuth();
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const queryClient = useQueryClient();
@@ -174,6 +176,10 @@ export default function CreateListing() {
       { text: 'Keep going', style: 'cancel' },
       { text: 'Abandon', style: 'destructive', onPress: () => router.back() },
     ]);
+  }
+
+  if (!auth.ready) {
+    return auth.redirect ?? null;
   }
 
   return (
