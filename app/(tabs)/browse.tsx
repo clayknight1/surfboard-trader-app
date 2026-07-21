@@ -65,20 +65,23 @@ export default function BrowseScreen() {
 
   useEffect(() => {
     async function getCurrentLocation() {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setHasLocationPermission(false);
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setHasLocationPermission(false);
+          return;
+        }
+        setHasLocationPermission(true);
+        const location = await Location.getCurrentPositionAsync();
+        setLocation({
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+        });
+      } catch (err) {
+        Sentry.captureException(err);
+      } finally {
         setLocationLoaded(true);
-        return;
       }
-
-      setHasLocationPermission(true);
-      let location = await Location.getCurrentPositionAsync();
-      setLocation({
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-      });
-      setLocationLoaded(true);
     }
     getCurrentLocation();
   }, []);
