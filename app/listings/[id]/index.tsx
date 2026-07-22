@@ -138,6 +138,11 @@ export default function ListingDetail() {
   });
 
   function handleReportListing() {
+    if (!userId) {
+      setSignInModalOpen(true);
+      return;
+    }
+
     Alert.alert('Report Listing', 'Why are you reporting this listing?', [
       { text: 'Spam', onPress: () => reportListingMutation.mutate('spam') },
       {
