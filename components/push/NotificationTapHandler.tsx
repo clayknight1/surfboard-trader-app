@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useRouter, useRootNavigationState } from 'expo-router';
+import { useRouter, useRootNavigationState, usePathname } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from '../../lib/auth';
 
 export default function NotificationTapHandler() {
   const router = useRouter();
+  const pathname = usePathname();
   const navigationState = useRootNavigationState();
   const lastResponse = Notifications.useLastNotificationResponse();
   const { loading } = useAuth();
@@ -32,6 +33,10 @@ export default function NotificationTapHandler() {
       listingId?: string;
     };
     if (data?.type === 'message' && data?.threadId) {
+      const targetThreadPath = `/messages/${data.threadId}`;
+      if (pathname === targetThreadPath) {
+        return;
+      }
       const path = data.listingId
         ? `/messages/${data.threadId}?listingId=${data.listingId}`
         : `/messages/${data.threadId}`;
