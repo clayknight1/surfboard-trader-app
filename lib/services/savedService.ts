@@ -37,7 +37,7 @@ export async function getSavedListings(userId: string) {
   }
 
   return (data ?? [])
-    .filter((row: any) => row.listings)
+    .filter((row: any) => row.listings && row.listings.status !== 'deleted')
     .map((row: any) => {
       const listing = row.listings;
       const primaryPhoto =
