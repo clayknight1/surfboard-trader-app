@@ -44,6 +44,10 @@ export default function EditListingScreen() {
     if (!data || !auth.userId) {
       return;
     }
+    if (data.user_id !== auth.userId) {
+      router.replace('/(tabs)/sell');
+      return;
+    }
 
     const lengthFeet = data.length_inches
       ? Math.floor(Number(data.length_inches) / 12)
