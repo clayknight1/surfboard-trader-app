@@ -146,7 +146,7 @@ export default function EditListingScreen() {
   function handleDelete() {
     Alert.alert(
       'Delete listing?',
-      'This cannot be undone. Your listing and all photos will be permanently deleted.',
+      'This will remove your listing from Surfboard Trader.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
