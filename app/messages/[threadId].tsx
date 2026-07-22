@@ -102,6 +102,11 @@ export default function ThreadScreen() {
           queryClient.invalidateQueries({
             queryKey: ['thread', resolvedThreadId],
           });
+          if (auth.userId) {
+            markThreadRead(resolvedThreadId, auth.userId)
+              .then(() => refreshUnreadCount())
+              .catch((err) => Sentry.captureException(err));
+          }
         },
       )
       .subscribe();
@@ -109,41 +114,7 @@ export default function ThreadScreen() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [resolvedThreadId, queryClient]);
-
-  // useEffect(() => {
-  //   if (!resolvedThreadId) return;
-
-  //   const channel = supabase
-  //     .channel(`thread:${resolvedThreadId}`)
-  //     .on(
-  //       'postgres_changes',
-  //       {
-  //         event: 'INSERT',
-  //         schema: 'public',
-  //         table: 'messages',
-  //         filter: `thread_id=eq.${resolvedThreadId}`,
-  //       },
-  //       (payload) => {
-  //         console.log('[realtime] INSERT received', payload);
-  //         const newMessage = payload.new as ThreadMessage;
-  //         queryClient.setQueryData<ThreadMessage[]>(
-  //           ['thread', resolvedThreadId],
-  //           (old = []) => {
-  //             if (old.some((m) => m.id === newMessage.id)) return old;
-  //             return [...old, newMessage];
-  //           },
-  //         );
-  //       },
-  //     )
-  //     .subscribe((status, err) => {
-  //       console.log('[realtime] channel status:', status, err);
-  //     });
-
-  //   return () => {
-  //     supabase.removeChannel(channel);
-  //   };
-  // }, [resolvedThreadId, queryClient]);
+  }, [resolvedThreadId, queryClient, auth.userId, refreshUnreadCount]);
 
   useEffect(() => {
     if (!resolvedThreadId) return;
