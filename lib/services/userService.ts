@@ -70,7 +70,7 @@ export async function uploadAvatar(
     throw error;
   }
 
-  return getTransformUrl('avatars', path, 160);
+  return `${getTransformUrl('avatars', path, 160)}&v=${Date.now()}`
 }
 
 export async function getPublicProfile(userId: string): Promise<PublicProfile> {
