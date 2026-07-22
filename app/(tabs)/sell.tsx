@@ -42,7 +42,7 @@ export default function SellScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
-  const sortedData = data?.sort((a, b) => {
+  const sortedData = [...(data ?? [])].sort((a, b) => {
     if (a.status === 'sold' && b.status !== 'sold') return 1;
     if (a.status !== 'sold' && b.status === 'sold') return -1;
     return 0;
