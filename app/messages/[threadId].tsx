@@ -89,7 +89,7 @@ export default function ThreadScreen() {
     if (!resolvedThreadId) return;
 
     const channel = supabase
-      .channel(`thread:${resolvedThreadId}`)
+      .channel(`thread:${resolvedThreadId}:${Date.now()}`)
       .on(
         'postgres_changes',
         {
