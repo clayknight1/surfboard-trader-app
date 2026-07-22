@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useAuth } from '../../lib/auth';
@@ -16,7 +15,6 @@ import { Colors, Spacing, Typography } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import LocationSheet from '../../components/ui/LocationSheet';
-import { supabase } from '../../lib/supabase';
 import { submitDeletionRequest } from '../../lib/services/userService';
 import { displayName } from '../../lib/utils';
 import CurrencySheet from '../../components/ui/CurrencySheet';
@@ -89,7 +87,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               await submitDeletionRequest(userId!);
-              await supabase.auth.signOut();
+              await signOut();
               router.replace('/auth/login');
             } catch (err) {
               Sentry.captureException(err);
