@@ -166,7 +166,13 @@ export default function UserProfileScreen() {
               {businessProfile?.website && (
                 <TouchableOpacity
                   style={styles.socialChip}
-                  onPress={() => Linking.openURL(businessProfile.website!)}
+                  onPress={() => {
+                    const raw = businessProfile.website!;
+                    const url = /^https?:\/\//i.test(raw)
+                      ? raw
+                      : `https://${raw}`;
+                    Linking.openURL(url).catch(() => {});
+                  }}
                 >
                   <Ionicons
                     name='globe-outline'
@@ -182,7 +188,7 @@ export default function UserProfileScreen() {
                   onPress={() =>
                     Linking.openURL(
                       `https://instagram.com/${businessProfile.instagram_handle}`,
-                    )
+                    ).catch(() => {})
                   }
                 >
                   <Ionicons
