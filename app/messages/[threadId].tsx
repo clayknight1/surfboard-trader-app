@@ -226,7 +226,7 @@ export default function ThreadScreen() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert("Couldn't block user", 'Try again in a moment."');
+      Alert.alert("Couldn't block user", 'Try again in a moment.');
     },
   });
 

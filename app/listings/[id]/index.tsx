@@ -82,7 +82,7 @@ export default function ListingDetail() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert("Couldn't mark as sold", 'Try again in a moment."');
+      Alert.alert("Couldn't mark as sold", 'Try again in a moment.');
     },
   });
 
@@ -133,7 +133,7 @@ export default function ListingDetail() {
     },
     onError: (err) => {
       Sentry.captureException(err);
-      Alert.alert("Couldn't submit report", 'Try again in a moment."');
+      Alert.alert("Couldn't submit report", 'Try again in a moment.');
     },
   });
 
