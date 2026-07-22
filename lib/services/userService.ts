@@ -2,6 +2,7 @@ import { supabase } from '../supabase';
 import { ListingCardData, PublicListing, PublicProfile, User } from '../types';
 import { getTransformUrl } from '../utils';
 import * as Sentry from '@sentry/react-native';
+import { LISTING_COLUMNS } from './listingService';
 
 export async function getUserProfile(userId: string): Promise<User> {
   const { data, error } = await supabase
@@ -95,7 +96,7 @@ export async function getPublicListings(
 ): Promise<ListingCardData[]> {
   const { data, error } = await supabase
     .from('listings')
-    .select('*, listing_photos(*)')
+    .select(`${LISTING_COLUMNS}, listing_photos(*)`)
     .eq('user_id', userId)
     .eq('status', 'active')
     .order('created_at', { ascending: false });

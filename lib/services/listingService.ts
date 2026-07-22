@@ -9,6 +9,9 @@ import {
 } from '../types';
 import { getTransformUrl } from '../utils';
 
+export const LISTING_COLUMNS =
+  'accepts_offers, board_type, bump_count, business_id, condition, created_at, currency, description, era, fin_setup, fin_system, id, is_featured, is_rideable, is_sponsored, last_bumped_at, lead_time_weeks, length_inches, listing_type, location_label, payment_notes, price, provenance, save_count, shaper_brand, shipping_notes, ships_domestically, ships_internationally, sponsored_tier, sponsored_until, status, thickness_inches, title, updated_at, user_id, view_count, volume, width_inches';
+
 export async function getListings(
   lat: number,
   lng: number,
@@ -71,7 +74,7 @@ export async function getListing(
   const { data, error } = await supabase
     .from('listings')
     .select(
-      '*, listing_photos(*), public_users!listings_user_id_fkey(id, full_name, avatar_url, role, business_profiles(business_name, logo_url))',
+      `${LISTING_COLUMNS}, listing_photos(*), public_users!listings_user_id_fkey(id, full_name, avatar_url, role, business_profiles(business_name, logo_url))`,
     )
     .eq('id', listingId)
     .single();
@@ -87,7 +90,7 @@ export async function getListing(
     ...photo,
     storage_path: getTransformUrl('listings', photo.storage_path, 800),
   }));
-  return { ...data, listing_photos: photos };
+  return { ...data, listing_photos: photos } as unknown as ListingWithPhotos;
 }
 
 export async function getListingsByUser(
@@ -95,7 +98,7 @@ export async function getListingsByUser(
 ): Promise<ListingWithPhotos[]> {
   const { data, error } = await supabase
     .from('listings')
-    .select('*, listing_photos(*)')
+     .select(`${LISTING_COLUMNS}, listing_photos(*)`)
     .eq('user_id', userId)
     .neq('status', 'deleted')
     .order('created_at', { ascending: false });

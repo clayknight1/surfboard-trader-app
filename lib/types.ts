@@ -7,7 +7,7 @@ export type User = Database['public']['Tables']['users']['Row'] & {
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
-export type Listing = Database['public']['Tables']['listings']['Row'];
+export type Listing = Omit<Database['public']['Tables']['listings']['Row'], 'location'>;
 export type ListingInsert = Database['public']['Tables']['listings']['Insert'];
 export type ListingUpdate = Database['public']['Tables']['listings']['Update'];
 
@@ -108,7 +108,7 @@ export type ListingCardData = {
 
 export type ListingWithPhotos = Listing & {
   listing_photos: ListingPhoto[];
-  public_users: {
+  public_users?: {
     id: string;
     full_name: string | null;
     avatar_url: string | null;
