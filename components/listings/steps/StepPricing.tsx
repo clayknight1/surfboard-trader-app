@@ -85,6 +85,7 @@ export default function StepPricing({
             placeholderTextColor={Colors.textSecondary}
             multiline
             numberOfLines={6}
+            maxLength={2000}
             textAlignVertical='top'
             inputAccessoryViewID={
               Platform.OS === 'ios' ? DESCRIPTION_ACCESSORY_ID : undefined

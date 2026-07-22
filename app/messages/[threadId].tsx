@@ -488,6 +488,7 @@ export default function ThreadScreen() {
             placeholder='Message...'
             placeholderTextColor={Colors.textSecondary}
             multiline
+            maxLength={1000}
           />
           <TouchableOpacity
             style={[

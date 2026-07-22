@@ -81,6 +81,7 @@ export default function NewThreadScreen() {
             placeholder='Message...'
             placeholderTextColor={Colors.textSecondary}
             multiline
+            maxLength={1000}
             autoFocus
           />
           <TouchableOpacity
