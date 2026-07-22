@@ -105,8 +105,6 @@ export default function ForgotPassword() {
           </View>
         )}
 
-        <View style={{ flex: 1 }} />
-
         <View style={styles.footer}>
           <TouchableOpacity onPress={() => router.replace('/auth/login')}>
             <Text style={styles.footerLink}>Back to sign in</Text>
@@ -125,9 +123,10 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 80,
+    paddingTop: 40,
     paddingBottom: Spacing.xxxl,
     gap: Spacing.xxxl,
+    justifyContent: 'center',
   },
   logo: {
     width: 240,
