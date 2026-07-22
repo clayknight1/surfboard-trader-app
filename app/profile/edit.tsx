@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.backgroundCard,
+    backgroundColor: Colors.backgroundInput,
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
