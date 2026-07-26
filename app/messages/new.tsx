@@ -19,6 +19,7 @@ import * as Sentry from '@sentry/react-native';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { useRequireAuth } from '../../lib/useRequireAuth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePostHog } from 'posthog-react-native';
 
 export default function NewThreadScreen() {
   const { listingId, sellerId } = useLocalSearchParams<{
@@ -29,11 +30,18 @@ export default function NewThreadScreen() {
   const router = useRouter();
   const [messageText, setMessageText] = useState('');
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const sendMessageMutation = useMutation({
     mutationFn: (body: string) => sendMessage(auth.userId!, listingId, body),
     onSuccess: (newThreadId) => {
       if (newThreadId) {
+        posthog?.capture('message_sent', {
+          listing_id: listingId,
+          recipient_id: sellerId,
+          thread_id: newThreadId,
+          is_first_message_in_thread: true,
+        });
         queryClient.invalidateQueries({ queryKey: ['inbox'] });
         router.replace(`/messages/${newThreadId}?listingId=${listingId}`);
       }

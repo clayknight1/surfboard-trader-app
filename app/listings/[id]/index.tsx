@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getListing,
@@ -38,6 +38,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { useSaveListing } from '../../../lib/useSaveListing';
 import ErrorState from '../../../components/ui/ErrorState';
+import { usePostHog } from 'posthog-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PHOTO_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -54,6 +55,7 @@ export default function ListingDetail() {
   const userId = session?.user?.id;
   const scrollY = useRef(new Animated.Value(0)).current;
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, PHOTO_HEIGHT * 0.6],
@@ -70,6 +72,18 @@ export default function ListingDetail() {
     retryDelay: 1000,
     staleTime: 1000 * 60 * 5,
   });
+
+  useEffect(() => {
+    if (!posthog || !data) return;
+    posthog.capture('listing_viewed', {
+      listing_id: data.id,
+      board_type: data.board_type ?? null,
+      price_cents: data.price ?? null,
+      is_sponsored: data.is_sponsored ?? false,
+      listing_type: data.listing_type ?? null,
+      seller_id: data.user_id,
+    });
+  }, [posthog, data?.id]);
 
   const markAsSoldMutation = useMutation({
     mutationFn: () => markListingAsSold(id),

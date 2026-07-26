@@ -18,6 +18,7 @@ import AuthInput from '../../components/ui/AuthInput';
 import { userCurrency } from '../../lib/utils';
 import * as Sentry from '@sentry/react-native';
 import FormError from '../../components/ui/FormError';
+import { usePostHog } from 'posthog-react-native';
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -29,6 +30,7 @@ export default function SignUp() {
   const [birthYear, setBirthYear] = useState('');
   const router = useRouter();
   const { session } = useAuth();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (session) {
@@ -78,6 +80,10 @@ export default function SignUp() {
         setError(error.message);
         return;
       }
+      posthog?.capture('sign_up_completed', {
+        user_id: data.user?.id ?? null,
+        email_confirmation_required: !data.session,
+      });
       // If no session was returned, email confirmation is ON — bounce to login
       if (!data.session) {
         router.replace({

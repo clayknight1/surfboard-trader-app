@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { focusManager, QueryCache, QueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -7,7 +7,7 @@ import { AuthProvider } from '../lib/auth';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { PostHogProvider } from 'posthog-react-native';
+import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -105,7 +105,11 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PostHogProvider
         apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY!}
-        options={{ host: 'https://us.i.posthog.com', disabled: __DEV__ }}
+        options={{
+          host: 'https://us.i.posthog.com',
+          disabled: __DEV__,
+          captureAppLifecycleEvents: true,
+        }}
       >
         <PersistQueryClientProvider
           client={queryClient}
@@ -114,6 +118,7 @@ export default Sentry.wrap(function RootLayout() {
           <SafeAreaProvider>
             <AuthProvider>
               <NotificationTapHandler />
+              <ScreenTracker />
               <Stack screenOptions={{ headerShown: false }} />
             </AuthProvider>
           </SafeAreaProvider>
@@ -122,3 +127,15 @@ export default Sentry.wrap(function RootLayout() {
     </GestureHandlerRootView>
   );
 });
+
+function ScreenTracker() {
+  const posthog = usePostHog();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!posthog || !pathname) return;
+    posthog.screen(pathname);
+  }, [posthog, pathname]);
+
+  return null;
+}

@@ -19,6 +19,7 @@ import {
   unregisterPushTokenAsync,
 } from './services/pushService';
 import * as Notifications from 'expo-notifications';
+import { usePostHog } from 'posthog-react-native';
 
 type AuthContextType = {
   session: Session | null;
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const pushTokenRef = useRef<string | null>(null);
+  const posthog = usePostHog();
 
   const queryClient = useQueryClient();
 
@@ -191,6 +193,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    if (!posthog) return;
+    if (session?.user?.id) {
+      posthog.identify(session.user.id, {
+        email: session.user.email ?? null,
+        tier: fetchedProfile?.tier ?? 'free',
+        role: fetchedProfile?.role ?? 'user',
+      });
+    }
+  }, [posthog, session?.user?.id, fetchedProfile?.tier, fetchedProfile?.role]);
+
   async function refreshSession() {
     const { data, error } = await supabase.auth.getSession();
     setSession(data.session ?? null);
@@ -206,6 +219,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const signOut = async () => {
+    posthog?.reset();
     if (pushTokenRef.current) {
       await unregisterPushTokenAsync(pushTokenRef.current);
       pushTokenRef.current = null;

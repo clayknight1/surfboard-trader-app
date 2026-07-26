@@ -6,9 +6,11 @@ import {
   saveListing,
   unsaveListing,
 } from './services/savedService';
+import { usePostHog } from 'posthog-react-native';
 
 export function useSaveListing(listingId: string, userId: string | undefined) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const { data: savedIds = [] } = useQuery({
     queryKey: ['savedIds', userId],
@@ -42,8 +44,13 @@ export function useSaveListing(listingId: string, userId: string | undefined) {
         queryClient.setQueryData(['savedIds', userId], context.previous);
       }
     },
-    onSuccess: () => {
+     onSuccess: () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      if (!isSaved) {
+        posthog?.capture('favorite_added', {
+          listing_id: listingId,
+        });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['savedIds'] });

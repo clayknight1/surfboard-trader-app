@@ -33,6 +33,7 @@ import { useRequireAuth } from '../../lib/useRequireAuth';
 import { ThreadMessage } from '../../lib/types';
 import { usePushPrompt } from '../../lib/usePushPrompt';
 import PushPrePrompt from '../../components/push/PushPrePrompt';
+import { usePostHog } from 'posthog-react-native';
 
 type ReportReason = 'spam' | 'inappropriate' | 'scam' | 'other';
 
@@ -56,6 +57,7 @@ export default function ThreadScreen() {
   const queryClient = useQueryClient();
   const resolvedThreadId = Array.isArray(threadId) ? threadId[0] : threadId;
   const flatListRef = useRef<FlatList>(null);
+  const posthog = usePostHog();
 
   const { data: messages, isPending } = useQuery({
     queryKey: ['thread', resolvedThreadId],
@@ -189,6 +191,12 @@ export default function ThreadScreen() {
     },
     onSuccess: () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      posthog?.capture('message_sent', {
+        listing_id: effectiveListingId,
+        recipient_id: otherUserId,
+        thread_id: resolvedThreadId,
+        is_first_message_in_thread: false,
+      });
       queryClient.invalidateQueries({ queryKey: ['thread', resolvedThreadId] });
       queryClient.invalidateQueries({ queryKey: ['inbox'] });
       if (canPromptNow) {
