@@ -62,8 +62,10 @@ export default function ThreadScreen() {
   const { data: messages, isPending } = useQuery({
     queryKey: ['thread', resolvedThreadId],
     queryFn: () => getMessages(resolvedThreadId!),
-    enabled: !!resolvedThreadId,
+    enabled: !!resolvedThreadId && !!auth.userId,
     refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const otherUserId = messages?.[0]
@@ -111,7 +113,13 @@ export default function ThreadScreen() {
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          queryClient.invalidateQueries({
+            queryKey: ['thread', resolvedThreadId],
+          });
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

@@ -27,7 +27,6 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [birthYear, setBirthYear] = useState('');
   const router = useRouter();
   const { session } = useAuth();
   const posthog = usePostHog();
@@ -48,22 +47,6 @@ export default function SignUp() {
 
     if (password !== confirmPassword) {
       setError("Passwords don't match.");
-      return;
-    }
-
-    if (!birthYear) {
-      setError('Please enter your birth year.');
-      return;
-    }
-
-    const parsedYear = parseInt(birthYear);
-    if (!Number.isFinite(parsedYear) || !/^\d{4}$/.test(birthYear)) {
-      setError('Please enter a valid birth year.');
-      return;
-    }
-    const age = new Date().getFullYear() - parsedYear;
-    if (age < 18) {
-      setError('You must be at least 18 years old to create an account.');
       return;
     }
     setLoading(true);
@@ -163,14 +146,6 @@ export default function SignUp() {
             autoCorrect={false}
             maxLength={72}
           />
-          <AuthInput
-            label='Birth Year'
-            value={birthYear}
-            onChangeText={setBirthYear}
-            placeholder='1990'
-            keyboardType='number-pad'
-            maxLength={4}
-          />
           <FormError>{error}</FormError>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -199,7 +174,8 @@ export default function SignUp() {
 
           <View style={styles.legalRow}>
             <Text style={styles.legalText}>
-              By signing up you agree to our{' '}
+              By signing up you confirm you are at least 18 years old and agree
+              to our{' '}
             </Text>
             <TouchableOpacity onPress={() => router.push('/legal/terms')}>
               <Text style={styles.legalLink}>Terms</Text>
